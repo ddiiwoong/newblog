@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[9664],{33608:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"BPF","count":1,"permalink":"/tags/bpf"}')}}]);
