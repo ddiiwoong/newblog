@@ -1,0 +1,76 @@
+{
+  "permalink": "/kubernetes/knative-knctl/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-02-18-knative-knctl.md",
+  "source": "@site/blog/2019-02-18-knative-knctl.md",
+  "title": "Knative CLI - knctl",
+  "description": "Knative CLI tool knctl에 대해 알아보자",
+  "date": "2019-02-18T00:00:00.000Z",
+  "formattedDate": "February 18, 2019",
+  "tags": [
+    {
+      "label": "Knative",
+      "permalink": "/tags/knative"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "FaaS",
+      "permalink": "/tags/faa-s"
+    },
+    {
+      "label": "Serverless",
+      "permalink": "/tags/serverless"
+    },
+    {
+      "label": "CRDs",
+      "permalink": "/tags/cr-ds"
+    },
+    {
+      "label": "CloudEvents",
+      "permalink": "/tags/cloud-events"
+    },
+    {
+      "label": "Mesh",
+      "permalink": "/tags/mesh"
+    },
+    {
+      "label": "knctl",
+      "permalink": "/tags/knctl"
+    }
+  ],
+  "readingTime": 14.54,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Knative CLI - knctl",
+    "comments": true,
+    "classes": "wide",
+    "description": "Knative CLI tool knctl에 대해 알아보자",
+    "slug": "kubernetes/knative-knctl/",
+    "date": "2019-02-18T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Knative",
+      "Kubernetes",
+      "FaaS",
+      "Serverless",
+      "CRDs",
+      "CloudEvents",
+      "Mesh",
+      "knctl"
+    ]
+  },
+  "prevItem": {
+    "title": "Knative with Gloo",
+    "permalink": "/kubernetes/knative-using-gloo/"
+  },
+  "nextItem": {
+    "title": "Hybrid Cloud",
+    "permalink": "/cloud/Hybrid/"
+  }
+}
