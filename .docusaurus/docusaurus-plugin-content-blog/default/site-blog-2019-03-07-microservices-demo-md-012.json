@@ -1,0 +1,71 @@
+{
+  "permalink": "/kubernetes/microservices-demo/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-03-07-microservices-demo.md",
+  "source": "@site/blog/2019-03-07-microservices-demo.md",
+  "title": "Cloud-Native Microservices Demo Application with OpenCensus",
+  "description": "Hipster Shop: Cloud-Native Microservices Demo Application 를 살펴보고 안에 들어있는 여러가지 오픈소스들을 알아본다",
+  "date": "2019-03-07T00:00:00.000Z",
+  "formattedDate": "March 7, 2019",
+  "tags": [
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "Istio",
+      "permalink": "/tags/istio"
+    },
+    {
+      "label": "Stackdriver",
+      "permalink": "/tags/stackdriver"
+    },
+    {
+      "label": "Prometheus",
+      "permalink": "/tags/prometheus"
+    },
+    {
+      "label": "gRPC",
+      "permalink": "/tags/g-rpc"
+    },
+    {
+      "label": "OpenCensus",
+      "permalink": "/tags/open-census"
+    },
+    {
+      "label": "skaffold",
+      "permalink": "/tags/skaffold"
+    }
+  ],
+  "readingTime": 13.585,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Cloud-Native Microservices Demo Application with OpenCensus",
+    "comments": true,
+    "classes": "wide",
+    "description": "Hipster Shop: Cloud-Native Microservices Demo Application 를 살펴보고 안에 들어있는 여러가지 오픈소스들을 알아본다",
+    "slug": "kubernetes/microservices-demo/",
+    "date": "2019-03-07T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Istio",
+      "Stackdriver",
+      "Prometheus",
+      "gRPC",
+      "OpenCensus",
+      "skaffold"
+    ]
+  },
+  "prevItem": {
+    "title": "K3s on Raspberry Pi Cluster",
+    "permalink": "/kubernetes/k3s-homelab/"
+  },
+  "nextItem": {
+    "title": "Knative with Gloo",
+    "permalink": "/kubernetes/knative-using-gloo/"
+  }
+}
