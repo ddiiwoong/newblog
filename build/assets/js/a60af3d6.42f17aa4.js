@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[2140],{9301:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"network policy","count":1,"permalink":"/tags/network-policy"}')}}]);
