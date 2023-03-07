@@ -1,0 +1,67 @@
+{
+  "permalink": "/kubernetes/eks-cni-custom/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2022-12-16-eks-cni-custom.md",
+  "source": "@site/blog/2022-12-16-eks-cni-custom.md",
+  "title": "EKS CNI Custom Networking",
+  "description": "Terraform null_resource를 활용하여 EKS CNI network를 구성하는 방법",
+  "date": "2022-12-16T00:00:00.000Z",
+  "formattedDate": "December 16, 2022",
+  "tags": [
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "EKS",
+      "permalink": "/tags/eks"
+    },
+    {
+      "label": "CNI",
+      "permalink": "/tags/cni"
+    },
+    {
+      "label": "Terraform",
+      "permalink": "/tags/terraform"
+    }
+  ],
+  "readingTime": 10.79,
+  "truncated": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong"
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "EKS CNI Custom Networking",
+    "comments": true,
+    "classes": "wide",
+    "description": "Terraform null_resource를 활용하여 EKS CNI network를 구성하는 방법",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/eks-cni-custom/",
+    "date": "2022-12-16T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "EKS",
+      "CNI",
+      "Terraform"
+    ]
+  },
+  "prevItem": {
+    "title": "kOps with Cloud9",
+    "permalink": "/kubernetes/kops/"
+  },
+  "nextItem": {
+    "title": "EKS Anywhere Advanced Usages",
+    "permalink": "/kubernetes/eks-anywhere-adv/"
+  }
+}

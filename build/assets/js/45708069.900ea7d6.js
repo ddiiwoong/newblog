@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8351],{1726:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"Canary analysis","count":1,"permalink":"/tags/canary-analysis"}')}}]);
