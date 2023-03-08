@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[4156],{99306:function(t){t.exports=JSON.parse('{"permalink":"/tags/tanzu","page":1,"postsPerPage":5,"totalPages":1,"totalCount":2,"blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);
