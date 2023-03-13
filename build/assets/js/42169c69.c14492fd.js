@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8376],{65736:function(t){t.exports=JSON.parse('{"permalink":"/tags/planning","page":1,"postsPerPage":5,"totalPages":1,"totalCount":2,"blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);

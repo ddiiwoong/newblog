@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[5819],{43765:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"git-sync","count":1,"permalink":"/tags/git-sync"}')}}]);

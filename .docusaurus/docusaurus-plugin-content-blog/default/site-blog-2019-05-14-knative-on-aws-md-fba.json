@@ -1,0 +1,71 @@
+{
+  "permalink": "/kubernetes/knative-on-aws/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-05-14-knative-on-aws.md",
+  "source": "@site/blog/2019-05-14-knative-on-aws.md",
+  "title": "Knative on EKS",
+  "description": "EKS에서도 Knative를 구성해보자",
+  "date": "2019-05-14T00:00:00.000Z",
+  "formattedDate": "May 14, 2019",
+  "tags": [
+    {
+      "label": "Knative",
+      "permalink": "/tags/knative"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "FaaS",
+      "permalink": "/tags/faa-s"
+    },
+    {
+      "label": "AWS",
+      "permalink": "/tags/aws"
+    },
+    {
+      "label": "Lambda",
+      "permalink": "/tags/lambda"
+    },
+    {
+      "label": "Serverless",
+      "permalink": "/tags/serverless"
+    },
+    {
+      "label": "EKS",
+      "permalink": "/tags/eks"
+    }
+  ],
+  "readingTime": 11.905,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Knative on EKS",
+    "comments": true,
+    "classes": "wide",
+    "description": "EKS에서도 Knative를 구성해보자",
+    "slug": "kubernetes/knative-on-aws/",
+    "date": "2019-05-14T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Knative",
+      "Kubernetes",
+      "FaaS",
+      "AWS",
+      "Lambda",
+      "Serverless",
+      "EKS"
+    ]
+  },
+  "prevItem": {
+    "title": "Yaml 작성 기본 Tip",
+    "permalink": "/kubernetes/CKAD-1/"
+  },
+  "nextItem": {
+    "title": "eksworkshop",
+    "permalink": "/kubernetes/eksworkshop/"
+  }
+}

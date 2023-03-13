@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[7197],{83298:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"skaffold","count":1,"permalink":"/tags/skaffold"}')}}]);
