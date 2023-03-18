@@ -8,7 +8,7 @@ authors: jinwoong
 toc: true
 toc_label: Table of Contents
 slug: kubernetes/kops-cilium/
-date: 2023-03-08
+date: 2023-03-18
 categories:
   - Kubernetes
 tags:
