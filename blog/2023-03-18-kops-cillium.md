@@ -399,7 +399,7 @@ https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt
 t3.medium 경우 : ((3 * (6 - 1) + 2 ) = 17개 >> aws-node 와 kube-proxy 2개 제외하면 15개
 ```
 
-IPAM을 설정한 Cilium은 [AWS ENI](https://docs.cilium.io/en/stable/network/concepts/ipam/eni/) 기준을 따라간다. 공식 문서에서는 아직 확인할 수 없지만 [GitHub issue](https://github.com/cilium/cilium/issues/10426)로 추정해보면 `health`, `router` `CiliumInternalIP` 3개의 IP를 제외하기 때문에 t3.medium의 경우라면 3개의 ENI 당 6개의 아이피를 할당할 수 있기 때문에 실제
+IPAM을 설정한 Cilium은 [AWS ENI](https://docs.cilium.io/en/stable/network/concepts/ipam/eni/) 기준을 따라간다. 공식 문서에서는 아직 확인할 수 없지만 [GitHub issue](https://github.com/cilium/cilium/issues/10426)로 추정해보면 `health`, `router` `CiliumInternalIP` 3개의 IP를 제외하기 때문에 t3.medium의 경우라면 3개의 ENI 당 6개의 아이피를 할당할 수 있기 때문에 실제 구성 가능한 개수는 12개 생성이 가능하다.
 
 ```
 (MaxENI * (IPv4addr - 1))
