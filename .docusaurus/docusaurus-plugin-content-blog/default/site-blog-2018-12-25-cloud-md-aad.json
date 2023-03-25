@@ -1,0 +1,46 @@
+{
+  "permalink": "/cloud/cloud/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-12-25-cloud.md",
+  "source": "@site/blog/2018-12-25-cloud.md",
+  "title": "Cloud Enginner",
+  "description": "Cloud Enginner",
+  "date": "2018-12-25T00:00:00.000Z",
+  "formattedDate": "December 25, 2018",
+  "tags": [
+    {
+      "label": "Cloud",
+      "permalink": "/tags/cloud"
+    },
+    {
+      "label": "Enginner",
+      "permalink": "/tags/enginner"
+    }
+  ],
+  "readingTime": 4.055,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Cloud Enginner",
+    "comments": true,
+    "classes": "wide",
+    "description": "Cloud Enginner",
+    "slug": "cloud/cloud/",
+    "date": "2018-12-25T00:00:00.000Z",
+    "categories": [
+      "Cloud"
+    ],
+    "tags": [
+      "Cloud",
+      "Enginner"
+    ]
+  },
+  "prevItem": {
+    "title": "2018 Retrospective",
+    "permalink": "/retrospective/newyear-plan/"
+  },
+  "nextItem": {
+    "title": "Spinnaker on Kubernetes #3 (Kayenta)",
+    "permalink": "/kubernetes/spinnaker-advanced-3/"
+  }
+}

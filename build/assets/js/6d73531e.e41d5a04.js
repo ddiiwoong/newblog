@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[5903],{7562:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"Knative","count":4,"permalink":"/tags/knative"}')}}]);
