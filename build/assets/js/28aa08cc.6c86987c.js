@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[304],{78108:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"Prometheus, Synology, \uc2dc\ub180\ub85c\uc9c0","count":1,"permalink":"/tags/prometheus-synology-\uc2dc\ub180\ub85c\uc9c0"}')}}]);
