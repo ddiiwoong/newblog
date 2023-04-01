@@ -1,0 +1,25 @@
+{
+  "title": "Recent Posts",
+  "items": [
+    {
+      "title": "prometheus grafana 스택으로 k6 테스트 결과 확인하기",
+      "permalink": "/kubernetes/k6-prometheus/"
+    },
+    {
+      "title": "Advanced Argo Rollout",
+      "permalink": "/kubernetes/argo-rollout-advanced/"
+    },
+    {
+      "title": "kOps with Cilium",
+      "permalink": "/kubernetes/kops-cilium/"
+    },
+    {
+      "title": "kOps with Cloud9",
+      "permalink": "/kubernetes/kops-cloud9/"
+    },
+    {
+      "title": "EKS CNI Custom Networking",
+      "permalink": "/kubernetes/eks-cni-custom/"
+    }
+  ]
+}

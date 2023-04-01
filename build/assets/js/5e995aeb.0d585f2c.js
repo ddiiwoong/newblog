@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[9333],{65041:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"AWS Batch","count":1,"permalink":"/tags/aws-batch"}')}}]);

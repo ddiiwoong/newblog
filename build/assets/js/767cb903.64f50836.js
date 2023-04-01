@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[2001],{42624:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"Managed Kubernetes","count":1,"permalink":"/tags/managed-kubernetes"}')}}]);
