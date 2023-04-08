@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[9827],{95152:function(t){t.exports=JSON.parse('{"permalink":"/tags/cloud-9","page":1,"postsPerPage":5,"totalPages":1,"totalCount":3,"blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);
