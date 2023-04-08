@@ -1,0 +1,86 @@
+{
+  "permalink": "/kubernetes/spinnaker-advanced-3/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-12-04-spinnaker-advanced-3.md",
+  "source": "@site/blog/2018-12-04-spinnaker-advanced-3.md",
+  "title": "Spinnaker on Kubernetes #3 (Kayenta)",
+  "description": "Spinnaker에 대해 알아봅니다 #3 (Kayenta)",
+  "date": "2018-12-04T00:00:00.000Z",
+  "formattedDate": "December 4, 2018",
+  "tags": [
+    {
+      "label": "CI/CD",
+      "permalink": "/tags/ci-cd"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "Spinnaker",
+      "permalink": "/tags/spinnaker"
+    },
+    {
+      "label": "Continuous Delivery",
+      "permalink": "/tags/continuous-delivery"
+    },
+    {
+      "label": "Continuous Deployment",
+      "permalink": "/tags/continuous-deployment"
+    },
+    {
+      "label": "Pipeline",
+      "permalink": "/tags/pipeline"
+    },
+    {
+      "label": "Canary",
+      "permalink": "/tags/canary"
+    },
+    {
+      "label": "Canary analysis",
+      "permalink": "/tags/canary-analysis"
+    },
+    {
+      "label": "Kayenta",
+      "permalink": "/tags/kayenta"
+    },
+    {
+      "label": "Automated Canary Service",
+      "permalink": "/tags/automated-canary-service"
+    }
+  ],
+  "readingTime": 14.66,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Spinnaker on Kubernetes #3 (Kayenta)",
+    "comments": true,
+    "classes": "wide",
+    "description": "Spinnaker에 대해 알아봅니다 #3 (Kayenta)",
+    "slug": "kubernetes/spinnaker-advanced-3/",
+    "date": "2018-12-04T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "CI/CD",
+      "Kubernetes",
+      "Spinnaker",
+      "Continuous Delivery",
+      "Continuous Deployment",
+      "Pipeline",
+      "Canary",
+      "Canary analysis",
+      "Kayenta",
+      "Automated Canary Service"
+    ]
+  },
+  "prevItem": {
+    "title": "Cloud Enginner",
+    "permalink": "/cloud/cloud/"
+  },
+  "nextItem": {
+    "title": "Spinnaker on Kubernetes #2",
+    "permalink": "/kubernetes/spinnaker-advanced-2/"
+  }
+}
