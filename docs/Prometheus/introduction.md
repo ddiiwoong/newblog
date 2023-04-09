@@ -1,6 +1,9 @@
 ---
 id: introduction
 title: Introduction to Prometheus
+sidebar_position: 1
+sidebar_label: Introduction
+sidebar_class_name: introduction
 tags:
   - Prometheus
 ---
