@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[2578],{7526:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"microservice","count":1,"permalink":"/tags/microservice"}')}}]);
