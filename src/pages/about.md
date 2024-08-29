@@ -16,6 +16,10 @@ author_profile: true
   * [프로메테우스 인프라스트럭처 모니터링 [가상머신, 컨테이너 환경의 프로메테우스 모니터링 실습과 활용]](http://www.acornpub.co.kr/book/monitoring-prometheus)
 * 2022.3
   * [클라우드 네이티브 트랜스포메이션 [클라우드를 도입하기 위한 치밀한 준비]](http://www.acornpub.co.kr/book/cloud-native)
+* 2023.12
+  * [쿠버네티스 - 엔터프라이즈 가이드 2/e [컨테이너 기술을 활용한 엔터프라이즈 환경 통합과 확장]](http://www.acornpub.co.kr/book/kubernetes-enterprise)
+* 2024.08
+  * [스프링 부트 3.0 3/e [프로덕션급 애플리케이션 개발 간소화]](http://www.acornpub.co.kr/book/spring-boot-3.0-3e)
 
 ## AWS Korea
 
