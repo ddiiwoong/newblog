@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8244],{29444:function(e){e.exports=JSON.parse('{"permalink":"/tags/prometheus-synology-\uc2dc\ub180\ub85c\uc9c0","page":1,"postsPerPage":5,"totalPages":1,"totalCount":1,"blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);

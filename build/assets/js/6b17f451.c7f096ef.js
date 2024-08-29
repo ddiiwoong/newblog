@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[9762],{73559:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"GitOps","count":3,"permalink":"/tags/git-ops"}')}}]);
