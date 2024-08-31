@@ -25,6 +25,8 @@ tags:
 ## AppArmor
 [AppArmor](https://apparmor.net/)는 Linux 시스템에서 실행되는 프로그램에 대한 액세스 제어 기능을 제공한다. AppArmor는 경로 기반으로 작동하며, 프로필을 통해 특정 프로그램이나 컨테이너가 필요한 접근만 허용하도록 설정할 수 있다. Kubernetes에서는 AppArmor 프로필을 Pod 또는 컨테이너 수준에서 지정할 수 있으며, securityContext를 통해 적용한다. 이 도구는 user space에서 호출되는 애플리케이션과 기본 시스템 기능 사이에 추가적인 보안 계층을 구현한다. 네트워크 호출 또는 파일 시스템 상호 작용을 제한할 수 있다. 많은 Linux 배포판(예: Debian, Ubuntu, openSUSE)이 AppArmor를 기본으로 제공한다. AppArmor를 지원하지 않는 Amazon Linux와 같은 배포판은 AppArmor와 유사한 접근 방식을 취하는 [SELinux](https://en.wikipedia.org/wiki/Security-Enhanced_Linux)를 대신 사용할 수 있다.  
 
+<!--truncate-->
+
 ### 프로파일(profile) 이해
 프로그램이 수행할 수 있는 작업과 수행할 수 없는 작업을 정의하는 규칙은 AppArmor 프로필에 정의된다. 모든 프로필을 적용하려면 먼저 AppArmor에 로드해야 한다. AppArmor는 로드된 프로파일을 확인할 수 있는 명령줄 도구를 제공한다. `aa-status` 명령을 실행하면 로드된 모든 프로파일의 요약을 확인할 수 있다. AppArmor에는 Linux 서비스를 보호하기 위한 기본 애플리케이션 프로파일 세트가 이미 포함되어 있음을 확인할 수 있다.
 
