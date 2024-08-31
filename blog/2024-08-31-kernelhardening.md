@@ -7,7 +7,7 @@ description: "AppArmor와 seccomp를 사용한 커널 강화"
 authors: jinwoong
 toc: true
 toc_label: Table of Contents
-slug: kubernetes/kenrelhardening/
+slug: kubernetes/kernelhardening/
 date: 2024-08-31
 categories:
   - Kubernetes
@@ -216,7 +216,7 @@ Test seccomp!
 
 간단히 말해서, 이 규칙 세트는 mkdir의 사용을 허용하지 않는다. 아래 규칙은 모든 `syscalls`을 허용하고, `syscalls` 리스트에 특별히 정의된 것만 거부하는 블랙리스트 방식이다. 반대로 화이트리스트 방식은 `syscalls`에 `SCMP_ACT_ALLOW`, `SCMP_ACT_ERRNO` 위치를 바꿔서 사용하면 된다. 
 
-기본 조치는 모든 시스템 호출에 적용됩니다. 여기서는 블랙리스트 방식으로 `SCMP_ACT_ALLOW`를 사용하는 모든 시스템 호출을 허용하고, `SCMP_ACT_ERRNO` 액션은 mkdir syscall의 실행을 방지하도록 규칙을 작성했다. 
+기본 조치는 모든 시스템 호출에 적용된다. 여기서는 블랙리스트 방식으로 `SCMP_ACT_ALLOW`를 사용하는 모든 시스템 호출을 허용하고, `SCMP_ACT_ERRNO` 액션은 mkdir syscall의 실행을 방지하도록 규칙을 작성했다. 
 
 사용자 정의 프로파일을 /var/lib/kubelet/seccomp 디렉터리에 배치해도 자동으로 규칙이 파드에 적용되지는 않기 때문에 파드에 프로파일을 적용해야 한다.
 
