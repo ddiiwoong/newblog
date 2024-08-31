@@ -1,0 +1,56 @@
+{
+  "permalink": "/retrospective/2020plan/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2020-01-03-2020plan.md",
+  "source": "@site/blog/2020-01-03-2020plan.md",
+  "title": "2019 Retrospective",
+  "description": "19년도를 돌아보며",
+  "date": "2020-01-03T00:00:00.000Z",
+  "formattedDate": "January 3, 2020",
+  "tags": [
+    {
+      "label": "Retrospective",
+      "permalink": "/tags/retrospective"
+    },
+    {
+      "label": "2019",
+      "permalink": "/tags/2019"
+    },
+    {
+      "label": "2020",
+      "permalink": "/tags/2020"
+    },
+    {
+      "label": "Planning",
+      "permalink": "/tags/planning"
+    }
+  ],
+  "readingTime": 6.255,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "2019 Retrospective",
+    "comments": true,
+    "classes": "wide",
+    "description": "19년도를 돌아보며",
+    "slug": "retrospective/2020plan/",
+    "date": "2020-01-03T00:00:00.000Z",
+    "categories": [
+      "Retrospective"
+    ],
+    "tags": [
+      "Retrospective",
+      "2019",
+      "2020",
+      "Planning"
+    ]
+  },
+  "prevItem": {
+    "title": "vSphere with Tanzu homelab running on ASUS PN50 (1/2)",
+    "permalink": "/kubernetes/vSphere-with-Tanzu-homelab/"
+  },
+  "nextItem": {
+    "title": "CircleCI로 AWS BATCH(ECS) CI/CD Pipeline 구성",
+    "permalink": "/devops/circleci-ecs/"
+  }
+}

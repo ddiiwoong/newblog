@@ -1,0 +1,67 @@
+{
+  "permalink": "/kubernetes/kyverno/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2023-04-08-kyverno.md",
+  "source": "@site/blog/2023-04-08-kyverno.md",
+  "title": "kyverno를 활용한 Kubernetes 정책 엔진 적용",
+  "description": "kyverno를 활용한 Kubernetes 정책 엔진 적용",
+  "date": "2023-04-08T00:00:00.000Z",
+  "formattedDate": "April 8, 2023",
+  "tags": [
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "kyverno",
+      "permalink": "/tags/kyverno"
+    },
+    {
+      "label": "policy",
+      "permalink": "/tags/policy"
+    },
+    {
+      "label": "security",
+      "permalink": "/tags/security"
+    }
+  ],
+  "readingTime": 10.7,
+  "truncated": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong"
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "kyverno를 활용한 Kubernetes 정책 엔진 적용",
+    "comments": true,
+    "classes": "wide",
+    "description": "kyverno를 활용한 Kubernetes 정책 엔진 적용",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/kyverno/",
+    "date": "2023-04-08T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "kyverno",
+      "policy",
+      "security"
+    ]
+  },
+  "prevItem": {
+    "title": "prometheus grafana 스택으로 k6 테스트 결과 확인하기",
+    "permalink": "/kubernetes/k6-prometheus/"
+  },
+  "nextItem": {
+    "title": "Advanced Argo Rollout",
+    "permalink": "/kubernetes/argo-rollout-advanced/"
+  }
+}
