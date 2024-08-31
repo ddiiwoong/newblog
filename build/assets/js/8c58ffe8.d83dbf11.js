@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8668],{70965:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"CRDs","count":4,"permalink":"/tags/cr-ds"}')}}]);
