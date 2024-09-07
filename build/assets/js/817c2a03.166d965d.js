@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[9075],{28121:function(e){e.exports=JSON.parse('{"permalink":"/tags/eks/page/2","page":2,"postsPerPage":5,"totalPages":2,"totalCount":6,"previousPage":"/tags/eks","blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);
