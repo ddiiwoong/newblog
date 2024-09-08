@@ -20,13 +20,7 @@ tags:
   - k6
 ---
 
-## PKOS Study #4
-
-가시다님의 Production Kubernetes Online Study (=PKOS) 2기 멤버가 되서 쿠버네티스 스터디를 진행하고 있다. 이정훈님의 집필하신 "24단계 실습으로 정복하는 쿠버네티스" 책을 기반으로 하는 스터디이며 총 (4+1)주간 진행이 되고 있고 네번째 스터디 일정이 마무리 되었다. 
-
-이번 스터디 과제에서는 애플리케이션의 부하 테스트를 k6를 이용하여 진행하고 결과를 prometheus 및 grafana로 전달하여 확인하는 방법을 작성한다.
-
-<!--truncate-->
+애플리케이션의 부하 테스트를 k6를 이용하여 진행하고 결과를 prometheus 및 grafana로 전달하여 확인하는 방법을 작성한다.
 
 ## k6
 
@@ -35,6 +29,8 @@ https://github.com/grafana/k6
 k6는 오픈소스 부하테스트 도구로, Go와 자바스크립트를 이용해 성능 테스트를 할 수 있는 도구이다. k6은 다양한 프로토콜(HTTP, WebSocket 등)을 지원하며, 설치와 사용이 매우 간편하다. 이전에 k6 테스트를 작성해 본 적이 없다면 [Running k6](https://k6.io/docs/getting-started/running-k6)를 확인하고 작동 방식을 파악하는 것부터 시작하는 것이 좋다. 또한, 친철하게 한글로 설명되어 있는 tutorial 링크도 참조한다.
 
 [https://github.com/schooldevops/k6-tutorials/blob/main/GettingStarts/01_intro_install.md](https://github.com/schooldevops/k6-tutorials/blob/main/GettingStarts/01_intro_install.md)
+
+<!--truncate-->
 
 ## Prometheus Stack
 

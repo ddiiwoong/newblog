@@ -21,12 +21,7 @@ tags:
   - Cilium
 ---
 
-## PKOS Study #2
-
-가시다님의 Production Kubernetes Online Study (=PKOS) 2기 멤버가 되서 쿠버네티스 스터디를 진행하고 있다. 이정훈님의 집필하신 "24단계 실습으로 정복하는 쿠버네티스" 책을 기반으로 하는 스터디이며 총 (4+1)주간 진행이 되고 있고 두번째 스터디 일정이 마무리 되었다. 
-
-
-이번 스터디 과제에서는 Cilium을 기반으로 하는 kOps 클러스터를 생성하고 네트워크 구성이 어떻게 되는지 확인해보고자 한다. Cilium는 Linux 커널 내에 강력한 보안 가시성 및 제어 로직을 동적으로 삽입할 수 있는 BPF라는 Linux 커널 기술을 사용하는 CNI이다. 
+Cilium을 기반으로 하는 kOps 클러스터를 생성하고 네트워크 구성이 어떻게 되는지 확인해보고자 한다. Cilium는 Linux 커널 내에 강력한 보안 가시성 및 제어 로직을 동적으로 삽입할 수 있는 BPF라는 Linux 커널 기술을 사용하는 CNI이다. 
 
 https://cilium.io/
 https://kops.sigs.k8s.io/networking/cilium/

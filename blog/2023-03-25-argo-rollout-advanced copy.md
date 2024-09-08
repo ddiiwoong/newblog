@@ -21,14 +21,7 @@ tags:
   - slack
 ---
 
-## PKOS Study #3
-
-가시다님의 Production Kubernetes Online Study (=PKOS) 2기 멤버가 되서 쿠버네티스 스터디를 진행하고 있다. 이정훈님의 집필하신 "24단계 실습으로 정복하는 쿠버네티스" 책을 기반으로 하는 스터디이며 총 (4+1)주간 진행이 되고 있고 세번째 스터디 일정이 마무리 되었다. 
-
-이번 스터디 과제에서는 kOps 환경에 구축한 ArgoCD와 Argo Rollout를 좀더 잘 쓰기 위한 몇가지 내용들을 간단하게 기록용으로 작성하였다.
-
-<!--truncate-->
-
+kOps 환경에 구축한 ArgoCD와 Argo Rollout를 좀더 잘 쓰기 위한 몇가지 내용들을 간단하게 기록용으로 작성하였다.
 
 ## GitOps
 
@@ -38,6 +31,7 @@ tags:
 
 이처럼 GitOps의 장점중에 가장 중요한 부분은 신뢰할 수 있는 정보가 공유되고, 인프라 구성하는 모든 변경 사항에 대한 추적과 관리가 가능해진다는 점일 것이다.
 
+<!--truncate-->
 
 ## ArgoCD, Argo Rollouts
 
