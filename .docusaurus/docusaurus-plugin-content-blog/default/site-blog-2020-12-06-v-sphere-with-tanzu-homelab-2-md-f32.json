@@ -1,0 +1,66 @@
+{
+  "permalink": "/kubernetes/vSphere-with-Tanzu-homelab-2/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2020-12-06-vSphere-with-Tanzu-homelab-2.md",
+  "source": "@site/blog/2020-12-06-vSphere-with-Tanzu-homelab-2.md",
+  "title": "vSphere with Tanzu homelab running on ASUS PN50 (2/2)",
+  "description": "이번 포스트에서는 Tanzu Cluster를 단일 홈랩 vSphere 서버에 올려본다",
+  "date": "2020-12-06T00:00:00.000Z",
+  "formattedDate": "December 6, 2020",
+  "tags": [
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "Tanzu",
+      "permalink": "/tags/tanzu"
+    },
+    {
+      "label": "vSphere",
+      "permalink": "/tags/v-sphere"
+    },
+    {
+      "label": "Homelab",
+      "permalink": "/tags/homelab"
+    },
+    {
+      "label": "ASUS",
+      "permalink": "/tags/asus"
+    },
+    {
+      "label": "PN50",
+      "permalink": "/tags/pn-50"
+    }
+  ],
+  "readingTime": 17.815,
+  "truncated": true,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "vSphere with Tanzu homelab running on ASUS PN50 (2/2)",
+    "comments": true,
+    "classes": "wide",
+    "description": "이번 포스트에서는 Tanzu Cluster를 단일 홈랩 vSphere 서버에 올려본다",
+    "slug": "kubernetes/vSphere-with-Tanzu-homelab-2/",
+    "date": "2020-12-06T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Tanzu",
+      "vSphere",
+      "Homelab",
+      "ASUS",
+      "PN50"
+    ]
+  },
+  "prevItem": {
+    "title": "Synology monitoring with Prometheus and snmp exporter",
+    "permalink": "/prometheus/synology-prometheus/"
+  },
+  "nextItem": {
+    "title": "vSphere with Tanzu homelab running on ASUS PN50 (1/2)",
+    "permalink": "/kubernetes/vSphere-with-Tanzu-homelab/"
+  }
+}
