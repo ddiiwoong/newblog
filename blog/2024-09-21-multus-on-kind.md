@@ -26,8 +26,8 @@ tags:
 
 ## Requirements
 
-- [Kind](https://kind.sigs.k8s.io/): Kind(Kubernetes IN Docker)는 Docker 컨테이너를 사용하여 로컬 Kubernetes 클러스터를 실행할 수 있게 해주는 도구입니다. 주로 테스트 및 개발 목적으로 사용되며, 빠르고 쉽게 Kubernetes 환경을 구축할 수 있습니다. 
-- [Multus](https://github.com/k8snetworkplumbingwg/multus-cni): Multus는 Kubernetes에서 여러 네트워크 인터페이스를 지원하기 위한 CNI 플러그인입니다. Multus를 통해 각 Pod가 여러 네트워크에 연결될 수 있으며, 다양한 네트워크 요구 사항을 충족할 수 있다. 특히 5G 워크로드에서 SR-IOV와 함께 사용될 때, Multus는 기본 네트워크 외에도 고성능 네트워크 인터페이스를 제공할 수 있다.
+- [Kind](https://kind.sigs.k8s.io/): Kind(Kubernetes IN Docker)는 Docker 컨테이너를 사용하여 로컬 Kubernetes 클러스터를 실행할 수 있게 해주는 도구다. 주로 테스트 및 개발 목적으로 사용되며, 빠르고 쉽게 Kubernetes 환경을 구축할 수 있다. 
+- [Multus](https://github.com/k8snetworkplumbingwg/multus-cni): Multus는 Kubernetes에서 여러 네트워크 인터페이스를 지원하기 위한 CNI 플러그인이다. Multus를 통해 각 Pod가 여러 네트워크에 연결될 수 있으며, 다양한 네트워크 요구 사항을 충족할 수 있다. 특히 5G 워크로드에서 SR-IOV와 함께 사용될 때, Multus는 기본 네트워크 외에도 고성능 네트워크 인터페이스를 제공할 수 있다.
     - [SR-IOV](https://github.com/k8snetworkplumbingwg/sriov-network-device-plugin): SR-IOV(Single Root I/O Virtualization)는 하나의 물리적 네트워크 인터페이스를 여러 가상 함수(VF)로 나누어 각 Pod에 직접 할당할 수 있게 해주는 기술이다. 이를 통해 네트워크 성능을 크게 향상시킬 수 있으며, 특히 고성능 네트워킹이 필요한 5G 및 NFV(Network Function Virtualization) 환경에서 중요하게 사용되는 기술이다.
 - [Koko](https://github.com/redhat-nfvpe/koko): Koko는 컨테이너 간 네트워크 연결을 위한 도구로, 특히 여러 네트워크 네임스페이스 간의 가상 이더넷 페어를 생성하는 데 사용된다. kind cluster에서 컨테이너로 구성된 노드간 통신을 위해서 사용된다.
 - [Macvlan](https://github.com/containernetworking/plugins/tree/main/plugins/main/macvlan): Macvlan은 네트워크 인터페이스를 가상화하여 여러 개의 가상 네트워크 인터페이스를 생성할 수 있는 기술이다. 이를 통해 각 컨테이너가 고유한 MAC 주소를 가지며, 물리 네트워크와 직접 통신할 수 있다.
@@ -323,7 +323,7 @@ spec:
 이 `NetworkAttachmentDefinition`의 각 부분을 하나씩 살펴보자. 이 구성은 `macvlan`을 사용하여 새로운 네트워크 인터페이스를 생성하고, 정적 IP 할당 및 라우팅을 설정한다. 또한 `tuning` 플러그인을 통해 MAC 주소 설정 기능을 추가로 제공하게 된다. 
 
 - name: "macvlan-conf"로 이 `NetworkAttachmentDefinition`의 이름을 지정한다.
-- cniVersion: 사용되는 CNI 스펙 버전을 나타냅니다. 여기서는 0.3.1 버전을 사용한다.
+- cniVersion: 사용되는 CNI 스펙 버전을 나타낸다. 여기서는 0.3.1 버전을 사용한다.
 - plugins: CNI 플러그인 목록을 정의한다.
   - type: "macvlan" 플러그인 사용
   - capabilities: IP 주소 할당 기능 활성화
@@ -345,7 +345,7 @@ networkattachmentdefinition.k8s.cni.cncf.io/macvlan-conf created
 
 모든 준비가 완료되었다. 이제 멀티 네트워크 파드를 생성해보자. 
 
-## 멀티 네트워크 파드 생성
+### 멀티 네트워크 파드 생성
 
 멀티 네트워크 파드를 생성하기 위해서는 `annotations`에 네트워크 인터페이스를 추가해야 한다. 이전에 구성했던 macvlan-conf를 추가하고, 각 파드에 할당될 IP 주소와 게이트웨이를 설정한다. 그리고 `netshoot` 이미지를 사용하여 파드를 생성한다. 또한 파드에 대한 네트워크 명령어 실행을 위해 `securityContext`를 통해 파드에 대한 권한을 설정하고, 파드가 종료될 때 자원을 정리하는 설정을 한다. 그리고 각 노드에 대한 선택과 통신 확인을 위해 `nodeSelector` 설정으로 이미 구성한 각 노드 컨테이너에 파드를 배치한다.
 
