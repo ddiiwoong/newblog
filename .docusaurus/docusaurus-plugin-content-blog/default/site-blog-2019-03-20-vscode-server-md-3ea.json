@@ -1,0 +1,66 @@
+{
+  "permalink": "/tools/vscode-server/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-03-20-vscode-server.md",
+  "source": "@site/blog/2019-03-20-vscode-server.md",
+  "title": "VScode Server",
+  "description": "code-server를 사용하여 로컬 VScode 설치없이 원격 환경에서 사용해보자.",
+  "date": "2019-03-20T00:00:00.000Z",
+  "formattedDate": "March 20, 2019",
+  "tags": [
+    {
+      "label": "vscode",
+      "permalink": "/tags/vscode"
+    },
+    {
+      "label": "code-server",
+      "permalink": "/tags/code-server"
+    },
+    {
+      "label": "kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "online coding",
+      "permalink": "/tags/online-coding"
+    },
+    {
+      "label": "GoormIDE",
+      "permalink": "/tags/goorm-ide"
+    },
+    {
+      "label": "Cloud9",
+      "permalink": "/tags/cloud-9"
+    }
+  ],
+  "readingTime": 5.13,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "VScode Server",
+    "comments": true,
+    "classes": "wide",
+    "description": "code-server를 사용하여 로컬 VScode 설치없이 원격 환경에서 사용해보자.",
+    "slug": "tools/vscode-server/",
+    "date": "2019-03-20T00:00:00.000Z",
+    "categories": [
+      "Tools"
+    ],
+    "tags": [
+      "vscode",
+      "code-server",
+      "kubernetes",
+      "online coding",
+      "GoormIDE",
+      "Cloud9"
+    ]
+  },
+  "prevItem": {
+    "title": "git-sync",
+    "permalink": "/kubernetes/git-sync/"
+  },
+  "nextItem": {
+    "title": "K3s on Raspberry Pi Cluster",
+    "permalink": "/kubernetes/k3s-homelab/"
+  }
+}
