@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8240],{37276:function(t){t.exports=JSON.parse('{"permalink":"/tags/security","page":1,"postsPerPage":5,"totalPages":1,"totalCount":3,"blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);
