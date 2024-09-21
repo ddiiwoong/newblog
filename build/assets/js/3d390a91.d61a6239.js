@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[5996],{97732:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"VMware","count":1,"permalink":"/tags/v-mware"}')}}]);

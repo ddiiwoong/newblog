@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[2187],{9848:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"CloudEvents","count":3,"permalink":"/tags/cloud-events"}')}}]);

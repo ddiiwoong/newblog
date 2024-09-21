@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[5316],{28479:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"vsphere","count":2,"permalink":"/tags/vsphere"}')}}]);
