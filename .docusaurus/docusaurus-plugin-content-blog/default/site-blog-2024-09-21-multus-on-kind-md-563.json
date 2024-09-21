@@ -1,0 +1,83 @@
+{
+  "permalink": "/kubernetes/multus-on-kind/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2024-09-21-multus-on-kind.md",
+  "source": "@site/blog/2024-09-21-multus-on-kind.md",
+  "title": "Multus on Kind cluster",
+  "description": "Multus를 Kind cluster에 설치하는 방법",
+  "date": "2024-09-21T00:00:00.000Z",
+  "formattedDate": "September 21, 2024",
+  "tags": [
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "multus",
+      "permalink": "/tags/multus"
+    },
+    {
+      "label": "cni",
+      "permalink": "/tags/cni"
+    },
+    {
+      "label": "kind",
+      "permalink": "/tags/kind"
+    },
+    {
+      "label": "multiple network",
+      "permalink": "/tags/multiple-network"
+    },
+    {
+      "label": "macvlan",
+      "permalink": "/tags/macvlan"
+    },
+    {
+      "label": "koko",
+      "permalink": "/tags/koko"
+    },
+    {
+      "label": "kindnet",
+      "permalink": "/tags/kindnet"
+    }
+  ],
+  "readingTime": 23.23,
+  "truncated": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong"
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Multus on Kind cluster",
+    "comments": true,
+    "classes": "wide",
+    "description": "Multus를 Kind cluster에 설치하는 방법",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/multus-on-kind/",
+    "date": "2024-09-21T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "multus",
+      "cni",
+      "kind",
+      "multiple network",
+      "macvlan",
+      "koko",
+      "kindnet"
+    ]
+  },
+  "nextItem": {
+    "title": "파드 Readiness & Probe",
+    "permalink": "/kubernetes/readinessandprobe/"
+  }
+}

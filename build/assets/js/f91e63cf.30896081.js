@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[7657],{39411:function(e){e.exports=JSON.parse('{"permalink":"/tags/serverless","page":1,"postsPerPage":5,"totalPages":1,"totalCount":4,"blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);
