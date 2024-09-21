@@ -1,0 +1,66 @@
+{
+  "permalink": "/kubernetes/cert-manager/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-07-13-cert-manager.md",
+  "source": "@site/blog/2018-07-13-cert-manager.md",
+  "title": "Cert-manager",
+  "description": "Cert-manager에 대해 알아봅니다",
+  "date": "2018-07-13T00:00:00.000Z",
+  "formattedDate": "July 13, 2018",
+  "tags": [
+    {
+      "label": "Cert-manager",
+      "permalink": "/tags/cert-manager"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "TLS",
+      "permalink": "/tags/tls"
+    },
+    {
+      "label": "Manage TLS Certificates",
+      "permalink": "/tags/manage-tls-certificates"
+    },
+    {
+      "label": "Security",
+      "permalink": "/tags/security"
+    },
+    {
+      "label": "HTTPS",
+      "permalink": "/tags/https"
+    }
+  ],
+  "readingTime": 8.14,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Cert-manager",
+    "comments": true,
+    "classes": "wide",
+    "description": "Cert-manager에 대해 알아봅니다",
+    "slug": "kubernetes/cert-manager/",
+    "date": "2018-07-13T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Cert-manager",
+      "Kubernetes",
+      "TLS",
+      "Manage TLS Certificates",
+      "Security",
+      "HTTPS"
+    ]
+  },
+  "prevItem": {
+    "title": "Dex",
+    "permalink": "/kubernetes/dex/"
+  },
+  "nextItem": {
+    "title": "Operators & CRDs(CustomResourceDefinitions) on Kubernetes",
+    "permalink": "/kubernetes/operator/"
+  }
+}
