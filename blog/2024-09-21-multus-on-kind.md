@@ -197,7 +197,7 @@ $ sudo ./koko_0.83_linux_amd64 -d multus-cluster-worker,eth1 -d multus-cluster-w
 Create veth...done
 ```
 
-"Create veth...done" 메시지는 실제로 새 veth가 생성되었다기 보다는 pair가 생성되어서 기존 docker bridge에 연결된 veth에 각 노드 컨테이너의 veth 인터페이스가 매핑되어 추가된 것이다. 상세 코드는 [koko.go 파일](https://github.com/redhat-nfvpe/koko/blob/bbe26f6c7e0124815573e22a2f28ff70bfd0db61/koko.go#L595)에서 확인할 수 있다.
+"Create veth...done" 메시지는 실제로 새 veth가 생성되었다기 보다는 pair가 생성되어서 기존 docker bridge에 연결된 veth에 각 노드 컨테이너의 `eth1` 인터페이스가 매핑되어 추가된 것이다. 상세 코드는 [koko.go 파일](https://github.com/redhat-nfvpe/koko/blob/bbe26f6c7e0124815573e22a2f28ff70bfd0db61/koko.go#L595)에서 확인할 수 있다.
 
 
 `ip a` 명령어로 인터페이스 정보를 다시 확인해보면, 각 노드 컨테이너에 새로운 `eth1` 인터페이스가 추가된 것을 확인할 수 있다.
