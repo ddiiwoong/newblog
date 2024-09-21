@@ -197,7 +197,38 @@ $ sudo ./koko_0.83_linux_amd64 -d multus-cluster-worker,eth1 -d multus-cluster-w
 Create veth...done
 ```
 
-"Create veth...done" 메시지는 실제로 새 veth가 생성되었다기 보다는 pair가 생성되어서 기존 docker bridge에 연결된 veth에 각 노드 컨테이너의 eth1 인터페이스가 매핑되어 추가된 것이다. 상세 코드는 [koko.go 파일](https://github.com/redhat-nfvpe/koko/blob/bbe26f6c7e0124815573e22a2f28ff70bfd0db61/koko.go#L595)에서 확인할 수 있다.
+"Create veth...done" 메시지는 실제로 새 veth가 생성되었다기 보다는 pair가 생성되어서 기존 docker bridge에 연결된 veth에 각 노드 컨테이너의 veth 인터페이스가 매핑되어 추가된 것이다. 상세 코드는 [koko.go 파일](https://github.com/redhat-nfvpe/koko/blob/bbe26f6c7e0124815573e22a2f28ff70bfd0db61/koko.go#L595)에서 확인할 수 있다.
+
+
+`ip a` 명령어로 인터페이스 정보를 다시 확인해보면, 각 노드 컨테이너에 새로운 `veth` 인터페이스와 `eth1` 인터페이스가 추가된 것을 확인할 수 있다.
+
+```bash
+$ docker exec -it multus-cluster-worker ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: veth70511bfb@if2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether e2:fc:51:47:c6:c9 brd ff:ff:ff:ff:ff:ff link-netns cni-d76fbcc0-760a-8cdc-7ee4-74e64ba60773
+    inet 10.244.1.1/32 scope global veth70511bfb
+       valid_lft forever preferred_lft forever
+    inet6 fe80::e0fc:51ff:fe47:c6c9/64 scope link 
+       valid_lft forever preferred_lft forever
+13: eth0@if14: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether 02:42:ac:12:00:02 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 172.18.0.2/16 brd 172.18.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fc00:f853:ccd:e793::2/64 scope global nodad 
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:acff:fe12:2/64 scope link 
+       valid_lft forever preferred_lft forever
+20: eth1@if19: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    link/ether d2:c6:03:dc:3c:bf brd ff:ff:ff:ff:ff:ff link-netnsid 1
+    inet6 fe80::d0c6:3ff:fedc:3cbf/64 scope link 
+       valid_lft forever preferred_lft forever
+```
 
 
 ## CNI 레퍼런스 플러그인 설치
