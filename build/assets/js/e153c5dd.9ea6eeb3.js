@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[3048],{19405:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"CustomResourceDefinitions","count":1,"permalink":"/tags/custom-resource-definitions"}')}}]);
