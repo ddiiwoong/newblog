@@ -1,9 +1,9 @@
 ---
 layout: single
-title: "multus on kind cluster"
+title: "Multus on Kind cluster"
 comments: true
 classes: wide
-description: "multus를 kind cluster에 설치하는 방법"
+description: "Multus를 Kind cluster에 설치하는 방법"
 authors: jinwoong
 toc: true
 toc_label: Table of Contents
