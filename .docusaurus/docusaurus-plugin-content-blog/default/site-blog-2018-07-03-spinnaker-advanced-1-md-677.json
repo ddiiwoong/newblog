@@ -1,0 +1,51 @@
+{
+  "permalink": "/kubernetes/spinnaker-advanced-1/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-07-03-spinnaker-advanced-1.md",
+  "source": "@site/blog/2018-07-03-spinnaker-advanced-1.md",
+  "title": "Spinnaker on Kubernetes #1",
+  "description": "Spinnaker에 대해 알아봅니다 #1",
+  "date": "2018-07-03T00:00:00.000Z",
+  "formattedDate": "July 3, 2018",
+  "tags": [
+    {
+      "label": "CI/CD",
+      "permalink": "/tags/ci-cd"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "Spinnaker",
+      "permalink": "/tags/spinnaker"
+    }
+  ],
+  "readingTime": 3.725,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Spinnaker on Kubernetes #1",
+    "comments": true,
+    "classes": "wide",
+    "description": "Spinnaker에 대해 알아봅니다 #1",
+    "slug": "kubernetes/spinnaker-advanced-1/",
+    "date": "2018-07-03T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "CI/CD",
+      "Kubernetes",
+      "Spinnaker"
+    ]
+  },
+  "prevItem": {
+    "title": "Cilium",
+    "permalink": "/kubernetes/cilium-1/"
+  },
+  "nextItem": {
+    "title": "Provisioning Dedicated Game Server on Kubernetes Cluster",
+    "permalink": "/kubernetes/openinfraday18/"
+  }
+}

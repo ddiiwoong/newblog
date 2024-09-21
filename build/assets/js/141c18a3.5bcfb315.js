@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[3336],{83806:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"Continuous Delivery","count":2,"permalink":"/tags/continuous-delivery"}')}}]);
