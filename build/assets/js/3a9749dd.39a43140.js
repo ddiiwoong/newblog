@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8630],{10813:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"kindnet","count":1,"permalink":"/tags/kindnet"}')}}]);
