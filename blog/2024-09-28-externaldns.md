@@ -8,7 +8,7 @@ authors: jinwoong
 toc: true
 toc_label: Table of Contents
 slug: kubernetes/externaldns/
-date: 2024-09-21
+date: 2024-09-29
 categories:
   - Kubernetes
 tags:
