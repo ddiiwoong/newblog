@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[6206],{50725:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"Terraform","count":1,"permalink":"/tags/terraform"}')}}]);
