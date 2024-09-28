@@ -1,0 +1,13 @@
+{
+  "type": "mdx",
+  "permalink": "/presentation",
+  "source": "@site/src/pages/presentation.md",
+  "title": "Presentation",
+  "description": "* 2021",
+  "frontMatter": {
+    "layout": "single",
+    "title": "Presentation",
+    "permalink": "/presentation/",
+    "author_profile": true
+  }
+}

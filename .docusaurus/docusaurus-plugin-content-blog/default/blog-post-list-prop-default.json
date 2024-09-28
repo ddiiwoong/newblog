@@ -1,0 +1,25 @@
+{
+  "title": "Recent Posts",
+  "items": [
+    {
+      "title": "ExternalDNS",
+      "permalink": "/kubernetes/externaldns/"
+    },
+    {
+      "title": "Multus on Kind cluster",
+      "permalink": "/kubernetes/multus-on-kind/"
+    },
+    {
+      "title": "파드 Readiness & Probe",
+      "permalink": "/kubernetes/readinessandprobe/"
+    },
+    {
+      "title": "커널 강화 도구 사용하기",
+      "permalink": "/kubernetes/kernelhardening/"
+    },
+    {
+      "title": "prometheus grafana 스택으로 k6 테스트 결과 확인하기",
+      "permalink": "/kubernetes/k6-prometheus/"
+    }
+  ]
+}

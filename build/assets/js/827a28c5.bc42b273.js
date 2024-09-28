@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[3195],{71673:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"Outpost","count":1,"permalink":"/tags/outpost"}')}}]);
