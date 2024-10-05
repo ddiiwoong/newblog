@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[979],{97664:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"statefulset","count":1,"permalink":"/tags/statefulset"}')}}]);
