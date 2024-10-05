@@ -1,0 +1,63 @@
+{
+  "permalink": "/kubernetes/headless-service/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2024-10-05-headless.md",
+  "source": "@site/blog/2024-10-05-headless.md",
+  "title": "Kubernetes Headless Service",
+  "description": "Kubernetes Headless Service 개념 및 사용 사례",
+  "date": "2024-10-06T00:00:00.000Z",
+  "formattedDate": "October 6, 2024",
+  "tags": [
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "headless-service",
+      "permalink": "/tags/headless-service"
+    },
+    {
+      "label": "statefulset",
+      "permalink": "/tags/statefulset"
+    },
+    {
+      "label": "redis",
+      "permalink": "/tags/redis"
+    }
+  ],
+  "readingTime": 13.36,
+  "truncated": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong"
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Kubernetes Headless Service",
+    "comments": true,
+    "classes": "wide",
+    "description": "Kubernetes Headless Service 개념 및 사용 사례",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/headless-service/",
+    "date": "2024-10-06T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "headless-service",
+      "statefulset",
+      "redis"
+    ]
+  },
+  "nextItem": {
+    "title": "ExternalDNS",
+    "permalink": "/kubernetes/externaldns/"
+  }
+}
