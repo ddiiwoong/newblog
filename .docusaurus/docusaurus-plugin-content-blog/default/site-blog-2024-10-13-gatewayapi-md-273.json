@@ -1,0 +1,78 @@
+{
+  "permalink": "/kubernetes/gatewayapi",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2024-10-13-gatewayapi.md",
+  "source": "@site/blog/2024-10-13-gatewayapi.md",
+  "title": "AWS Gateway API Controller",
+  "description": "Gateway API의 이해와 Lattice를 통해 AWS Gateway API Controller 사용하기",
+  "date": "2024-10-13T00:00:00.000Z",
+  "formattedDate": "October 13, 2024",
+  "tags": [
+    {
+      "label": "Gateway API",
+      "permalink": "/tags/gateway-api"
+    },
+    {
+      "label": "AWS Gateway API Controller",
+      "permalink": "/tags/aws-gateway-api-controller"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "Microservices",
+      "permalink": "/tags/microservices"
+    },
+    {
+      "label": "API Management",
+      "permalink": "/tags/api-management"
+    },
+    {
+      "label": "Lattice",
+      "permalink": "/tags/lattice"
+    },
+    {
+      "label": "EKS",
+      "permalink": "/tags/eks"
+    }
+  ],
+  "readingTime": 16.225,
+  "truncated": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong"
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "AWS Gateway API Controller",
+    "comments": true,
+    "classes": "wide",
+    "description": "Gateway API의 이해와 Lattice를 통해 AWS Gateway API Controller 사용하기",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/gatewayapi",
+    "date": "2024-10-13T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Gateway API",
+      "AWS Gateway API Controller",
+      "Kubernetes",
+      "Microservices",
+      "API Management",
+      "Lattice",
+      "EKS"
+    ]
+  },
+  "nextItem": {
+    "title": "Kubernetes Headless Service",
+    "permalink": "/kubernetes/headless-service/"
+  }
+}

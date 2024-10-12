@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[2867],{10744:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"Gateway API","count":1,"permalink":"/tags/gateway-api"}')}}]);
