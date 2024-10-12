@@ -216,7 +216,7 @@ metadata:
   resourceVersion: ""
 ```
 
-### 서비스 연동 테스트를 위한 데모 
+## 서비스 연동 테스트를 위한 데모 
 
 이 예에서는 단일 VPC에 단일 클러스터를 생성한 다음, 2개의 HTTPRoutes(`rates` 및 `inventory`)와 3개의 kubetnetes 서비스(`parking`, `review` 및 `inventory-1`)를 구성한다.
 
