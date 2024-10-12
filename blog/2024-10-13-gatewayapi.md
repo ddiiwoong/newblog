@@ -25,6 +25,8 @@ tags:
 
 이번 포스팅의 목적은 Gateway API의 개념을 이해하고 Lattice를 통해 AWS Gateway API Controller를 EKS에서 사용해보기 위함이다.
 
+<!--truncate-->
+
 ## Gateway API 이해하기
 
 [https://gateway-api.sigs.k8s.io/](https://gateway-api.sigs.k8s.io/)
