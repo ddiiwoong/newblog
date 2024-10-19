@@ -22,7 +22,7 @@ tags:
 
 > 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
-이번 포스팅의 목적은 Istio Ambient 모드를 이해하고, Observability를 구현해보는것이다.
+이번 포스팅의 목적은 K3d 클러스터에 Istio Ambient 모드를 구성하고 기본 개념을 이해하는 것이다.
 
 <!--truncate-->
 
@@ -49,68 +49,6 @@ Ambient 메시는 쿠버네티스 클러스터의 각 노드에 배포되어 실
 일반적으로 ztunnel은 일반적인 확장성 프록시를 목표로 하지 않으며, 이러한 작업에는 `Envoy`가 더 적합하다. 
 
 전송 계층에서는 [HBONE](https://istio.io/latest/docs/ambient/architecture/hbone/)이라는 HTTP CONNECT 기반 트래픽 터널링 프로토콜을 통해 구현된다.
-
-<!-- ### Ztunnel Metrics
-
-Ztunnel exposes a variety of metrics, at varying levels of stability.  They are
-accessible by making an HTTP request to either "/stats/prometheus" or "/metrics" on port 15020.
-
-**Core** metrics are considered stable APIs.
-
-**Unstable** metrics may be changed. This includes removal, semantic changes, and label changes.
-
-### Core metrics
-
-#### Traffic metrics
-
-- Tcp Bytes Sent (`istio_tcp_sent_bytes_total`): This is a `COUNTER` which measures the size of total bytes sent during response in case of a TCP connection.
-- Tcp Bytes Received (`istio_tcp_received_bytes_total`): This is a `COUNTER` which measures the size of total bytes received during request in case of a TCP connection.
-- Tcp Connections Opened (`istio_tcp_connections_opened_total`): This is a `COUNTER` incremented for every opened connection.
-- Tcp Connections Closed (`istio_tcp_connections_closed_total`): This is a `COUNTER` incremented for every closed connection.
-
-#### Meta metrics
-
-- Istio build information (`istio_build`)
-
-### Unstable metrics
-
-#### DNS metrics
-
-- DNS Requests (`istio_dns_requests_total`)
-- DNS Upstream Requests (`istio_dns_upstream_requests_total`)
-- DNS Upstream Failures (`istio_dns_upstream_failures_total`)
-- DNS Upstream Request Duration (`istio_dns_upstream_request_duration_seconds`)
-- On Demand DNS Requests (`istio_on_demand_dns_total`)
-
-#### In-Pod metrics
-
-- Active proxy count (`istio_active_proxy_count_total`)
-- Pending proxy count (`istio_pending_proxy_count_total`)
-- Proxies started (`istio_proxies_started_total`)
-- Proxies stopped (`istio_proxies_stopped_total`)
-
-#### XDS metrics
-
-- XDS Connection terminations (`istio_xds_connection_terminations_total`)
-
-## Logging
-
-Ztunnel exposes a variety of logs, both operational and "access logs".
-
-Logs are controlled by the `RUST_LOG` variable.
-This can set all levels, or a specific target. For instance, `RUST_LOG=error,ztunnel::proxy=warn`.
-Logs can be emitted in JSON format with `LOG_FORMAT=json`.
-Access logs are under the `access` target.
-
-An example access log looks like (with newlines for readability; the real logs are on one line):
-
-```text
-2024-04-11T15:38:42.182974Z  INFO access: connection complete
-    src.addr=10.244.0.24:46238 src.workload="shell-6d8bcd654d-t88gp" src.namespace="default" src.identity="spiffe://cluster.local/ns/default/sa/default"
-    dst.addr=10.244.0.42:15008 dst.hbone_addr=10.96.108.116:80 dst.service="echo.default.svc.cluster.local"
-    direction="outbound" bytes_sent=67 bytes_recv=490 duration="13ms"
-``` -->
-
 
 ### Waypoint Proxy
 
