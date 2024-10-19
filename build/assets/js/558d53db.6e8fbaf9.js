@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[555],{79827:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"identity service","count":1,"permalink":"/tags/identity-service"}')}}]);
