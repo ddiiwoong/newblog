@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8615],{908:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"AWS Gateway API Controller","count":1,"permalink":"/tags/aws-gateway-api-controller"}')}}]);

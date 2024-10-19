@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[3886],{79566:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"NetworkReadiness","count":1,"permalink":"/tags/network-readiness"}')}}]);
