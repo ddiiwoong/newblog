@@ -1,0 +1,56 @@
+{
+  "permalink": "/kubernetes/openinfraday18/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-07-01-openinfraday18.md",
+  "source": "@site/blog/2018-07-01-openinfraday18.md",
+  "title": "Provisioning Dedicated Game Server on Kubernetes Cluster",
+  "description": "Provisioning Dedicated Game Server on Kubernetes Cluster",
+  "date": "2018-07-01T00:00:00.000Z",
+  "formattedDate": "July 1, 2018",
+  "tags": [
+    {
+      "label": "CI/CD",
+      "permalink": "/tags/ci-cd"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "Agones",
+      "permalink": "/tags/agones"
+    },
+    {
+      "label": "Spinnaker",
+      "permalink": "/tags/spinnaker"
+    }
+  ],
+  "readingTime": 0.2,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Provisioning Dedicated Game Server on Kubernetes Cluster",
+    "comments": true,
+    "classes": "wide",
+    "description": "Provisioning Dedicated Game Server on Kubernetes Cluster",
+    "slug": "kubernetes/openinfraday18/",
+    "date": "2018-07-01T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "CI/CD",
+      "Kubernetes",
+      "Agones",
+      "Spinnaker"
+    ]
+  },
+  "prevItem": {
+    "title": "Spinnaker on Kubernetes #1",
+    "permalink": "/kubernetes/spinnaker-advanced-1/"
+  },
+  "nextItem": {
+    "title": "Mutating Webhook",
+    "permalink": "/kubernetes/mutating-web-hook/"
+  }
+}

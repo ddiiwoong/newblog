@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[1010],{58476:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"multiple network","count":1,"permalink":"/tags/multiple-network"}')}}]);
