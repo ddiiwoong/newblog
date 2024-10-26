@@ -1,0 +1,61 @@
+{
+  "permalink": "/kubernetes/what-is-tailscale/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2022-02-05-what-is-tailscale.md",
+  "source": "@site/blog/2022-02-05-what-is-tailscale.md",
+  "title": "What is Tailscale?",
+  "description": "wireguard와 tailscale을 비교하고 kubernetes 환경에서 활용방안 검토",
+  "date": "2022-02-05T00:00:00.000Z",
+  "formattedDate": "February 5, 2022",
+  "tags": [
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "wireguard",
+      "permalink": "/tags/wireguard"
+    },
+    {
+      "label": "tailscale",
+      "permalink": "/tags/tailscale"
+    },
+    {
+      "label": "vpn",
+      "permalink": "/tags/vpn"
+    },
+    {
+      "label": "network",
+      "permalink": "/tags/network"
+    }
+  ],
+  "readingTime": 28.07,
+  "truncated": true,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "What is Tailscale?",
+    "comments": true,
+    "classes": "wide",
+    "description": "wireguard와 tailscale을 비교하고 kubernetes 환경에서 활용방안 검토",
+    "slug": "kubernetes/what-is-tailscale/",
+    "date": "2022-02-05T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "wireguard",
+      "tailscale",
+      "vpn",
+      "network"
+    ]
+  },
+  "prevItem": {
+    "title": "EKS Anywhere on vSphere Homelab",
+    "permalink": "/kubernetes/eks-anywhere/"
+  },
+  "nextItem": {
+    "title": "Synology monitoring with Prometheus and snmp exporter",
+    "permalink": "/prometheus/synology-prometheus/"
+  }
+}

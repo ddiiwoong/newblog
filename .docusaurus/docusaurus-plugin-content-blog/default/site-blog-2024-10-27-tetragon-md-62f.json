@@ -1,0 +1,73 @@
+{
+  "permalink": "/kubernetes/tetragon",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2024-10-27-tetragon.md",
+  "source": "@site/blog/2024-10-27-tetragon.md",
+  "title": "Tetragon",
+  "description": "eBPF 기반 Tetragon를 사용하여 Kubernetes 클러스터의 보안 및 프로세스 모니터링",
+  "date": "2024-10-27T00:00:00.000Z",
+  "formattedDate": "October 27, 2024",
+  "tags": [
+    {
+      "label": "Tetragon",
+      "permalink": "/tags/tetragon"
+    },
+    {
+      "label": "eBPF",
+      "permalink": "/tags/e-bpf"
+    },
+    {
+      "label": "security",
+      "permalink": "/tags/security"
+    },
+    {
+      "label": "kernel",
+      "permalink": "/tags/kernel"
+    },
+    {
+      "label": "kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "systemcall",
+      "permalink": "/tags/systemcall"
+    }
+  ],
+  "readingTime": 17.55,
+  "truncated": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong"
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Tetragon",
+    "comments": true,
+    "classes": "wide",
+    "description": "eBPF 기반 Tetragon를 사용하여 Kubernetes 클러스터의 보안 및 프로세스 모니터링",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/tetragon",
+    "date": "2024-10-27T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Tetragon",
+      "eBPF",
+      "security",
+      "kernel",
+      "kubernetes",
+      "systemcall"
+    ]
+  },
+  "nextItem": {
+    "title": "Istio Ambient Mode on K3d",
+    "permalink": "/kubernetes/istio-ambient"
+  }
+}

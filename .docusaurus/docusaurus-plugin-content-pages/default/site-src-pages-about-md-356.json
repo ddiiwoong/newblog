@@ -1,0 +1,13 @@
+{
+  "type": "mdx",
+  "permalink": "/about",
+  "source": "@site/src/pages/about.md",
+  "title": "About",
+  "description": "기술이야기 듣는것, 말하는것, 공부하는것 좋아합니다.",
+  "frontMatter": {
+    "layout": "single",
+    "title": "About",
+    "permalink": "/about/",
+    "author_profile": true
+  }
+}

@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[6413],{24573:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"eBPF","count":1,"permalink":"/tags/e-bpf"}')}}]);

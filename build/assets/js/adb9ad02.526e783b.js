@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8436],{88211:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"headless-service","count":1,"permalink":"/tags/headless-service"}')}}]);
