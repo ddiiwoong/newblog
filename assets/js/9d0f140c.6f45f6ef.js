@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[6302],{22274:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"Tetragon","count":1,"permalink":"/tags/tetragon"}')}}]);

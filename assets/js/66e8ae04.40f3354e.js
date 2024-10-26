@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[6581],{94480:function(e){e.exports=JSON.parse('{"permalink":"/tags/kubernetes/page/8","page":8,"postsPerPage":5,"totalPages":8,"totalCount":37,"previousPage":"/tags/kubernetes/page/7","blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);

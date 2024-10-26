@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[994],{99394:function(n){n.exports=JSON.parse('{"allTagsPath":"/tags","name":"online coding","count":1,"permalink":"/tags/online-coding"}')}}]);
