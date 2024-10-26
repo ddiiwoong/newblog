@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[8826],{37143:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"kubernetes","count":37,"permalink":"/tags/kubernetes"}')}}]);

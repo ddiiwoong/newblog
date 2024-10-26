@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[3214],{52840:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"systemcall","count":1,"permalink":"/tags/systemcall"}')}}]);
