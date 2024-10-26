@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[9985],{3866:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"externaldns","count":1,"permalink":"/tags/externaldns"}')}}]);

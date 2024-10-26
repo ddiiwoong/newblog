@@ -1,0 +1,75 @@
+{
+  "permalink": "/devops/circleci-ecs/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-06-30-circleci-ecs.md",
+  "source": "@site/blog/2019-06-30-circleci-ecs.md",
+  "title": "CircleCI로 AWS BATCH(ECS) CI/CD Pipeline 구성",
+  "description": "이전 포스팅에서 EKS 클러스터와 어플리케이션 배포 및 테스트를 간단하게 해봤다.  이번에는 AWS ECS 또는 AWS Batch Application을 CircleCI를 통해 배포 및 업데이트 하는 것을 알아본다.",
+  "date": "2019-06-30T00:00:00.000Z",
+  "formattedDate": "June 30, 2019",
+  "tags": [
+    {
+      "label": "DevOps",
+      "permalink": "/tags/dev-ops"
+    },
+    {
+      "label": "CI/CD",
+      "permalink": "/tags/ci-cd"
+    },
+    {
+      "label": "Pipeline",
+      "permalink": "/tags/pipeline"
+    },
+    {
+      "label": "CircleCI",
+      "permalink": "/tags/circle-ci"
+    },
+    {
+      "label": "GitHub",
+      "permalink": "/tags/git-hub"
+    },
+    {
+      "label": "GitOps",
+      "permalink": "/tags/git-ops"
+    },
+    {
+      "label": "ECS",
+      "permalink": "/tags/ecs"
+    },
+    {
+      "label": "AWS Batch",
+      "permalink": "/tags/aws-batch"
+    }
+  ],
+  "readingTime": 10.595,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "CircleCI로 AWS BATCH(ECS) CI/CD Pipeline 구성",
+    "comments": true,
+    "classes": "wide",
+    "slug": "devops/circleci-ecs/",
+    "date": "2019-06-30T00:00:00.000Z",
+    "categories": [
+      "DevOps"
+    ],
+    "tags": [
+      "DevOps",
+      "CI/CD",
+      "Pipeline",
+      "CircleCI",
+      "GitHub",
+      "GitOps",
+      "ECS",
+      "AWS Batch"
+    ]
+  },
+  "prevItem": {
+    "title": "2019 Retrospective",
+    "permalink": "/retrospective/2020plan/"
+  },
+  "nextItem": {
+    "title": "CircleCI - GitHub 연동 및 EKS 구성하기",
+    "permalink": "/devops/circleci/"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "permalink": "/kubernetes/eksworkshop/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-03-29-eksworkshop.md",
+  "source": "@site/blog/2019-03-29-eksworkshop.md",
+  "title": "eksworkshop",
+  "description": "eskworkshop 튜토리얼을 실행하고 간단한 Microservice앱을 배포해보자",
+  "date": "2019-03-29T00:00:00.000Z",
+  "formattedDate": "March 29, 2019",
+  "tags": [
+    {
+      "label": "eks",
+      "permalink": "/tags/eks"
+    },
+    {
+      "label": "aws",
+      "permalink": "/tags/aws"
+    },
+    {
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "label": "eskworkshop",
+      "permalink": "/tags/eskworkshop"
+    },
+    {
+      "label": "kubectl",
+      "permalink": "/tags/kubectl"
+    },
+    {
+      "label": "Managed Kubernetes",
+      "permalink": "/tags/managed-kubernetes"
+    }
+  ],
+  "readingTime": 14.23,
+  "truncated": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "eksworkshop",
+    "comments": true,
+    "classes": "wide",
+    "description": "eskworkshop 튜토리얼을 실행하고 간단한 Microservice앱을 배포해보자",
+    "slug": "kubernetes/eksworkshop/",
+    "date": "2019-03-29T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "eks",
+      "aws",
+      "Kubernetes",
+      "eskworkshop",
+      "kubectl",
+      "Managed Kubernetes"
+    ]
+  },
+  "prevItem": {
+    "title": "Knative on EKS",
+    "permalink": "/kubernetes/knative-on-aws/"
+  },
+  "nextItem": {
+    "title": "git-sync",
+    "permalink": "/kubernetes/git-sync/"
+  }
+}
