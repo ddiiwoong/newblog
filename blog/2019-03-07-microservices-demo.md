@@ -301,7 +301,7 @@ $ minikube service list
 ```
 
 3개의 서비스로 각각 접속이 되는것을 확인할수 있다.
-Grafana 대시보드로 들어가면 현재 수집되는 prometheus source(http://prometheus:9090)를 통해 OpenCensus기반 Application Metric을 확인할 수 있다.
+Grafana 대시보드로 들어가면 현재 수집되는 prometheus source(`http://prometheus:9090`)를 통해 OpenCensus기반 Application Metric을 확인할 수 있다.
 
 ![hipster_grafana](/img/hipster_grafana.png)
 

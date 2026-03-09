@@ -210,7 +210,7 @@ $ eksctl create cluster --name=eksworkshop-eksctl --nodes=3 --node-ami=auto
 서울리전(ap-northeast-2)기준 약 15-20분이 소요되며 `eksctl` 기본 설정값은 다음과 같다.
 
 * 클러스터명은 자동생성, --name 옵션으로 지정가능 (eksworkshop-eksctl)
-* CloudFormation : eksctl-{$Cluster_Name}-cluster
+* CloudFormation : eksctl-\{$Cluster_Name\}-cluster
 * m5.large * 2 instances ([EKS Instance Type](https://github.com/awslabs/amazon-eks-ami/blob/7f6c8cb3597e17f6e5f7df96d12bccf5604dc909/amazon-eks-nodegroup.yaml) NodeInstanceType.AllowedValues 참고)
 * Default AMI : AWS EKS AMI (custom EKS AMI 가능 - Packer활용)
 * Default Region : us-west-2

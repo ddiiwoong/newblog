@@ -11,25 +11,25 @@ jobs:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16.x
-          cache: yarn
+          node-version: 20.x
+          cache: npm
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
       - name: Test build website
-        run: yarn build
+        run: npm run build
   deploy:
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16.x
-          cache: yarn
-      - uses: webfactory/ssh-agent@v0.5.4
+          node-version: 20.x
+          cache: npm
+      - uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.GH_PAGES_DEPLOY }}
       - name: Deploy to GitHub Pages
@@ -38,8 +38,8 @@ jobs:
         run: |
           git config --global user.email "ddiiwoong@github.com"
           git config --global user.name "ddiiwoong"
-          yarn install --frozen-lockfile
-          yarn deploy
+          npm ci
+          npm run deploy
       - name: copy
         env:
           TARGET_BRANCH: 'gh-pages'
