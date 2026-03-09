@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[9727],{81187:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"slack","count":1,"permalink":"/tags/slack"}')}}]);

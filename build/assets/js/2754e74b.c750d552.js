@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[1932],{94340:function(e){e.exports=JSON.parse('{"allTagsPath":"/tags","name":"CircleCI","count":2,"permalink":"/tags/circle-ci"}')}}]);

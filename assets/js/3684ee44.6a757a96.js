@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[7549],{74790:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"wireguard","count":1,"permalink":"/tags/wireguard"}')}}]);

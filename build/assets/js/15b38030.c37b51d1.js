@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[4805],{23130:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"argo-rollout","count":1,"permalink":"/tags/argo-rollout"}')}}]);

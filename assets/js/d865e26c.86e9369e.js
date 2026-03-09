@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[265],{83969:function(a){a.exports=JSON.parse('{"allTagsPath":"/tags","name":"AppArmor","count":1,"permalink":"/tags/app-armor"}')}}]);

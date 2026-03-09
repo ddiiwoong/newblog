@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[6574],{69720:function(e){e.exports=JSON.parse('{"permalink":"/tags/ci-cd","page":1,"postsPerPage":5,"totalPages":2,"totalCount":6,"nextPage":"/tags/ci-cd/page/2","blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}')}}]);

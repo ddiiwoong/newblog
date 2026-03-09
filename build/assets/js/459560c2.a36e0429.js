@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[917],{89170:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"ssh git","count":1,"permalink":"/tags/ssh-git"}')}}]);

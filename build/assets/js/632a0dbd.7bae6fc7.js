@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([[6694],{88726:function(s){s.exports=JSON.parse('{"allTagsPath":"/tags","name":"Admission Controller","count":1,"permalink":"/tags/admission-controller"}')}}]);
