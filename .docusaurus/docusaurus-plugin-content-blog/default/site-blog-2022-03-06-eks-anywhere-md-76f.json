@@ -1,0 +1,80 @@
+{
+  "permalink": "/kubernetes/eks-anywhere/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2022-03-06-eks-anywhere.md",
+  "source": "@site/blog/2022-03-06-eks-anywhere.md",
+  "title": "EKS Anywhere on vSphere Homelab",
+  "description": "vSphere homelab 환경에서 EKS Anywhere 구성하기",
+  "date": "2022-03-06T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "vsphere",
+      "permalink": "/tags/vsphere"
+    },
+    {
+      "inline": true,
+      "label": "eks anywhere",
+      "permalink": "/tags/eks-anywhere"
+    },
+    {
+      "inline": true,
+      "label": "eks",
+      "permalink": "/tags/eks"
+    },
+    {
+      "inline": true,
+      "label": "flux",
+      "permalink": "/tags/flux"
+    },
+    {
+      "inline": true,
+      "label": "gitops",
+      "permalink": "/tags/gitops"
+    },
+    {
+      "inline": true,
+      "label": "eks-anywhere",
+      "permalink": "/tags/eks-anywhere"
+    }
+  ],
+  "readingTime": 22.05,
+  "hasTruncateMarker": true,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "EKS Anywhere on vSphere Homelab",
+    "comments": true,
+    "classes": "wide",
+    "description": "vSphere homelab 환경에서 EKS Anywhere 구성하기",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/eks-anywhere/",
+    "date": "2022-03-06T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "vsphere",
+      "eks anywhere",
+      "eks",
+      "flux",
+      "gitops",
+      "eks-anywhere"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "EKS Anywhere Advanced Usages",
+    "permalink": "/kubernetes/eks-anywhere-adv/"
+  },
+  "nextItem": {
+    "title": "What is Tailscale?",
+    "permalink": "/kubernetes/what-is-tailscale/"
+  }
+}

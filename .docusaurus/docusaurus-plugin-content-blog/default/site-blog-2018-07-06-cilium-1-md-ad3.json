@@ -1,0 +1,72 @@
+{
+  "permalink": "/kubernetes/cilium-1/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-07-06-cilium-1.md",
+  "source": "@site/blog/2018-07-06-cilium-1.md",
+  "title": "Cilium",
+  "description": "Cilium에 대해 알아봅니다",
+  "date": "2018-07-06T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Cilium",
+      "permalink": "/tags/cilium"
+    },
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "network policy",
+      "permalink": "/tags/network-policy"
+    },
+    {
+      "inline": true,
+      "label": "Istio",
+      "permalink": "/tags/istio"
+    },
+    {
+      "inline": true,
+      "label": "BPF",
+      "permalink": "/tags/bpf"
+    },
+    {
+      "inline": true,
+      "label": "CNI",
+      "permalink": "/tags/cni"
+    }
+  ],
+  "readingTime": 11.91,
+  "hasTruncateMarker": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Cilium",
+    "comments": true,
+    "classes": "wide",
+    "description": "Cilium에 대해 알아봅니다",
+    "slug": "kubernetes/cilium-1/",
+    "date": "2018-07-06T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Cilium",
+      "Kubernetes",
+      "network policy",
+      "Istio",
+      "BPF",
+      "CNI"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Operators & CRDs(CustomResourceDefinitions) on Kubernetes",
+    "permalink": "/kubernetes/operator/"
+  },
+  "nextItem": {
+    "title": "Spinnaker on Kubernetes #1",
+    "permalink": "/kubernetes/spinnaker-advanced-1/"
+  }
+}

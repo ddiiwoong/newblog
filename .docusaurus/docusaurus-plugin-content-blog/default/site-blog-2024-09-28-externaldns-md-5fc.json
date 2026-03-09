@@ -1,0 +1,72 @@
+{
+  "permalink": "/kubernetes/externaldns/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2024-09-28-externaldns.md",
+  "source": "@site/blog/2024-09-28-externaldns.md",
+  "title": "ExternalDNS",
+  "description": "ExternalDNS와 CoreDNS를 통해 Service를 외부에서 사용할 수 있도록 설정하는 방법",
+  "date": "2024-09-29T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "externaldns",
+      "permalink": "/tags/externaldns"
+    },
+    {
+      "inline": true,
+      "label": "coredns",
+      "permalink": "/tags/coredns"
+    },
+    {
+      "inline": true,
+      "label": "etcd",
+      "permalink": "/tags/etcd"
+    }
+  ],
+  "readingTime": 3.16,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong",
+      "page": null
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "ExternalDNS",
+    "comments": true,
+    "classes": "wide",
+    "description": "ExternalDNS와 CoreDNS를 통해 Service를 외부에서 사용할 수 있도록 설정하는 방법",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/externaldns/",
+    "date": "2024-09-29T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "externaldns",
+      "coredns",
+      "etcd"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Kubernetes Headless Service",
+    "permalink": "/kubernetes/headless-service/"
+  },
+  "nextItem": {
+    "title": "Multus on Kind cluster",
+    "permalink": "/kubernetes/multus-on-kind/"
+  }
+}

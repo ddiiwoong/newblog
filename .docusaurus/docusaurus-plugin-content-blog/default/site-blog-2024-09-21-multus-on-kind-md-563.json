@@ -1,0 +1,96 @@
+{
+  "permalink": "/kubernetes/multus-on-kind/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2024-09-21-multus-on-kind.md",
+  "source": "@site/blog/2024-09-21-multus-on-kind.md",
+  "title": "Multus on Kind cluster",
+  "description": "Multus를 Kind cluster에 설치하는 방법",
+  "date": "2024-09-21T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "multus",
+      "permalink": "/tags/multus"
+    },
+    {
+      "inline": true,
+      "label": "cni",
+      "permalink": "/tags/cni"
+    },
+    {
+      "inline": true,
+      "label": "kind",
+      "permalink": "/tags/kind"
+    },
+    {
+      "inline": true,
+      "label": "multiple network",
+      "permalink": "/tags/multiple-network"
+    },
+    {
+      "inline": true,
+      "label": "macvlan",
+      "permalink": "/tags/macvlan"
+    },
+    {
+      "inline": true,
+      "label": "koko",
+      "permalink": "/tags/koko"
+    },
+    {
+      "inline": true,
+      "label": "kindnet",
+      "permalink": "/tags/kindnet"
+    }
+  ],
+  "readingTime": 15.67,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong",
+      "page": null
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Multus on Kind cluster",
+    "comments": true,
+    "classes": "wide",
+    "description": "Multus를 Kind cluster에 설치하는 방법",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/multus-on-kind/",
+    "date": "2024-09-21T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "multus",
+      "cni",
+      "kind",
+      "multiple network",
+      "macvlan",
+      "koko",
+      "kindnet"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "ExternalDNS",
+    "permalink": "/kubernetes/externaldns/"
+  },
+  "nextItem": {
+    "title": "파드 Readiness & Probe",
+    "permalink": "/kubernetes/readinessandprobe/"
+  }
+}

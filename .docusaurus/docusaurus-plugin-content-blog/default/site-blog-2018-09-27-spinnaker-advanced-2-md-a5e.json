@@ -1,0 +1,72 @@
+{
+  "permalink": "/kubernetes/spinnaker-advanced-2/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-09-27-spinnaker-advanced-2.md",
+  "source": "@site/blog/2018-09-27-spinnaker-advanced-2.md",
+  "title": "Spinnaker on Kubernetes #2",
+  "description": "Spinnaker에 대해 알아봅니다 #2",
+  "date": "2018-09-27T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "CI/CD",
+      "permalink": "/tags/ci-cd"
+    },
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "Spinnaker",
+      "permalink": "/tags/spinnaker"
+    },
+    {
+      "inline": true,
+      "label": "Continuous Delivery",
+      "permalink": "/tags/continuous-delivery"
+    },
+    {
+      "inline": true,
+      "label": "Continuous Deployment",
+      "permalink": "/tags/continuous-deployment"
+    },
+    {
+      "inline": true,
+      "label": "Pipeline",
+      "permalink": "/tags/pipeline"
+    }
+  ],
+  "readingTime": 3.73,
+  "hasTruncateMarker": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Spinnaker on Kubernetes #2",
+    "comments": true,
+    "classes": "wide",
+    "description": "Spinnaker에 대해 알아봅니다 #2",
+    "slug": "kubernetes/spinnaker-advanced-2/",
+    "date": "2018-09-27T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "CI/CD",
+      "Kubernetes",
+      "Spinnaker",
+      "Continuous Delivery",
+      "Continuous Deployment",
+      "Pipeline"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Spinnaker on Kubernetes #3 (Kayenta)",
+    "permalink": "/kubernetes/spinnaker-advanced-3/"
+  },
+  "nextItem": {
+    "title": "knative",
+    "permalink": "/kubernetes/knative/"
+  }
+}

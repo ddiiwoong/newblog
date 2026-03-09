@@ -1,0 +1,66 @@
+{
+  "permalink": "/kubernetes/dex/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-07-26-dex.md",
+  "source": "@site/blog/2018-07-26-dex.md",
+  "title": "Dex",
+  "description": "Dex 대해 알아봅니다",
+  "date": "2018-07-26T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "dex",
+      "permalink": "/tags/dex"
+    },
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "identity service",
+      "permalink": "/tags/identity-service"
+    },
+    {
+      "inline": true,
+      "label": "OIDC",
+      "permalink": "/tags/oidc"
+    },
+    {
+      "inline": true,
+      "label": "connectors",
+      "permalink": "/tags/connectors"
+    }
+  ],
+  "readingTime": 6.65,
+  "hasTruncateMarker": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Dex",
+    "comments": true,
+    "classes": "wide",
+    "description": "Dex 대해 알아봅니다",
+    "slug": "kubernetes/dex/",
+    "date": "2018-07-26T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "dex",
+      "Kubernetes",
+      "identity service",
+      "OIDC",
+      "connectors"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "knative",
+    "permalink": "/kubernetes/knative/"
+  },
+  "nextItem": {
+    "title": "Cert-manager",
+    "permalink": "/kubernetes/cert-manager/"
+  }
+}

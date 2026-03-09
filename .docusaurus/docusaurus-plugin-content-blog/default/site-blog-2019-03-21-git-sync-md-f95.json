@@ -1,0 +1,72 @@
+{
+  "permalink": "/kubernetes/git-sync/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-03-21-git-sync.md",
+  "source": "@site/blog/2019-03-21-git-sync.md",
+  "title": "git-sync",
+  "description": "git-sync에 대해서 알아본다.",
+  "date": "2019-03-21T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "git-sync",
+      "permalink": "/tags/git-sync"
+    },
+    {
+      "inline": true,
+      "label": "GitOps",
+      "permalink": "/tags/git-ops"
+    },
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "ssh git",
+      "permalink": "/tags/ssh-git"
+    },
+    {
+      "inline": true,
+      "label": "sidecar",
+      "permalink": "/tags/sidecar"
+    },
+    {
+      "inline": true,
+      "label": "sidecar pattern",
+      "permalink": "/tags/sidecar-pattern"
+    }
+  ],
+  "readingTime": 6.13,
+  "hasTruncateMarker": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "git-sync",
+    "comments": true,
+    "classes": "wide",
+    "description": "git-sync에 대해서 알아본다.",
+    "slug": "kubernetes/git-sync/",
+    "date": "2019-03-21T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "git-sync",
+      "GitOps",
+      "Kubernetes",
+      "ssh git",
+      "sidecar",
+      "sidecar pattern"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "eksworkshop",
+    "permalink": "/kubernetes/eksworkshop/"
+  },
+  "nextItem": {
+    "title": "VScode Server",
+    "permalink": "/tools/vscode-server/"
+  }
+}

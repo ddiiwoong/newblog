@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkddii=globalThis.webpackChunkddii||[]).push([[8996],{8534(a){a.exports=JSON.parse('{"metadata":{"permalink":"/page/5","page":5,"postsPerPage":5,"totalPages":10,"totalCount":46,"previousPage":"/page/4","nextPage":"/page/6","blogDescription":"My little thought may as a catalyst in other engineer\'s career","blogTitle":"Cloud Catalyst"}}')}}]);

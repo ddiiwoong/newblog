@@ -1,0 +1,60 @@
+{
+  "permalink": "/kubernetes/CKAD-1/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-06-10-CKAD-1.md",
+  "source": "@site/blog/2019-06-10-CKAD-1.md",
+  "title": "Yaml 작성 기본 Tip",
+  "description": "CKAD검정시 YAML 작성 tip",
+  "date": "2019-06-10T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "CKAD",
+      "permalink": "/tags/ckad"
+    },
+    {
+      "inline": true,
+      "label": "Exam",
+      "permalink": "/tags/exam"
+    },
+    {
+      "inline": true,
+      "label": "Tip",
+      "permalink": "/tags/tip"
+    }
+  ],
+  "readingTime": 0.69,
+  "hasTruncateMarker": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Yaml 작성 기본 Tip",
+    "comments": true,
+    "classes": "wide",
+    "description": "CKAD검정시 YAML 작성 tip",
+    "slug": "kubernetes/CKAD-1/",
+    "date": "2019-06-10T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "CKAD",
+      "Exam",
+      "Tip"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "CircleCI - GitHub 연동 및 EKS 구성하기",
+    "permalink": "/devops/circleci/"
+  },
+  "nextItem": {
+    "title": "Knative on EKS",
+    "permalink": "/kubernetes/knative-on-aws/"
+  }
+}

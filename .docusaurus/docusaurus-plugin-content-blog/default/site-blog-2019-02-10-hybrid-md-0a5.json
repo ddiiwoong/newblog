@@ -1,0 +1,60 @@
+{
+  "permalink": "/cloud/Hybrid/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2019-02-10-Hybrid.md",
+  "source": "@site/blog/2019-02-10-Hybrid.md",
+  "title": "Hybrid Cloud",
+  "description": "Hybrid Cloud",
+  "date": "2019-02-10T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Hybrid",
+      "permalink": "/tags/hybrid"
+    },
+    {
+      "inline": true,
+      "label": "Multi",
+      "permalink": "/tags/multi"
+    },
+    {
+      "inline": true,
+      "label": "Outpost",
+      "permalink": "/tags/outpost"
+    },
+    {
+      "inline": true,
+      "label": "VMware",
+      "permalink": "/tags/v-mware"
+    }
+  ],
+  "readingTime": 3.68,
+  "hasTruncateMarker": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "title": "Hybrid Cloud",
+    "comments": true,
+    "classes": "wide",
+    "description": "Hybrid Cloud",
+    "slug": "cloud/Hybrid/",
+    "date": "2019-02-10T00:00:00.000Z",
+    "categories": [
+      "Cloud"
+    ],
+    "tags": [
+      "Hybrid",
+      "Multi",
+      "Outpost",
+      "VMware"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Knative CLI - knctl",
+    "permalink": "/kubernetes/knative-knctl/"
+  },
+  "nextItem": {
+    "title": "SRE (Site Reliablity Engineering)",
+    "permalink": "/job/SRE/"
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "permalink": "/kubernetes/eks-anywhere-adv/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2022-03-18-eks-anywhere-adv.md",
+  "source": "@site/blog/2022-03-18-eks-anywhere-adv.md",
+  "title": "EKS Anywhere Advanced Usages",
+  "description": "EKS Anywhere 로 구성된 쿠버네티스 클러스터 활용 ",
+  "date": "2022-03-18T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "vsphere",
+      "permalink": "/tags/vsphere"
+    },
+    {
+      "inline": true,
+      "label": "eks anywhere",
+      "permalink": "/tags/eks-anywhere"
+    },
+    {
+      "inline": true,
+      "label": "eks-anywhere",
+      "permalink": "/tags/eks-anywhere"
+    },
+    {
+      "inline": true,
+      "label": "eks connector",
+      "permalink": "/tags/eks-connector"
+    },
+    {
+      "inline": true,
+      "label": "eks",
+      "permalink": "/tags/eks"
+    },
+    {
+      "inline": true,
+      "label": "opentelemetry",
+      "permalink": "/tags/opentelemetry"
+    },
+    {
+      "inline": true,
+      "label": "cilium",
+      "permalink": "/tags/cilium"
+    },
+    {
+      "inline": true,
+      "label": "observability",
+      "permalink": "/tags/observability"
+    },
+    {
+      "inline": true,
+      "label": "prometheus",
+      "permalink": "/tags/prometheus"
+    },
+    {
+      "inline": true,
+      "label": "grafana",
+      "permalink": "/tags/grafana"
+    },
+    {
+      "inline": true,
+      "label": "loki",
+      "permalink": "/tags/loki"
+    },
+    {
+      "inline": true,
+      "label": "microservice",
+      "permalink": "/tags/microservice"
+    },
+    {
+      "inline": true,
+      "label": "istio",
+      "permalink": "/tags/istio"
+    }
+  ],
+  "readingTime": 12.56,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Jinwoong Kim",
+      "title": "Technologist and Cloud Consultant",
+      "url": "https://www.linkedin.com/in/ddiiwoong/",
+      "imageURL": "https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80",
+      "key": "jinwoong",
+      "page": null
+    }
+  ],
+  "frontMatter": {
+    "layout": "single",
+    "title": "EKS Anywhere Advanced Usages",
+    "comments": true,
+    "classes": "wide",
+    "description": "EKS Anywhere 로 구성된 쿠버네티스 클러스터 활용 ",
+    "authors": "jinwoong",
+    "toc": true,
+    "toc_label": "Table of Contents",
+    "slug": "kubernetes/eks-anywhere-adv/",
+    "date": "2022-03-18T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Kubernetes",
+      "vsphere",
+      "eks anywhere",
+      "eks-anywhere",
+      "eks connector",
+      "eks",
+      "opentelemetry",
+      "cilium",
+      "observability",
+      "prometheus",
+      "grafana",
+      "loki",
+      "microservice",
+      "istio"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "EKS CNI Custom Networking",
+    "permalink": "/kubernetes/eks-cni-custom/"
+  },
+  "nextItem": {
+    "title": "EKS Anywhere on vSphere Homelab",
+    "permalink": "/kubernetes/eks-anywhere/"
+  }
+}

@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkddii=globalThis.webpackChunkddii||[]).push([[4245],{72475(a){a.exports=JSON.parse('{"authors":[{"name":"Jinwoong Kim","title":"Technologist and Cloud Consultant","url":"https://www.linkedin.com/in/ddiiwoong/","imageURL":"https://s.gravatar.com/avatar/e8bfebcbeacb5b9a0c90614e792febf2?s=80","key":"jinwoong","page":null,"count":15}]}')}}]);

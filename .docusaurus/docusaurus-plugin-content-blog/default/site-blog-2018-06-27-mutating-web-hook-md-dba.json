@@ -1,0 +1,61 @@
+{
+  "permalink": "/kubernetes/mutating-web-hook/",
+  "editUrl": "https://github.com/ddiiwoong/newblog/tree/main/blog/2018-06-27-mutating-web-hook.md",
+  "source": "@site/blog/2018-06-27-mutating-web-hook.md",
+  "title": "Mutating Webhook",
+  "description": "Mutating Webhook에 대해 알아봅니다",
+  "date": "2018-06-27T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": true,
+      "label": "Mutating Webhook",
+      "permalink": "/tags/mutating-webhook"
+    },
+    {
+      "inline": true,
+      "label": "Kubernetes",
+      "permalink": "/tags/kubernetes"
+    },
+    {
+      "inline": true,
+      "label": "Admission Controller",
+      "permalink": "/tags/admission-controller"
+    },
+    {
+      "inline": true,
+      "label": "Istio",
+      "permalink": "/tags/istio"
+    },
+    {
+      "inline": true,
+      "label": "Agones",
+      "permalink": "/tags/agones"
+    }
+  ],
+  "readingTime": 6.46,
+  "hasTruncateMarker": false,
+  "authors": [],
+  "frontMatter": {
+    "layout": "single",
+    "classes": "wide",
+    "title": "Mutating Webhook",
+    "description": "Mutating Webhook에 대해 알아봅니다",
+    "slug": "kubernetes/mutating-web-hook/",
+    "date": "2018-06-27T00:00:00.000Z",
+    "categories": [
+      "Kubernetes"
+    ],
+    "tags": [
+      "Mutating Webhook",
+      "Kubernetes",
+      "Admission Controller",
+      "Istio",
+      "Agones"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Provisioning Dedicated Game Server on Kubernetes Cluster",
+    "permalink": "/kubernetes/openinfraday18/"
+  }
+}
