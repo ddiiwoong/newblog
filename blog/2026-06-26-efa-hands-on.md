@@ -33,7 +33,7 @@ tags:
 ## 테스트 구성
 
 ```
-[ 인스턴스 A (GPU) ]  ←— EFA / SRD —→  [ 인스턴스 B (GPU) ]
+[ 인스턴스 A (GPU) ]  ← EFA / SRD →  [ 인스턴스 B (GPU) ]
         \                                      /
          \____ 같은 Cluster Placement Group ___/
               (같은 AZ · 같은 서브넷 · 근접 배치)
