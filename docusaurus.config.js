@@ -20,6 +20,7 @@ const TwitterSvg =
   trailingSlash: true,
   markdown: {
     format: 'detect',
+    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'warn',
     },
@@ -28,6 +29,7 @@ const TwitterSvg =
   //   defaultLocale: "ko",
   //   locales: ["ko"],
   // },
+  themes: ['@docusaurus/theme-mermaid'],
   presets: [
     [
       '@docusaurus/preset-classic',
