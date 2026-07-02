@@ -39,6 +39,8 @@ jobs:
           git config --global user.email "ddiiwoong@github.com"
           git config --global user.name "ddiiwoong"
           npm ci
+          npm run build
+          rm -rf node_modules/.cache
           npm run deploy
       - name: copy
         env:
