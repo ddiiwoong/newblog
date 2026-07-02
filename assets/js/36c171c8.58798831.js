@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkddii=globalThis.webpackChunkddii||[]).push([[9393],{275(s){s.exports=JSON.parse('{"tags":[{"label":"Prometheus","permalink":"/docs/tags/prometheus","count":1}]}')}}]);
