@@ -25,6 +25,10 @@ const TwitterSvg =
       onBrokenMarkdownLinks: 'warn',
     },
   },
+  future: {
+    faster: true,
+    v4: true,
+  },
   // i18n: {
   //   defaultLocale: "ko",
   //   locales: ["ko"],
