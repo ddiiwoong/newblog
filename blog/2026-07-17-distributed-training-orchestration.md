@@ -1,15 +1,14 @@
 ---
 layout: single
-title: "분산 학습 클러스터, 어떻게 묶어 돌리나 — HyperPod vs ParallelCluster vs EKS"
+title: "분산 학습 클러스터 — HyperPod vs ParallelCluster vs EKS"
 comments: true
 classes: wide
-description: "EFA와 FSx로 준비한 노드들을 하나의 멀티노드 학습 클러스터로 묶는 오케스트레이션 방식을 비교한다"
+description: "EFA와 FSx로 준비한 노드들을 하나의 멀티노드 학습 클러스터로 묶는 오케스트레이션 방식을 비교"
 authors: jinwoong
 toc: true
 toc_label: Table of Contents
 slug: aws/distributed-training-orchestration
-date: 2026-07-17
-draft: true
+date: 2026-07-14
 categories:
   - AWS
 tags:
@@ -25,9 +24,7 @@ tags:
 
 > 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
-> **(초안 메모 — 발행 전 처리)** 세 방식 모두 직접 검증해 반영했다 — ParallelCluster(EFA·FSx·2노드 MPI·OSU·노드 복구), HyperPod(공식 라이프사이클로 Slurm 구성·sinfo·srun·관리형 복구), EKS(GPU+EFA 노드그룹·device plugin·MPIJob NCCL all-reduce). 발행 전: 참고 문서 링크 최종 검증 + 표현 정리.
-
-시리즈의 마지막 편이다. 지금까지 분산 학습의 조각들을 하나씩 만들었다.
+시리즈의 마지막 편이다. 지금까지 분산 학습의 내용들을 정리해봤다.
 
 - [1편·2편](https://ddii.dev/aws/efa-hands-on/): 네트워크(EFA)로 노드 간 통신을 빠르게
 - [3편](https://ddii.dev/aws/distributed-training-storage/): 스토리지(FSx/EFS/S3)로 데이터·체크포인트 공급
@@ -418,15 +415,15 @@ Grafana에는 NVIDIA 공식 **DCGM 대시보드(ID 12239)** 를 임포트하면 
 - 대규모·장기 학습에서 노드 복구를 관리형으로 맡기고 싶다 → **HyperPod**
 - 이미 Kubernetes 플랫폼이 있고 학습·서빙을 통합하고 싶다 → **EKS**
 
-## 마무리 — 5부작 정리
+## 마무리
 
-이 시리즈는 분산 학습 인프라를 아래에서 위로 쌓아 올렸다.
+분산 학습 인프라를 개념부터 실제 클러스터 구성하는 것까지 진행해봤다.
 
 1. [1편](https://ddii.dev/aws/infiniband-vs-efa/) — 네트워크 개념(InfiniBand vs EFA)
 2. [2편](https://ddii.dev/aws/efa-hands-on/) — 네트워크 핸즈온(EFA·NCCL)
 3. [3편](https://ddii.dev/aws/distributed-training-storage/) — 스토리지(FSx/EFS/S3)
 4. [4편](https://ddii.dev/aws/distributed-training-bottlenecks/) — 병목 관측·프로파일링
-5. **5편: 클러스터 오케스트레이션** (이 글) — 묶어서 돌리기
+5. **5편: 클러스터 오케스트레이션** (이 글) — 분산 학습 클러스터링
 
 네트워크로 노드를 잇고, 스토리지로 데이터를 공급하고, 관측으로 병목을 찾고, 오케스트레이션으로 묶으면 — 분산 학습 인프라의 전체 구성이 완성된다.
 
