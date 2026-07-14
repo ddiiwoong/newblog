@@ -209,7 +209,7 @@ $ kubectl apply -f auth-dev-tls.yaml
 certificate "auth-dev-tls" created
 ```
 
-이후 TLS 생성 상태를 확인한다. 이때 Message에서 ```Normal   CeritifcateIssued     Certificated issued successfully``` 문구가 확인되면 인증서 발급이 정상적으로 되었다고 볼 수 있다.  
+이후 TLS 생성 상태를 확인한다. 이때 Message에서 ```Normal   CeritifcateIssued     Certificated issued successfully``` 문구가 확인되면 인증서 발급이 정상적으로 되었다고 볼 수 있다.  
 이때 발급되는 시간이 네트워크 환경에 따라 1~5분정도 소요될때로 있는것으로 보인다. 
 ``` 
 $ kubectl describe -f auth-dev-tls.yaml
