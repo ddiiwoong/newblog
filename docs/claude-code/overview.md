@@ -891,7 +891,7 @@ Claude Code는 단순한 코딩 어시스턴트가 아닙니다. **저장소 전
 
 | # | 출처 | 상세 |
 |---|------|------|
-| [1] | **Claude Code Deep Dive Workshop — Chapter 1: Overview** | Choi WooHyung (Prin. Solutions Architect, AWS Korea), 2026.07. 192 슬라이드, 10 Parts. 내부 워크샵 교재 (Amazon Confidential). |
+| [1] | **Claude Code Deep Dive Workshop — Chapter 1: Overview** | Choi WooHyung (Prin. Solutions Architect, AWS Korea). [github.com/whchoi98/claude-code-workshop](https://github.com/whchoi98/claude-code-workshop) |
 | [2] | **Claude Code in Action** | Anthropic Skilljar 공식 교육 코스. 2026 리뉴얼 커리큘럼 (10 레슨) + 기존 커리큘럼 (21 레슨). [anthropic.skilljar.com/claude-code-in-action](https://anthropic.skilljar.com/claude-code-in-action) |
 | [3] | **Agentic AI Explained** | AWS Training & Certification 자기 주도 학습. 13개 모듈, 약 1시간. Agentic AI의 개념, 아키텍처, 디자인 패턴, 엔지니어링 원칙 전반. |
 
