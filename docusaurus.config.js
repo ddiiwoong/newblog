@@ -111,12 +111,12 @@ const TwitterSvg =
 
           {
             type: 'dropdown',
-            to: 'docs/Prometheus/introduction',
-            docId: 'introduction',
+            to: 'docs/claude-code/overview',
+            docId: 'claude-code/overview',
             position: 'left',
             label: 'Docs',
             items: [
-              {to: 'docs/Prometheus/introduction', label: 'Prometheus'},
+              {to: 'docs/claude-code/overview', label: 'Claude Code'},
             ],
           },
           {
