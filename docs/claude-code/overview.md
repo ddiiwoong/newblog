@@ -16,9 +16,7 @@ tags:
 
 ## 들어가며
 
-코드 자동완성(Code Completion)을 넘어, **목표를 주면 스스로 계획하고 실행하며 검증까지 완수하는 에이전트**가 등장했습니다. Anthropic이 만든 **Claude Code**가 바로 그 주인공입니다.
-
-이 글에서는 Claude Code의 정체성, 아키텍처, 설치, 인증부터 핵심 워크플로까지 — Chapter 1 전체를 하나의 블로그로 정리합니다.
+이 글에서는 Claude Code의 정체성, 아키텍처, 설치, 인증부터 핵심 워크플로까지 Claude Code Deep Dive Workshop — Chapter 1 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.
 
 ---
 
