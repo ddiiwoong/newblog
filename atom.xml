@@ -382,10 +382,19 @@ GPT-2 (small, 124M params) 기준</p>
 <p>우리의 목표: <code>"The cat sat on the"</code> 다음에 <code>"floor"</code>가 올 거라고 예측하는 과정을 단계별로 따라가보자.</p>
 <hr>
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="2-전체-아키텍처--문장이-거치는-전체-경로">2. 전체 아키텍처 — 문장이 거치는 전체 경로<a href="https://ddii.dev/deep-learning/transformer-explainer/#2-%EC%A0%84%EC%B2%B4-%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98--%EB%AC%B8%EC%9E%A5%EC%9D%B4-%EA%B1%B0%EC%B9%98%EB%8A%94-%EC%A0%84%EC%B2%B4-%EA%B2%BD%EB%A1%9C" class="hash-link" aria-label="Direct link to 2. 전체 아키텍처 — 문장이 거치는 전체 경로" title="Direct link to 2. 전�체 아키텍처 — 문장이 거치는 전체 경로" translate="no">​</a></h2>
+<p>Transformer는 크게 세 단계로 구성된다. 입력 텍스트를 숫자로 바꾸는 <strong>Embedding</strong>, 그 숫자들을 반복적으로 정제하는 <strong>Transformer Block</strong>, 그리고 최종 벡터에서 다음 단어를 고르는 <strong>Output</strong>이다. 각 단계는 독립적으로 이해할 수 있지만, 실제로는 파이프라인처럼 순서대로 흘러간다.</p>
 <!-- -->
+<p>각 단계가 하는 일을 한 줄로 정리하면:</p>
+<ul>
+<li class=""><strong>① Embedding</strong>: 텍스트를 모델이 연산할 수 있는 숫자 행렬로 변환한다. "The"라는 문자열을 768개의 실수로 이루어진 벡터로 바꾸고, 여기에 "몇 번째 위치인지" 정보까지 더한다.</li>
+<li class=""><strong>② Transformer Block (×12)</strong>: 이 숫자 행렬을 12번 반복해서 다듬는다. 매 블록마다 두 가지 연산이 일어나는데, Self-Attention이 "다른 단어들을 참고해서 맥락을 모으고", MLP가 "모은 맥락에 학습된 지식을 적용"한다. 입력과 출력의 크기(5×768)는 바뀌지 않지만, 내용은 블록을 거칠수록 더 깊은 의미를 담게 된다.</li>
+<li class=""><strong>③ Output</strong>: 12번 처리된 마지막 토큰("the")의 768차원 벡터를 50,257개 어휘 각각에 대한 점수로 변환하고, 그 점수를 확률로 바꿔서 다음 단어를 선택한다.</li>
+</ul>
+<p>여기서 핵심적인 설계 원리 하나: <strong>모든 단계에서 행렬의 크기가 일정하다</strong> (5×768 → 5×768 → ... → 5×768). 블록을 12번 반복해도 구조가 같으니 쌓기 쉽고, 깊이를 조절하는 것만으로 모델의 능력을 키울 수 있다. GPT-2 small은 12블록, GPT-3는 96블록이다.</p>
 <p><strong>우리 문장의 여정 요약:</strong></p>
 <div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">"The cat sat on the"     ← 사람이 쓴 텍스트 (문자열)</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    ↓ [Embedding]</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">[5 × 768] 숫자 행렬     ← 5개 토큰, 각각 768개 숫자로 표현</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    ↓ [Block 1]</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">[5 × 768]               ← 같은 크기, 내용만 더 정교해짐</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    ↓ [Block 2~11]</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">[5 × 768]               ← 12번 반복하면서 점점 깊은 이해</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    ↓ [Block 12]</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">[5 × 768]               ← 최종 표현</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    ↓ [Output]</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">"floor" (확률 0.076)       ← 다음 단어 예측 완료!</span><br></div></code></pre></div></div>
 <p>한 마디로: <strong>텍스트 → 숫자 행렬 → 12번 다듬기 → 다음 단어 확률</strong>. 이것이 전부다.</p>
+<p>그리고 이 과정은 <strong>한 토큰을 예측할 때마다 처음부터 끝까지 반복</strong>된다. "floor"를 예측한 뒤에는 "The cat sat on the floor"를 다시 입력으로 넣어서 그 다음 토큰("." 등)을 예측한다. 이걸 Auto-Regressive 생성이라 부르고, Part 2에서 이 반복이 서빙 성능에 어떤 영향을 미치는지 다룬다.</p>
 <hr>
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="3-embedding--the-cat-sat-on-the를-숫자로-바꾸기">3. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-embedding" class="">Embedding</a> — "The cat sat on the"를 숫자로 바꾸기<a href="https://ddii.dev/deep-learning/transformer-explainer/#3-embedding--the-cat-sat-on-the%EB%A5%BC-%EC%88%AB%EC%9E%90%EB%A1%9C-%EB%B0%94%EA%BE%B8%EA%B8%B0" class="hash-link" aria-label="Direct link to 3-embedding--the-cat-sat-on-the를-숫자로-바꾸기" title="Direct link to 3-embedding--the-cat-sat-on-the를-숫자로-바꾸기" translate="no">​</a></h2>
 <p><strong>하는 일</strong>: 텍스트 문자열을 모델이 처리할 수 있는 숫자 행렬로 변환.</p>
@@ -716,7 +725,7 @@ GPT-2 (small, 124M params) 기준</p>
 
 <table><thead><tr><th></th><th>전통 ML</th><th>LLM</th></tr></thead><tbody><tr><td>상태</td><td>Stateless</td><td><strong>Stateful</strong> (<a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a>)</td></tr><tr><td>연산량</td><td>고정</td><td><strong>가변</strong> (출력 길이 모름)</td></tr><tr><td>메모리</td><td>고정</td><td><strong>동적 증가</strong></td></tr><tr><td>위치</td><td>백그라운드</td><td><strong>사용자 직접 대면</strong></td></tr><tr><td>비용</td><td>저렴 (CPU 가능)</td><td><strong>GPU 필수, 10배+ 비용</strong></td></tr><tr><td>패턴</td><td>단일 Forward</td><td><strong><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-auto-regressive" class="">Auto-Regressive</a> (반복 Forward)</strong></td></tr></tbody></table>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="auto-regressive-생성-구조"><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-auto-regressive" class="">Auto-Regressive</a> 생성 구조<a href="https://ddii.dev/deep-learning/transformer-explainer/#auto-regressive-%EC%83%9D%EC%84%B1-%EA%B5%AC%EC%A1%B0" class="hash-link" aria-label="Direct link to auto-regressive-생성-구조" title="Direct link to auto-regressive-생성-구조" translate="no">​</a></h3>
-<p>LLM은 한 번에 답을 내놓는 게 아니라, <strong>토큰을 하나씩 순차 생성</strong>한다.</p>
+<p>LLM은 한 번에 답을 내놓는 게 아니라, <strong>토큰을 하나씩 순차 생성</strong>한다. 이게 이미지 분류(입력 넣으면 답 한 방에 나옴)나 전통 ML과 근본적으로 다른 점이다. 100토큰짜리 답변을 만들려면 모델을 100번 호출해야 한다. 매번 전체 모델을 Forward Pass 하는 셈이라, 연산 비용이 출력 길이에 비례해 쌓인다.</p>
 <!-- -->
 <p>매 스텝마다 모델을 <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-forward-pass" class="">Forward Pass</a> 한다는 뜻이다.<br>
 → 이게 서빙에서 왜 문제가 되냐?</p>
@@ -748,7 +757,7 @@ GPT-2 (small, 124M params) 기준</p>
 <table><thead><tr><th>특성</th><th>서빙 영향</th></tr></thead><tbody><tr><td>순차 생성</td><td>GPU가 대부분 idle (한 토큰씩만 처리)</td></tr><tr><td>가변 출력</td><td>리소스 예약 어려움 (언제 끝날지 모름)</td></tr><tr><td><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a> 누적</td><td>메모리가 시간에 따라 계속 증가</td></tr><tr><td>실시간 스트리밍</td><td><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-time-to-first-token" class="">TTFT</a>(첫 토큰)가 UX 좌우</td></tr></tbody></table>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="decoder-only-구조-현대-llm-표준"><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-decoder" class="">Decoder</a>-Only 구조 (현대 LLM 표준)<a href="https://ddii.dev/deep-learning/transformer-explainer/#decoder-only-%EA%B5%AC%EC%A1%B0-%ED%98%84%EB%8C%80-llm-%ED%91%9C%EC%A4%80" class="hash-link" aria-label="Direct link to decoder-only-구조-현대-llm-표준" title="Direct link to decoder-only-구조-현대-llm-표준" translate="no">​</a></h3>
 <!-- -->
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="gpt-2-vs-최신-모델-구조-비교">GPT-2 vs 최신 모델 구조 비교<a href="https://ddii.dev/deep-learning/transformer-explainer/#gpt-2-vs-%EC%B5%9C%EC%8B%A0-%EB%AA%A8%EB%8D%B8-%EA%B5%AC%EC%A1%B0-%EB%B9%84%EA%B5%90" class="hash-link" aria-label="Direct link to GPT-2 vs 최신 모델 구조 비교" title="Direct link to GPT-2 vs 최신 모델 구조 비교" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="gpt-2-vs-최신-모델-구조-비교">GPT-2 vs 최신 모델 구조 비교<a href="https://ddii.dev/deep-learning/transformer-explainer/#gpt-2-vs-%EC%B5%9C%EC%8B%A0-%EB%AA%A8%EB%8D%B8-%EA%B5%AC%EC%A1%B0-%EB%B9%84%EA%B5%90" class="hash-link" aria-label="Direct link to GPT-2 vs 최신 모델 구조 비교" title="Direct link to GPT-2 vs 최신 모��델 구조 비교" translate="no">​</a></h3>
 
 
 
@@ -794,10 +803,15 @@ GPT-2 (small, 124M params) 기준</p>
 <!-- -->
 <p>→ <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-grouped-query-attention" class="">GQA</a>는 K,V의 수를 줄여서 <strong><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a> 크기를 절감</strong>하는 것이다.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="kv-cache가-왜-핵심인가"><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a>가 왜 핵심인가<a href="https://ddii.dev/deep-learning/transformer-explainer/#kv-cache%EA%B0%80-%EC%99%9C-%ED%95%B5%EC%8B%AC%EC%9D%B8%EA%B0%80" class="hash-link" aria-label="Direct link to kv-cache가-왜-핵심인가" title="Direct link to kv-cache가-왜-핵심인가" translate="no">​</a></h3>
+<p>Auto-Regressive 생성에서 매 토큰마다 Attention을 계산하려면, 이전 토큰들의 Key와 Value가 필요하다. KV Cache가 없으면 새 토큰 하나를 생성할 때마다 이전 토큰 전체를 처음부터 다시 계산해야 한다. 5번째 토큰을 만들 때 1<del>4번째를 다시 계산하고, 6번째를 만들 때 1</del>5번째를 다시 계산하는 식이다. 이러면 출력 길이 n에 대해 총 연산량이 O(n²)이 된다.</p>
+<p>KV Cache는 이전 토큰들의 K, V 벡터를 메모리에 저장해두고, 새 토큰은 자기 Q만 계산해서 저장된 K, V와 Attention을 수행한다. 재계산이 없으니 각 스텝이 O(1)이고, 전체는 O(n)이 된다. 대신 그 대가로 <strong>메모리를 계속 먹는다</strong>. 토큰이 생성될수록 Cache가 커지고, 동시 요청이 많으면 수십~수백 GB의 GPU 메모리를 KV Cache가 잡아먹는다. 이 메모리 관리 문제를 해결하는 게 뒤에 나올 PagedAttention이다.</p>
 <p><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a> 없이 → 매 토큰 생성 시 <strong>이전 토큰 전부 다시 계산</strong> → O(n²)<br>
 <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a> 있으면 → 이전 결과 재활용 → <strong>O(n)</strong></p>
 <!-- -->
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="prefill--decode-2단계"><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-prefill" class="">Prefill</a> &amp; <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-decode" class="">Decode</a> 2단계<a href="https://ddii.dev/deep-learning/transformer-explainer/#prefill--decode-2%EB%8B%A8%EA%B3%84" class="hash-link" aria-label="Direct link to prefill--decode-2단계" title="Direct link to prefill--decode-2단계" translate="no">​</a></h3>
+<p>LLM 추론은 두 개의 명확히 다른 단계로 나뉜다. 이 구분이 중요한 이유는 <strong>두 단계의 하드웨어 병목이 정반대</strong>이기 때문이다.</p>
+<p><strong>Prefill</strong>: 사용자가 보낸 프롬프트(입력 전체)를 한 번에 처리하는 단계다. 입력 토큰 수백~수천 개를 병렬로 처리하니 행렬곱이 크고, GPU 연산 유닛을 꽉 채운다(Compute-bound). 이 단계에서 KV Cache가 한 번에 생성된다. 이 단계의 소요 시간이 곧 TTFT(첫 토큰까지 걸리는 시간)다.</p>
+<p><strong>Decode</strong>: 첫 토큰이 나온 이후, 한 번에 한 토큰씩 순차 생성하는 단계다. 매 스텝마다 토큰 1개에 대해서만 연산하니 행렬곱 자체는 작다. 대신 KV Cache 전체를 GPU 메모리에서 읽어와야 하므로, 메모리 대역폭이 병목이 된다(Memory-bound). GPU 연산 유닛은 대부분 놀고, 데이터가 메모리에서 올라오길 기다리는 상태다. 이게 LLM 서빙에서 GPU 활용률이 낮은 근본 원인이다.</p>
 <!-- -->
 
 
@@ -884,6 +898,7 @@ GPT-2 (small, 124M params) 기준</p>
 <p><em>이후 §13~§22 (<a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing, <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-quantization" class="">Quantization</a>, <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-flashattention" class="">FlashAttention</a>, <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-pagedattention" class="">PagedAttention</a> 등)은 기존 내용 유지</em></p>
 <hr>
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="13-batching--요청을-묶어서-처리하기">13. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing — 요청을 묶어서 처리하기<a href="https://ddii.dev/deep-learning/transformer-explainer/#13-batching--%EC%9A%94%EC%B2%AD%EC%9D%84-%EB%AC%B6%EC%96%B4%EC%84%9C-%EC%B2%98%EB%A6%AC%ED%95%98%EA%B8%B0" class="hash-link" aria-label="Direct link to 13-batching--요청을-묶어서-처리하기" title="Direct link to 13-batching--요청을-묶어서-처리하기" translate="no">​</a></h2>
+<p>Decode 단계에서 GPU가 놀고 있다면, 그 빈 연산 자원에 다른 요청을 끼워 넣으면 된다. 이게 Batching의 핵심 동기다. 하나의 요청만 처리하면 GPU 활용률이 10~20%에 머무는데, 여러 요청을 묶으면 같은 GPU로 더 많은 토큰을 처리할 수 있다. 문제는 LLM 요청마다 출력 길이가 다르다는 점이다.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="batching-종류"><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing 종류<a href="https://ddii.dev/deep-learning/transformer-explainer/#batching-%EC%A2%85%EB%A5%98" class="hash-link" aria-label="Direct link to batching-종류" title="Direct link to batching-종류" translate="no">​</a></h3>
 <!-- -->
 <p>Continuous <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing 동작:</p>
@@ -925,7 +940,7 @@ GPT-2 (small, 124M params) 기준</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="기법-전체-맵">기법 전체 맵<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EA%B8%B0%EB%B2%95-%EC%A0%84%EC%B2%B4-%EB%A7%B5" class="hash-link" aria-label="Direct link to 기법 전체 맵" title="Direct link to 기법 전체 맵" translate="no">​</a></h3>
 <!-- -->
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-1-quantization-양자화">14-1. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-quantization-%EC%96%91%EC%9E%90%ED%99%94" class="">Quantization</a> (양자화)<a href="https://ddii.dev/deep-learning/transformer-explainer/#14-1-quantization-%EC%96%91%EC%9E%90%ED%99%94" class="hash-link" aria-label="Direct link to 14-1-quantization-양자화" title="Direct link to 14-1-quantization-양자화" translate="no">​</a></h3>
-<p>모델 가중치의 정밀도(bit)를 줄여서 크기↓, 속도↑.</p>
+<p>모델 가중치의 정밀도(bit)를 줄여서 크기↓, 속도↑. 원리는 간단하다. FP16(16비트)으로 저장된 가중치를 INT8(8비트)이나 INT4(4비트)로 변환하면, 같은 GPU 메모리에 더 큰 모델을 올릴 수 있고, 메모리에서 데이터를 읽는 양이 줄어 대역폭 병목(Decode 단계)이 완화된다. 대신 정밀도가 떨어지니 출력 품질이 약간 저하될 수 있다. 실무에서는 INT4로 내려도 대부분의 태스크에서 품질 차이를 체감하기 어려운 수준이다.</p>
 <!-- -->
 
 
@@ -959,14 +974,20 @@ GPT-2 (small, 124M params) 기준</p>
 <table><thead><tr><th>정밀도</th><th>모델 크기 (7B 기준)</th><th>속도</th><th>품질 손실</th></tr></thead><tbody><tr><td>FP16</td><td>14 GB</td><td>기준</td><td>없음</td></tr><tr><td>INT8</td><td>7 GB</td><td>1.5-2x↑</td><td>거의 없음</td></tr><tr><td>INT4</td><td>3.5 GB</td><td>2-3x↑</td><td>약간</td></tr></tbody></table>
 <p>실무에서는 **INT4 (W4A16)**가 가성비 최고. GPTQ, AWQ, GGUF 등 방식 있다.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-2-flashattention">14-2. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-flashattention" class="">FlashAttention</a><a href="https://ddii.dev/deep-learning/transformer-explainer/#14-2-flashattention" class="hash-link" aria-label="Direct link to 14-2-flashattention" title="Direct link to 14-2-flashattention" translate="no">​</a></h3>
+<p>Attention의 근본 문제는 메모리다. 시퀀스 길이 N인 입력에 대해 Q×K^T를 계산하면 N×N 크기의 중간 행렬이 생긴다. N=4096이면 이 행렬만 64MB(FP16 기준)를 차지하고, N=128K이면 물리적으로 GPU 메모리에 올라가지 않는다.</p>
+<p>FlashAttention은 이 N×N 행렬을 <strong>통째로 만들지 않는다</strong>. 대신 Q, K, V를 작은 블록으로 쪼개서, GPU의 빠른 온칩 메모리(SRAM)에 올릴 수 있는 크기만큼만 처리하고, 부분 결과를 점진적으로 합산한다. 결과는 수학적으로 동일하지만 메모리 사용량이 O(N²)에서 O(N)으로 떨어지고, SRAM 접근이 DRAM보다 수십 배 빠르니 속도도 2~4배 향상된다.</p>
 <p>표준 Attention: Q×K^T 계산 시 <strong>(N×N) 행렬을 통째로 메모리에 생성</strong> → O(N²) 메모리.</p>
 <p><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-flashattention" class="">FlashAttention</a>: <strong>블록 단위로 나눠서 GPU SRAM에서 처리</strong> → O(N) 메모리 + 2-4배 속도↑.</p>
 <!-- -->
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-3-pagedattention-vllm">14-3. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-pagedattention" class="">PagedAttention</a> (<a href="https://ddii.dev/deep-learning/transformer-explainer/#term-vllm" class="">vLLM</a>)<a href="https://ddii.dev/deep-learning/transformer-explainer/#14-3-pagedattention-vllm" class="hash-link" aria-label="Direct link to 14-3-pagedattention-vllm" title="Direct link to 14-3-pagedattention-vllm" translate="no">​</a></h3>
+<p>KV Cache의 메모리 관리 문제를 해결하는 기법이다. 문제의 핵심은 이렇다: 요청마다 출력 길이가 다르므로 KV Cache 크기를 미리 알 수 없다. 기존 방식은 최대 출력 길이만큼 연속 메모리를 미리 잡아두는데, 실제로 짧게 끝나면 나머지가 낭비된다. 여러 요청이 동시에 들어오면 이 낭비가 쌓여 GPU 메모리의 40~60%가 사용 불가 상태가 된다.</p>
+<p>PagedAttention은 OS의 가상 메모리처럼 KV Cache를 작은 고정 크기 <strong>페이지</strong> 단위로 나눈다. 페이지는 물리적으로 연속일 필요가 없고, 필요할 때마다 빈 페이지를 할당한다. 요청이 끝나면 그 페이지를 해제해서 다른 요청이 쓴다. 이러면 단편화(fragmentation)가 사라지고, KV Cache 메모리 낭비가 거의 0%가 된다.</p>
 <p><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a>를 <strong>고정 크기 페이지(page)</strong> 단위로 관리. OS의 가상 메모리와 같은 원리.</p>
 <!-- -->
 <p>효과: <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-kv-cache" class="">KV Cache</a> 메모리 낭비를 **거의 0%**로 줄임.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-4-speculative-decoding">14-4. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-speculative-decoding" class="">Speculative Decoding</a><a href="https://ddii.dev/deep-learning/transformer-explainer/#14-4-speculative-decoding" class="hash-link" aria-label="Direct link to 14-4-speculative-decoding" title="Direct link to 14-4-speculative-decoding" translate="no">​</a></h3>
+<p>Decode 단계가 느린 이유는 큰 모델이 토큰 하나를 만들기 위해 전체 레이어를 다 통과해야 하기 때문이다. 그런데 생성되는 토큰의 상당수는 사실 "뻔한" 토큰이다("The capital of France is" 뒤에 "Paris"가 올 확률이 압도적이듯). Speculative Decoding은 이 점을 이용한다.</p>
+<p>작은 모델(draft model, 1<del>2B 수준)이 빠르게 여러 토큰(예: 5개)을 연속으로 추측한다. 그 뒤 큰 모델(target model, 70B 등)이 이 5개를 <strong>한 번의 Forward Pass</strong>로 동시에 검증한다. 큰 모델 입장에서는 5개를 병렬로 확인하는 거라 1개 생성하는 것과 시간이 비슷하다. 검증 결과 앞의 3</del>4개가 맞으면 그대로 채택하고, 틀린 지점부터 다시 시작한다. 핵심은 <strong>최종 출력 품질이 큰 모델 단독 생성과 수학적으로 동일</strong>하다는 점이다. 속도만 2~3배 빨라진다.</p>
 <p>작은 모델(draft)이 빠르게 여러 토큰을 추측 → 큰 모델(target)이 한 번에 검증.</p>
 <!-- -->
 
@@ -1001,6 +1022,8 @@ GPT-2 (small, 124M params) 기준</p>
 
 <table><thead><tr><th></th><th>Draft Model</th><th>Target Model</th></tr></thead><tbody><tr><td>크기</td><td>작음 (1B)</td><td>큼 (70B)</td></tr><tr><td>속도</td><td>빠름</td><td>느림</td></tr><tr><td>역할</td><td>추측</td><td>검증</td></tr><tr><td>최종 품질</td><td>Target과 <strong>동일</strong> (수학적 보장)</td><td></td></tr></tbody></table>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-5-prefill-decode-분리">14-5. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-prefill" class="">Prefill</a>-<a href="https://ddii.dev/deep-learning/transformer-explainer/#term-decode" class="">Decode</a> 분리<a href="https://ddii.dev/deep-learning/transformer-explainer/#14-5-prefill-decode-%EB%B6%84%EB%A6%AC" class="hash-link" aria-label="Direct link to 14-5-prefill-decode-분리" title="Direct link to 14-5-prefill-decode-분리" translate="no">​</a></h3>
+<p>앞에서 봤듯 Prefill은 Compute-bound이고 Decode는 Memory-bound다. 하드웨어 요구사항이 정반대라는 뜻이다. 같은 GPU에서 두 단계를 번갈아 처리하면 어느 쪽이든 비효율이 생긴다. Prefill을 할 때는 메모리 대역폭이 남고, Decode를 할 때는 연산 유닛이 논다.</p>
+<p>해법은 물리적으로 분리하는 것이다. Prefill 전용 GPU(연산 최적화된 구성)에서 입력을 처리하고 KV Cache를 생성한 뒤, 그 Cache를 Decode 전용 GPU(대역폭 최적화된 구성)로 넘겨서 토큰 생성을 이어간다. 이렇게 하면 각 GPU가 자기에게 맞는 일만 하니 전체 시스템 효율이 올라간다. 아직 연구/초기 단계에 있는 기법이지만, Mooncake(Moonshot AI)나 Splitwise(Microsoft) 등에서 실용화가 진행되고 있다.</p>
 <p><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-prefill" class="">Prefill</a>(연산 집약)과 <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-decode" class="">Decode</a>(메모리 집약)는 하드웨어 요구사항이 다름 → 별도 GPU에 배치.</p>
 <!-- -->
 <hr>
