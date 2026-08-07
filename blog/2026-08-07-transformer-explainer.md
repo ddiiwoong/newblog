@@ -30,8 +30,7 @@ tags:
 
 > 인터랙티브 실습: [Transformer Explainer (Georgia Tech)](https://poloclub.github.io/transformer-explainer/)
 > 참고: *Hands-On LLM Serving and Optimization* (O'Reilly 2026)
->
-> GPT-2 (small, 124M params) 기준. 반말체, 도식 중심.
+> GPT-2 (small, 124M params) 기준
 
 <!--truncate-->
 
@@ -779,7 +778,6 @@ sequenceDiagram
 # Part 2: LLM Serving & Optimization
 
 > *Hands-On LLM Serving and Optimization* (O'Reilly 2026, Ch.1~2) 기반 정리
-> 말투: 반말 · 스타일: 도식 중심, 비유 최소
 
 ---
 
