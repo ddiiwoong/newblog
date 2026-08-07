@@ -32,6 +32,8 @@ tags:
 > 참고: *Hands-On LLM Serving and Optimization* (O'Reilly 2026)
 > GPT-2 (small, 124M params) 기준
 
+이 글은 두 파트로 구성된다. Part 1에서는 GPT-2를 기준으로 Transformer의 동작 원리를 하나의 예시 문장("The cat sat on the")이 입력부터 다음 단어 예측까지 거치는 전체 경로를 따라가며 설명한다. Embedding, Self-Attention, MLP, Output 각 단계에서 데이터가 어떤 형태로 변환되는지를 코드와 함께 추적한다. Part 2에서는 학습된 모델을 실제로 서빙할 때의 문제 — Auto-Regressive 생성의 비효율, KV Cache 메모리 관리, Prefill/Decode 병목 — 를 다루고, Continuous Batching, PagedAttention, Quantization, Speculative Decoding 등 주요 최적화 기법과 vLLM/TensorRT-LLM 같은 서빙 프레임워크를 정리한다.
+
 <!--truncate-->
 
 ---
