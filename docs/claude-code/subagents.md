@@ -2,7 +2,7 @@
 id: subagents
 title: Claude Code Deep Dive — 맞춤 서브에이전트로 작업 분담하기
 sidebar_position: 2
-sidebar_label: "Ch.2: Subagents"
+sidebar_label: Subagents
 tags:
   - Claude Code
   - Anthropic
