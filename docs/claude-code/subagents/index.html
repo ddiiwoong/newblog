@@ -1,0 +1,1004 @@
+<!doctype html><html lang=en dir=ltr class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-claude-code/subagents" data-has-hydrated=false><head><meta charset=UTF-8><meta name=generator content="Docusaurus v3.10.1"><title data-rh=true>Claude Code Deep Dive — 맞춤 서브에이전트로 작업 분담하기 | Cloud Catalyst</title><meta data-rh=true name=viewport content="width=device-width, initial-scale=1.0"/><meta data-rh=true name=twitter:card content=summary_large_image /><meta data-rh=true property=og:url content=https://ddii.dev/docs/claude-code/subagents/ /><meta data-rh=true property=og:locale content=en /><meta data-rh=true name=docusaurus_locale content=en /><meta data-rh=true name=docsearch:language content=en /><meta data-rh=true name=naver-site-verification content=cbcc03783e5594725d3951f4e7f16ede80e69881 /><meta data-rh=true name=docusaurus_version content=current /><meta data-rh=true name=docusaurus_tag content=docs-default-current /><meta data-rh=true name=docsearch:version content=current /><meta data-rh=true name=docsearch:docusaurus_tag content=docs-default-current /><meta data-rh=true property=og:title content="Claude Code Deep Dive — 맞춤 서브에이전트로 작업 분담하기 | Cloud Catalyst"/><meta data-rh=true name=description content="해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다."/><meta data-rh=true property=og:description content="해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다."/><link data-rh=true rel=icon href=/img/favicon.ico /><link data-rh=true rel=canonical href=https://ddii.dev/docs/claude-code/subagents/ /><link data-rh=true rel=alternate href=https://ddii.dev/docs/claude-code/subagents/ hreflang=en /><link data-rh=true rel=alternate href=https://ddii.dev/docs/claude-code/subagents/ hreflang=x-default /><link data-rh=true rel=preconnect href=https://UTLA0DRN66-dsn.algolia.net crossorigin=anonymous /><link rel=alternate type=application/rss+xml href=/rss.xml title="Act as a catalyst RSS Feed"><link rel=alternate type=application/atom+xml href=/atom.xml title="Act as a catalyst Atom Feed"><link rel=alternate type=application/json href=/feed.json title="Act as a catalyst JSON Feed"><link rel=preconnect href=https://www.google-analytics.com><link rel=preconnect href=https://www.googletagmanager.com><script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZT898XDT2"></script><script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-4ZT898XDT2",{anonymize_ip:!0})</script><link rel=search type=application/opensearchdescription+xml title="Cloud Catalyst" href=/opensearch.xml><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4362752107119680" crossorigin=anonymous></script><link rel=stylesheet href=/assets/css/styles.7ffb2c92.css /><script src=/assets/js/runtime~main.4f1fabce.js defer></script><script src=/assets/js/main.2aab21e3.js defer></script></head><body><svg style="display: none;"><defs>
+<symbol id=theme-svg-external-link viewBox="0 0 24 24"><path fill=currentColor d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme-fac")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||"light"),document.documentElement.setAttribute("data-theme-choice",t||"light")}(),function(){try{for(var[t,e]of new URLSearchParams(window.location.search).entries())if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id=__docusaurus><div role=region aria-label="Skip to main content"><a class=skipToContent_fXgn href=#__docusaurus_skipToContent_fallback>Skip to main content</a></div><nav aria-label=Main class="theme-layout-navbar navbar navbar--fixed-top navbarHideable_m1mJ"><div class=navbar__inner><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded=false class="navbar__toggle clean-btn" type=button><svg width=30 height=30 viewBox="0 0 30 30" aria-hidden=true><path stroke=currentColor stroke-linecap=round stroke-miterlimit=10 stroke-width=2 d="M4 7h22M4 15h22M4 23h22"/></svg></button><a class=navbar__brand href=/><div class=navbar__logo><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--light_NVdE"/><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--dark_xIcU"/></div><b class="navbar__title text--truncate">Cloud Catalyst</b></a><a aria-current=page class="navbar__item navbar__link navbar__link--active" href=/>Posts</a><div class="navbar__item dropdown dropdown--hoverable"><a class=navbar__link aria-haspopup=true aria-expanded=false role=button docid=claude-code/overview href=/docs/claude-code/overview/>Docs</a><ul class=dropdown__menu><li><a class=dropdown__link href=/docs/claude-code/overview/>Claude Code</a></ul></div></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a class="navbar__item navbar__link" href=/tags/>Tags</a><a class="navbar__item navbar__link" href=/presentation/>Presentation</a><a class="navbar__item navbar__link" href=/archive/>Archive</a><a class="navbar__item navbar__link" href=/about/>About</a><a class="navbar__item navbar__link" href=/pang4u/>Pang4u</a><a href=https://github.com/ddiiwoong/newblog target=_blank rel="noopener noreferrer" class="navbar__item navbar__link header-github-link" aria-label="GitHub repository"></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type=button disabled title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill=currentColor d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill=currentColor d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill=currentColor d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"/></svg></button></div><div class=navbarSearchContainer_Bca1><button type=button class="DocSearch DocSearch-Button" aria-label="Search (Meta+k)" aria-keyshortcuts=Meta+k><span class=DocSearch-Button-Container><svg width=20 height=20 class=DocSearch-Search-Icon viewBox="0 0 24 24" aria-hidden=true><circle cx=11 cy=11 r=8 stroke=currentColor fill=none stroke-width=1.4 /><path d="m21 21-4.3-4.3" stroke=currentColor fill=none stroke-linecap=round stroke-linejoin=round /></svg><span class=DocSearch-Button-Placeholder>Search</span></span><span class=DocSearch-Button-Keys></span></button></div></div></div><div role=presentation class=navbar-sidebar__backdrop></div></nav><div id=__docusaurus_skipToContent_fallback class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class=docsWrapper_hBAB><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type=button></button><div class=docRoot_UBD9><main class="docMainContainer_TBSr docMainContainerEnhanced_lQrH"><div class="container padding-top--md padding-bottom--lg"><div class=row><div class="col docItemCol_VOVn"><div class=docItemContainer_Djhp><article><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type=button class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Claude Code Deep Dive — 맞춤 서브에이전트로 작업 분담하기</h1></header><blockquote>
+<p>해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.</p>
+</blockquote>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=들어가며>들어가며<a href=#들어가며 class=hash-link aria-label="Direct link to 들어가며" title="Direct link to 들어가며" translate=no>​</a></h2>
+<p>이 글에서는 Claude Code의 서브에이전트(Sub-agent) 개념, 정의 방법, 디스패치 전략부터 5가지 실전 패턴까지 — Claude Code Deep Dive Workshop Chapter 2 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.</p>
+<blockquote>
+<p><strong>주요 출처</strong>:</p>
+<ul>
+<li class="">📕 AWS Korea 워크샵 — <em>Claude Code Deep Dive Workshop Ch.2</em> (Choi WooHyung, 2026.07)</li>
+<li class="">📕 AWS Bedrock 온라인 프로그램 — <em>모듈07: MCP와 Sub-agents</em> (정재민 SA)</li>
+<li class="">🎓 Anthropic 공식 교육 — <em>Introduction to Sub-agents</em> (Anthropic Skilljar)</li>
+<li class="">📖 Anthropic 공식문서 — <a href=https://docs.anthropic.com/en/docs/claude-code/sub-agents target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/sub-agents</a></li>
+<li class=""><strong>기준 시점</strong>: 2026년 7월 · Claude Code v2.1</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li class="">📕 AWS Korea 워크샵 — <em>Claude Code Deep Dive Workshop Chapter 2</em> (Choi WooHyung, Prin. SA, AWS Korea, 2026.07)</li>
+<li class="">🎓 Anthropic Skilljar — <em>Claude Code in Action</em> (2026 리뉴얼 커리큘럼)</li>
+<li class="">📖 Anthropic 공식문서 — <a href=https://docs.anthropic.com/en/docs/claude-code/overview target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code</a></li>
+</ul>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=목차>목차<a href=#목차 class=hash-link aria-label="Direct link to 목차" title="Direct link to 목차" translate=no>​</a></h2>
+<ol>
+<li class=""><a href=#1-subagent%EB%9E%80-%EB%AC%B4%EC%97%87%EC%9D%B8%EA%B0%80 class="">Subagent란 무엇인가</a></li>
+<li class=""><a href=#2-%EC%A0%95%EC%9D%98-%EB%B0%A9%EB%B2%95 class="">정의 방법 — Markdown 한 장으로 워커를 만들기</a></li>
+<li class=""><a href=#3-%EB%94%94%EC%8A%A4%ED%8C%A8%EC%B9%98 class="">디스패치 — 부르고, 병렬로 돌리고, 이어서 깨우기</a></li>
+<li class=""><a href=#4-pattern-1-code-reviewer class="">Pattern 1: Code Reviewer</a></li>
+<li class=""><a href=#5-pattern-2-tester class="">Pattern 2: Tester</a></li>
+<li class=""><a href=#6-pattern-3-security-scanner class="">Pattern 3: Security Scanner</a></li>
+<li class=""><a href=#7-pattern-4-docs-writer class="">Pattern 4: Docs Writer</a></li>
+<li class=""><a href=#8-pattern-5-migration-bot class="">Pattern 5: Migration Bot</a></li>
+<li class=""><a href=#9-%EC%8B%A4%EC%A0%84-%EB%8D%B0%EB%AA%A8-finops-agent--sub-agent-%EB%B3%91%EB%A0%AC-%EB%B6%84%EC%84%9D class="">실전 데모: FinOps Agent</a></li>
+<li class=""><a href=#10--anthropic-skilljar-%EB%B3%B4%EC%B6%A9-sub-agent-%EC%84%A4%EA%B3%84-%ED%95%B5%EC%8B%AC-%EC%9B%90%EC%B9%99 class="">Anthropic Skilljar 보충: Sub-agent 설계 핵심 원칙</a></li>
+<li class=""><a href=#11-%EC%84%A0%ED%83%9D-%EA%B0%80%EC%9D%B4%EB%93%9C--%EC%95%88%ED%8B%B0%ED%8C%A8%ED%84%B4 class="">선택 가이드 & 안티패턴</a></li>
+<li class=""><a href=#references class="">References</a></li>
+</ol>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=1-subagent란-무엇인가>1. Subagent란 무엇인가<a href=#1-subagent란-무엇인가 class=hash-link aria-label="Direct link to 1. Subagent란 무엇인가" title="Direct link to 1. Subagent란 무엇인가" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=정의>정의<a href=#정의 class=hash-link aria-label="Direct link to 정의" title="Direct link to 정의" translate=no>​</a></h3>
+<blockquote>
+<p>Subagent는 특정 작업을 처리하는 <strong>격리된 Claude 인스턴스</strong>입니다.<br/>
+자체 컨텍스트 윈도우, 맞춤 시스템 프롬프트, 별도 도구 권한으로 독립 작업 후 <strong>요약만</strong> 돌려줍니다.</p>
+</blockquote>
+<!-- -->
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=왜-위임하는가--컨텍스트-오염-문제>왜 위임하는가 — 컨텍스트 오염 문제<a href=#왜-위임하는가--컨텍스트-오염-문제 class=hash-link aria-label="Direct link to 왜 위임하는가 — 컨텍스트 오염 문제" title="Direct link to 왜 위임하는가 — 컨텍스트 오염 문제" translate=no>​</a></h3>
+<p>Claude Code는 대화가 길어질수록 컨텍스트 윈도우가 채워집니다. 모든 파일 읽기, 검색 결과, 도구 호출 출력이 그대로 쌓이기 때문입니다. 이 공간은 <strong>유한</strong>한다 — Sonnet 5 기준 1M 토큰이지만, 그 안에 대화 초반의 지시와 방향이 묻히면 응답 품질이 눈에 띄게 떨어집니다.</p>
+<p><strong>구체적 시나리오</strong>: 낯선 프로젝트에서 "환불 처리 로직이 어디 있는지" 알고 싶다고 가정합니다. Sub-agent 없이 직접 탐색하면 15~30개 파일을 읽고, grep을 여러 번 실행하고, 호출 체인을 추적합니다. 이 모든 것이 메인 컨텍스트에 쌓여서, 정작 원하는 답("middleware/refund.js 42번 줄")을 받은 뒤에도 이미 윈도우의 상당 부분을 소진한 상태가 됩니다. 반면 Explore sub-agent에게 위임하면 그 탐색은 별도 윈도우에서 일어나고, 메인에는 "질문 + 요약 한 문단"만 기록됩니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>위임 없이 (메인에서 직접)<th>위임하면 (Subagent 경유)<tbody><tr><td>30개 파일 읽기가 그대로 이력에 축적<td>대량 읽기는 자식 컨텍스트에서 소화<tr><td>테스트 로그 수천 줄이 윈도우 점유<td>메인에는 실패 테스트 요약만 도착<tr><td>Compaction이 빨리 오고 초기 지시 소실<td>본 대화는 결정과 방향에만 사용<tr><td>긴 세션일수록 응답 품질 하락<td>긴 세션에도 컨텍스트가 가볍게 유지</table>
+<blockquote>
+<p>💡 <strong>트레이드오프</strong>: Sub-agent를 사용하면 컨텍스트는 깨끗하게 유지되지만, 그 대가로 sub-agent가 결론에 도달한 <strong>과정의 가시성을 잃는다</strong>. 요약만 돌아오기 때문입니다. 따라서 "과정 자체를 보면서 반응해야 하는 작업"은 메인에서 직접 하는 것이 맞습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=main-agent-vs-subagent-비교>Main Agent vs Subagent 비교<a href=#main-agent-vs-subagent-비교 class=hash-link aria-label="Direct link to Main Agent vs Subagent 비교" title="Direct link to Main Agent vs Subagent 비교" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>구분<th>Main Agent<th>Subagent<tbody><tr><td>컨텍스트<td>전체 대화 이력 보유<td>위임 메시지로 새 출발<tr><td>시스템 프롬프트<td>Claude Code 전체 프롬프트<td>정의 파일 본문 + 환경 정보<tr><td>도구<td>세션의 전체 도구<td><code>tools</code> 필드로 좁힌 집합<tr><td>산출물<td>사용자와의 대화<td>요약 결과 한 덩이<tr><td>수명<td>세션과 함께<td>작업 완료 시 종료, resume 가능</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=subagent-시작-시-로드되는-것-초기-컨텍스트-5요소>Subagent 시작 시 로드되는 것 (초기 컨텍스트 5요소)<a href=#subagent-시작-시-로드되는-것-초기-컨텍스트-5요소 class=hash-link aria-label="Direct link to Subagent 시작 시 로드되는 것 (초기 컨텍스트 5요소)" title="Direct link to Subagent 시작 시 로드되는 것 (초기 컨텍스트 5요소)" translate=no>​</a></h3>
+<ol>
+<li class=""><strong>System Prompt</strong> — 에이전트 자신의 프롬프트 + 환경 정보 (Claude Code 전체 프롬프트는 미포함)</li>
+<li class=""><strong>Task Message</strong> — 메인 Claude가 작성한 위임 지시문 (대화 이력은 오지 않음)</li>
+<li class=""><strong>CLAUDE.md + Memory</strong> — 메인이 로드한 메모리 계층 전체</li>
+<li class=""><strong>Git Status</strong> — 부모 세션 시작 시점 스냅샷</li>
+<li class=""><strong>Preloaded Skills</strong> — <code>skills</code> 필드에 지정한 스킬의 본문 전체</li>
+</ol>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=built-in-에이전트>Built-in 에이전트<a href=#built-in-에이전트 class=hash-link aria-label="Direct link to Built-in 에이전트" title="Direct link to Built-in 에이전트" translate=no>​</a></h3>
+<p>Claude Code에는 즉시 사용 가능한 내장 sub-agent가 포함되어 있습니다. 사용자가 명시적으로 호출하지 않아도, Claude가 작업 성격을 판단해 자동으로 위임합니다. Explore와 Plan은 CLAUDE.md와 git 상태를 <strong>생략</strong>해서 빠르고 저렴하게 동작합니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>이름<th>특성<th>용도<tbody><tr><td><strong>Explore</strong><td>읽기 전용, 3단계 강도 (quick/medium/very thorough)<td>코드베이스 검색과 분석에 최적화. Claude가 수정 없이 코드를 이해해야 할 때 자동으로 위임합니다. v2.1.198부터 메인 모델을 상속하며, Claude API에서는 Opus 상한이 적용됩니다.<tr><td><strong>Plan</strong><td>읽기 전용, 모델 상속<td>Plan 모드에서 Claude가 코드베이스를 이해해야 할 때 연구를 위임합니다. 탐색 출력이 별도 컨텍스트에 격리되어 메인(계획 수립 전용)이 깨끗하게 유지됩니다.<tr><td><strong>general-purpose</strong><td>전체 도구, 모델 상속<td>탐색과 수정 모두 필요한 복잡한 다단계 작업에 사용됩니다. 복잡한 추론으로 결과를 해석하거나, 여러 의존 단계가 필요한 작업에 적합합니다.</table>
+<blockquote>
+<p>💡 Explore를 더 저렴하게 운영하고 싶다면, 동명의 커스텀 정의를 만들어 <code>model: haiku</code>를 지정하면 내장 Explore를 오버라이드할 수 있습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실행-모델-foreground-vs-background>실행 모델: Foreground vs Background<a href=#실행-모델-foreground-vs-background class=hash-link aria-label="Direct link to 실행 모델: Foreground vs Background" title="Direct link to 실행 모델: Foreground vs Background" translate=no>​</a></h3>
+<p>v2.1.198부터 <strong>백그라운드가 기본값</strong>입니다.</p>
+<p><strong>Foreground</strong>는 "이 결과가 없으면 다음 판단을 할 수 없다"는 상황에서 사용합니다. 메인 대화가 완전히 차단되며, sub-agent가 완료될 때까지 기다립니다. <strong>Background</strong>(기본)는 "결과가 오면 좋지만, 그 사이 다른 작업을 계속할 수 있다"는 상황입니다. 실제 사용감은 브라우저 탭을 여러 개 열어두고 작업하는 것과 비슷한다 — 완료되면 알림이 뜨고, 결과를 확인할 수 있습니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>모드<th>동작<th>사용 시점<tbody><tr><td><strong>Foreground</strong><td>메인 차단, 결과가 즉시 다음 판단에 필요<td>체이닝 (앞 결과에 의존), 순차 의존 작업<tr><td><strong>Background</strong> (기본)<td>동시 진행, 완료 시 메시지로 도착<td>병렬 리서치, 독립적 분석, 리뷰</table>
+<p><strong>조작 키</strong>: <code>Ctrl+B</code> 실행 중 작업을 백그라운드로 전환, <code>x</code> 중지 또는 완료 정리, <code>Esc</code> 프롬프트로 복귀, <code>/tasks</code> 전체 작업 현황 확인</p>
+<blockquote>
+<p>💡 권한 프롬프트(승인 요청)는 백그라운드 에이전트의 것도 <strong>메인 세션에 표면화</strong>됩니다. 어떤 에이전트가 요청하는지 이름이 함께 표시되므로 혼동 없이 승인/거부할 수 있습니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=2-정의-방법>2. 정의 방법<a href=#2-정의-방법 class=hash-link aria-label="Direct link to 2. 정의 방법" title="Direct link to 2. 정의 방법" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=정의-파일-구조--yaml-frontmatter--시스템-프롬프트>정의 파일 구조 — YAML Frontmatter + 시스템 프롬프트<a href=#정의-파일-구조--yaml-frontmatter--시스템-프롬프트 class=hash-link aria-label="Direct link to 정의 파일 구조 — YAML Frontmatter + 시스템 프롬프트" title="Direct link to 정의 파일 구조 — YAML Frontmatter + 시스템 프롬프트" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>&lt;!-- .claude/agents/my-agent.md --></span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token hr punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">name: my-agent</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: 언제 이 에이전트를 써야 하는지 설명</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">tools: Read, Grep, Glob, Bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">model: sonnet</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important">memory: project</span><br/></div><div class=token-line style=color:#393A34><span class="token title important"></span><span class="token title important punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">여기가 시스템 프롬프트 본문입니다.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">호출되면 무엇을 하는지 상세히 기술합니다.</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=스코프-5계층-같은-이름-충돌-시-위가-이김>스코프 5계층 (같은 이름 충돌 시 위가 이김)<a href=#스코프-5계층-같은-이름-충돌-시-위가-이김 class=hash-link aria-label="Direct link to 스코프 5계층 (같은 이름 충돌 시 위가 이김)" title="Direct link to 스코프 5계층 (같은 이름 충돌 시 위가 이김)" translate=no>​</a></h3>
+<p>왜 5계층으로 나눠져 있을까요? 조직에는 "모든 개발자에게 강제할 정책"(Managed), "내 취향"(User), "이 팀의 표준"(Project)이 공존합니다. 계층 구조 덕분에 관리자가 보안 에이전트를 강제 배포하면서도, 개인은 자기만의 편의 에이전트를 자유롭게 추가할 수 있습니다. 동명 충돌 시 상위가 이기므로, 조직 정책이 개인 설정을 항상 재정의합니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>순위<th>스코프<th>위치<th>설명<tbody><tr><td>1<td><strong>Managed</strong><td>조직 관리 설정 디렉토리<td>관리자가 배포, 최우선<tr><td>2<td><strong>--agents 플래그</strong><td>CLI 인자 (JSON)<td>세션 한정, 디스크 저장 없음<tr><td>3<td><strong>Project</strong><td><code>.claude/agents/</code><td>버전 관리로 팀 공유 ← <strong>실무 중심</strong><tr><td>4<td><strong>User</strong><td><code>~/.claude/agents/</code><td>내 모든 프로젝트에서 사용<tr><td>5<td><strong>Plugin</strong><td>플러그인의 <code>agents/</code><td><code>my-plugin:name</code> 스코프 이름</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=프론트매터-주요-필드-요약>프론트매터 주요 필드 요약<a href=#프론트매터-주요-필드-요약 class=hash-link aria-label="Direct link to 프론트매터 주요 필드 요약" title="Direct link to 프론트매터 주요 필드 요약" translate=no>​</a></h3>
+<p>각 필드가 왜 존재하는지 이해하면 설계가 쉬워집니다:</p>
+<ul>
+<li class=""><strong><code>tools</code></strong>: 에이전트가 할 수 있는 일의 범위를 물리적으로 제한합니다. 코드 리뷰어에게 Edit를 주지 않으면, 아무리 실수해도 코드를 바꿀 수 없습니다. 이것이 CLAUDE.md의 "~하지 마라"와 다른 점이다 — 도구가 없으면 시도 자체가 불가능합니다.</li>
+<li class=""><strong><code>model</code></strong>: 비용과 품질의 균형입니다. 탐색성 워커는 haiku로 저렴하게, 아키텍처 판단이 필요한 리뷰어는 opus로 정밀하게 배분합니다. <code>inherit</code>는 메인과 동일 모델을 사용합니다.</li>
+<li class=""><strong><code>memory</code></strong>: <code>project</code> 스코프를 권장합니다. 리뷰할수록 이 저장소의 반복 이슈와 컨벤션이 축적되어, 시간이 갈수록 더 정확한 피드백을 줍니다. 팀이 <code>.claude/agent-memory/</code>를 커밋하면 학습 자체가 팀 자산이 됩니다.</li>
+<li class=""><strong><code>hooks</code></strong>: CLAUDE.md는 "보통 따르는" 지시이고, Hook은 "절대 건너뛸 수 없는" 코드입니다. Security Scanner처럼 무인 실행에서도 안전을 보장해야 하는 에이전트에 필수적입니다.</li>
+<li class=""><strong><code>mcpServers</code></strong>: 이 에이전트<strong>만</strong> 특정 외부 시스템에 접근하게 합니다. DB 분석 에이전트에만 PostgreSQL MCP를 붙이면, 다른 에이전트는 DB에 접근할 수 없다 — 최소 권한 원칙의 실현입니다.</li>
+<li class=""><strong><code>maxTurns</code></strong>: 폭주 방지 안전장치입니다. 에이전트가 길을 잃어 무한히 도는 것을 물리적으로 막습니다. Migration Bot처럼 긴 작업은 60, 일반 리뷰어는 20~40 정도가 적절합니다.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>필드<th>설명<th>예시<tbody><tr><td><code>name</code><td>고유 식별자 (소문자+하이픈)<td><code>code-reviewer</code><tr><td><code>description</code><td><strong>자동 위임의 트리거</strong> — 언제 쓰는지<td><code>Use immediately after modifying code</code><tr><td><code>tools</code><td>허용 도구 목록 (생략 시 전체 상속)<td><code>Read, Grep, Glob, Bash</code><tr><td><code>disallowedTools</code><td>차단 목록 (상속에서 빼기)<td><code>Write, Edit</code><tr><td><code>model</code><td>모델 지정 (<code>sonnet</code>, <code>opus</code>, <code>haiku</code>, <code>inherit</code>)<td><code>sonnet</code><tr><td><code>permissionMode</code><td>권한 모드 오버라이드<td><code>dontAsk</code>, <code>acceptEdits</code><tr><td><code>memory</code><td>영속 메모리 스코프<td><code>project</code> (권장)<tr><td><code>skills</code><td>프리로드할 스킬 목록<td><code>[api-conventions, error-handling]</code><tr><td><code>dontAsk</code><td>무승인 실행 허용 (⚠️ 보안 주의)<td><code>true</code><tr><td><code>permissionMode</code><td>에이전트별 권한 모드<td><code>plan</code>, <code>default</code>, <code>acceptEdits</code>, <code>bypassPermissions</code><tr><td><code>color</code><td>UI 색상 구분 (여러 에이전트 동시 사용 시)<td><code>blue</code><tr><td><code>agent_type</code><td>훅 매처에서 사용되는 타입 값<td>name과 동일<tr><td><code>mcpServers</code><td>이 에이전트 전용 MCP 서버<td>(인라인 또는 참조)<tr><td><code>isolation</code><td>실행 격리<td><code>worktree</code><tr><td><code>maxTurns</code><td>턴 수 상한 (폭주 방지)<td><code>40</code><tr><td><code>hooks</code><td>이 에이전트 활성 중만 적용되는 Hook<td>PreToolUse, Stop 등<tr><td><code>background</code><td>항상 백그라운드 실행<td><code>true</code><tr><td><code>effort</code><td>노력 수준 오버라이드<td><code>high</code><tr><td><code>initialPrompt</code><td><code>--agent</code> 실행 시 첫 턴 자동 제출<td>세션형 부팅 지시</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=description-작성--위임되는-설명-vs-무시되는-설명>description 작성 — 위임되는 설명 vs 무시되는 설명<a href=#description-작성--위임되는-설명-vs-무시되는-설명 class=hash-link aria-label="Direct link to description 작성 — 위임되는 설명 vs 무시되는 설명" title="Direct link to description 작성 — 위임되는 설명 vs 무시되는 설명" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token title important punctuation" style=color:#393A34>#</span><span class="token title important"> ❌ 무시됨 (역할만, 시점 없음)</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: 코드를 리뷰하는 에이전트</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important punctuation" style=color:#393A34>#</span><span class="token title important"> ✅ 위임됨 (시점 명확 + 능동 문구)</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: Expert code review specialist. Use immediately after writing or modifying code. MUST BE USED before commits touching auth or payments.</span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 <code>Use proactively</code>, <code>MUST BE USED when...</code> 같은 능동 문구가 자동 위임 정확도를 결정합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-첫-에이전트-만들기>실습: 첫 에이전트 만들기<a href=#실습-첫-에이전트-만들기 class=hash-link aria-label="Direct link to 실습: 첫 에이전트 만들기" title="Direct link to 실습: 첫 에이전트 만들기" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 1. 프로젝트에서 Claude를 시작한다</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">cd your-project && claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 2. Claude에게 에이전트 생성을 요청한다</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> ~/.claude/agents/ 에 code-improver 서브에이전트를 만들어줘.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  파일을 스캔해서 가독성, 성능, 모범 사례 개선점을 제안하는 역할이야.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  읽기 전용으로 하고 모델은 sonnet을 써.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 3. 저장 후 몇 초 뒤 바로 위임 가능 (파일 워처 자동 감지)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> code-improver 에이전트로 이 프로젝트 개선점 제안해줘</span><br/></div></code></pre></div></div>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=3-디스패치>3. 디스패치<a href=#3-디스패치 class=hash-link aria-label="Direct link to 3. 디스패치" title="Direct link to 3. 디스패치" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=호출-3단계-사다리>호출 3단계 사다리<a href=#호출-3단계-사다리 class=hash-link aria-label="Direct link to 호출 3단계 사다리" title="Direct link to 호출 3단계 사다리" translate=no>​</a></h3>
+<p>에이전트를 "어떻게 부를 것인가"에는 세 단계가 있습니다. 강도가 올라갈수록 Claude의 재량이 줄어들고, 사용자의 의도가 확실하게 전달됩니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>레벨<th>방법<th>강도<tbody><tr><td><strong>1. 자연어</strong><td>"test-runner 서브에이전트로 고쳐줘"<td>Claude가 판단 — 다른 에이전트가 더 적합하면 대신 위임할 수도 있다<tr><td><strong>2. @멘션</strong><td><code>@agent-code-reviewer 이번 diff 봐줘</code><td><strong>이번 작업은 반드시</strong> 그 에이전트 — Claude의 선택권을 고정한다<tr><td><strong>3. --agent</strong><td><code>claude --agent code-reviewer</code><td><strong>세션 전체가</strong> 그 에이전트의 프롬프트와 도구로 실행 — 기본 Claude Code 프롬프트를 완전히 대체한다</table>
+<p><strong>실무 판단 기준</strong>:</p>
+<ul>
+<li class="">처음 써보는 에이전트라면 <strong>자연어</strong>로 시작해서 자동 위임이 잘 되는지 확인한다</li>
+<li class="">잘 되면 그대로, 잘 안 되면 <strong>@멘션</strong>으로 보장한다</li>
+<li class="">한 세션 내내 그 역할만 필요하면 (예: PR 리뷰 전문 세션) <strong>--agent</strong>로 시작한다</li>
+</ul>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=멘션-실습>@멘션 실습<a href=#멘션-실습 class=hash-link aria-label="Direct link to @멘션 실습" title="Direct link to @멘션 실습" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">~/proj $ claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 타입어헤드에서 선택</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> @ 입력 후 에이전트 목록에서 선택</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 수동 표기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> @agent-code-reviewer auth 변경 부분 봐줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 플러그인 에이전트</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> @agent-my-plugin:review:security 이 PR 스캔해줘</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--agent-세션-전체-실행>--agent 세션 전체 실행<a href=#--agent-세션-전체-실행 class=hash-link aria-label="Direct link to --agent 세션 전체 실행" title="Direct link to --agent 세션 전체 실행" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 세션 자체가 code-reviewer의 프롬프트와 도구로 실행된다</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude --agent code-reviewer</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 프로젝트 기본값으로 고정 (.claude/settings.json)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># { "agent": "code-reviewer" }</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=병렬-리서치-패턴>병렬 리서치 패턴<a href=#병렬-리서치-패턴 class=hash-link aria-label="Direct link to 병렬 리서치 패턴" title="Direct link to 병렬 리서치 패턴" translate=no>​</a></h3>
+<p>이 패턴은 독립적인 모듈 여러 개를 동시에 조사해야 할 때 사용합니다. 핵심 조건은 <strong>조사 경로가 서로 의존하지 않을 것</strong>입니다.</p>
+<p><strong>실제 동작 흐름</strong>: (1) 사용자가 병렬 조사를 요청한다 → (2) 메인 Claude가 각 모듈에 대한 위임 지시문을 작성하고 sub-agent 3개를 동시에 스폰한다 → (3) 각 sub-agent는 자기 컨텍스트에서 독립적으로 파일을 읽고 분석한다 → (4) 완료되는 순서대로 요약이 메인에 도착한다 (동시에 끝날 필요 없음) → (5) 메인 Claude가 3개의 보고를 종합하여 사용자에게 답변합니다.</p>
+<blockquote>
+<p>⚠️ <strong>회수 비용 주의</strong>: 3개 에이전트가 각각 상세한 결과를 반환하면 그것 자체가 메인 컨텍스트를 채울 수 있습니다. 지시문에 "핵심 흐름을 <strong>3~5줄로</strong> 요약해서 보고해"처럼 회수 형태를 명시하는 것이 좋습니다.</p>
+</blockquote>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">> 인증, 데이터베이스, API 모듈을 각각 별도 서브에이전트로 병렬 조사해줘.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  각자 담당 영역의 구조와 핵심 흐름을 요약해서 보고해.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 동작:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   독립 에이전트 3개가 동시에 탐색</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   각자 자기 컨텍스트에서 파일을 소화</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   완료되는 대로 요약이 메인에 도착</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   메인 Claude가 세 보고를 종합</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=체이닝-순차-연결>체이닝 (순차 연결)<a href=#체이닝-순차-연결 class=hash-link aria-label="Direct link to 체이닝 (순차 연결)" title="Direct link to 체이닝 (순차 연결)" translate=no>​</a></h3>
+<p>앞 에이전트의 결과가 다음 에이전트의 입력이 되어야 할 때 사용합니다. <strong>에이전트 간에 직접 통신은 없다</strong> — 항상 메인이 중계자 역할을 합니다.</p>
+<p><strong>구체적 흐름</strong>: (1) code-reviewer가 성능 이슈 3건을 찾아 보고한다 → (2) 보고가 메인에 도착한다 → (3) 메인 Claude가 그 결과를 읽고, optimizer에게 "이 3건을 수정하라"는 새 위임 지시문을 작성한다 → (4) optimizer가 수정을 수행합니다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 앞 결과를 메인이 받아 다음 지시문에 반영</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> code-reviewer 서브에이전트로 성능 이슈를 찾고,</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  그다음 optimizer 서브에이전트로 고쳐줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 메인 Claude의 내부 동작:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   1. code-reviewer 스폰 → "성능 이슈: N+1 쿼리(users.ts:42), 불필요한 재렌더링(App.tsx:15)" 회수</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   2. 결과를 읽고 optimizer에게 위임: "users.ts:42의 N+1을 batch 로드로, App.tsx:15의 재렌더링을 memo로 수정해줘"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   3. optimizer가 수정 완료 보고</span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 체이닝은 Foreground로 실행해야 한다 — 앞 결과가 없으면 다음을 시작할 수 없기 때문입니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=resume--종료된-에이전트-이어서-깨우기>Resume — 종료된 에이전트 이어서 깨우기<a href=#resume--종료된-에이전트-이어서-깨우기 class=hash-link aria-label="Direct link to Resume — 종료된 에이전트 이어서 깨우기" title="Direct link to Resume — 종료된 에이전트 이어서 깨우기" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">> code-reviewer 서브에이전트로 인증 모듈 리뷰해줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 완료, agent ID가 메인에 귀환</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 그 리뷰 이어서 이번엔 인가 로직을 분석해줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># Claude가 SendMessage로 해당 에이전트를 재개</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 이전 도구 호출과 추론을 전부 가진 채 계속</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=fork--대화-전체를-물려받는-특수-서브에이전트>/fork — 대화 전체를 물려받는 특수 서브에이전트<a href=#fork--대화-전체를-물려받는-특수-서브에이전트 class=hash-link aria-label="Direct link to /fork — 대화 전체를 물려받는 특수 서브에이전트" title="Direct link to /fork — 대화 전체를 물려받는 특수 서브에이전트" translate=no>​</a></h3>
+<p>Named subagent는 정의 파일의 프롬프트로 <strong>새로 출발</strong>합니다. 반면 <code>/fork</code>는 지금까지의 <strong>전체 대화 이력, 도구, 모델을 그대로 상속</strong>합니다. "지금까지 함께 작업한 맥락을 다 알고 있는 곁가지 워커"를 만드는 것입니다. 프롬프트 캐시까지 공유하므로 새 sub-agent를 스폰하는 것보다 비용이 저렴합니다.</p>
+<p><strong>선택 기준</strong>: "이 곁가지 작업을 설명하려면 배경이 길다" → <code>/fork</code>. "역할이 정형화되어 있고 매번 같은 방식으로 일한다" → Named subagent (정의 파일).</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">> /fork 지금까지의 파서 변경에 대한 단위 테스트 초안 작성</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 전체 대화 이력, 도구, 모델을 상속</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 프롬프트 캐시를 공유해 신규 스폰보다 저렴</span><br/></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>구분<th>Named Subagent<th>/fork<tbody><tr><td>컨텍스트<td>지시문으로 새 출발<td>전체 대화 이력 상속<tr><td>프롬프트<td>정의 파일의 것<td>메인과 동일<tr><td>캐시<td>별도 캐시<td>메인과 공유 (비용↓)<tr><td>선택 기준<td>역할이 정형화된 작업<td>배경 설명이 긴 곁가지</table>
+<hr/>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=resume과-sendmessage--종료된-에이전트를-이어서-깨우기>Resume과 SendMessage — 종료된 에이전트를 이어서 깨우기<a href=#resume과-sendmessage--종료된-에이전트를-이어서-깨우기 class=hash-link aria-label="Direct link to Resume과 SendMessage — 종료된 에이전트를 이어서 깨우기" title="Direct link to Resume과 SendMessage — 종료된 에이전트를 이어서 깨우기" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">~/proj $ claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> code-reviewer 서브에이전트로 인증 모듈 리뷰해줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 완료, agent ID가 메인에 귀환</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 그 리뷰 이어서 이번엔 인가 로직을 분석해줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → Claude가 SendMessage로 해당 에이전트를 재개</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 이전 도구 호출과 추론을 전부 가진 채 계속</span><br/></div></code></pre></div></div>
+<p><strong>핵심 규칙:</strong></p>
+<ul>
+<li class="">중지된 에이전트는 메시지 수신 시 <strong>자동 재개</strong>된다</li>
+<li class="">이름 재사용 충돌 시 전송을 거부하고 대상을 안내한다</li>
+<li class="">Explore, Plan은 일회성이라 <strong>재개 불가</strong>이다</li>
+</ul>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=에러-처리-v21199>에러 처리 (v2.1.199+)<a href=#에러-처리-v21199 class=hash-link aria-label="Direct link to 에러 처리 (v2.1.199+)" title="Direct link to 에러 처리 (v2.1.199+)" translate=no>​</a></h3>
+<p>v2.1.199부터 API 오류로 끊긴 에이전트는 오류 텍스트를 "결과인 척" 반환하지 않고 <strong>실패로 정확히 보고</strong>합니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>상황<th>동작<tbody><tr><td>Foreground 실패<td>부분 출력 + 중단 안내, 또는 명시적 종료 오류 반환<tr><td>Background 실패<td>실패로 마킹, 종료 메시지에 오류명과 마지막 출력 포함<tr><td>복구<td>원인 해소 후 재시도 요청 또는 해당 에이전트 resume</table>
+<p><strong>안전장치:</strong></p>
+<ul>
+<li class=""><code>maxTurns</code> 상한으로 폭주 방지 (기본값: 무제한, 설정 권장)</li>
+<li class="">훅 검증으로 위험 호출 차단</li>
+</ul>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=4-pattern-1-code-reviewer>4. Pattern 1: Code Reviewer<a href=#4-pattern-1-code-reviewer class=hash-link aria-label="Direct link to 4. Pattern 1: Code Reviewer" title="Direct link to 4. Pattern 1: Code Reviewer" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: 코드를 작성한 같은 컨텍스트에서 리뷰하면, Claude가 작성에 참여했기 때문에 "신선한 시선"을 기대할 수 없습니다. 또한 사람 리뷰어에게 가기 전에 명백한 결함을 거르지 않으면 리뷰 왕복 횟수가 늘어납니다. 별도 컨텍스트의 리뷰어는 코드를 <strong>처음 보는 것처럼</strong> 검토하여 더 날카로운 피드백을 제공합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=시나리오>시나리오<a href=#시나리오 class=hash-link aria-label="Direct link to 시나리오" title="Direct link to 시나리오" translate=no>​</a></h3>
+<p>커밋 전 셀프 리뷰를 표준화합니다. 사람 리뷰어에게 가기 전에 명백한 결함과 보안 이슈를 걸러, 리뷰 왕복 횟수를 줄이는 것이 목표입니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=정의-파일-복붙용>정의 파일 (복붙용)<a href=#정의-파일-복붙용 class=hash-link aria-label="Direct link to 정의 파일 (복붙용)" title="Direct link to 정의 파일 (복붙용)" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>&lt;!-- .claude/agents/code-reviewer.md --></span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token hr punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">name: code-reviewer</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: Expert code review specialist. Proactively reviews code. Use immediately after writing or modifying code. MUST BE USED before commits touching auth, payments, or user data.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">tools: Read, Grep, Glob, Bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">model: inherit</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important">memory: project</span><br/></div><div class=token-line style=color:#393A34><span class="token title important"></span><span class="token title important punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are a senior code reviewer ensuring high standards of code quality and security.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">When invoked:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Run </span><span class="token code-snippet code keyword" style=color:#00009f>`git diff`</span><span class="token plain"> to identify modified files</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Focus on the diff, not the entire repository</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Begin review immediately</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Review checklist:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 명확성: 함수와 변수 이름, 중복 코드</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 안전성: 에러 처리, 입력 검증, 시크릿 노출</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 품질: 테스트 커버리지, 성능 고려</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Provide feedback organized by priority:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">Critical</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain"> (must fix): 파일:라인 + 수정 예시</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">Warnings</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain"> (should fix): 개선 방향 제시</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">Suggestions</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain"> (consider improving): 선택적 개선</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">결론에 </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">머지 가능 여부</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain">를 한 줄로 판정.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">As you review, update your agent memory with:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 반복 발견되는 패턴과 이슈</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 이 저장소의 코딩 컨벤션</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Before each review, check memory for past patterns first.</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=호출-경로-3가지>호출 경로 3가지<a href=#호출-경로-3가지 class=hash-link aria-label="Direct link to 호출 경로 3가지" title="Direct link to 호출 경로 3가지" translate=no>​</a></h3>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=경로-1-대화형>경로 1: 대화형<a href=#경로-1-대화형 class=hash-link aria-label="Direct link to 경로 1: 대화형" title="Direct link to 경로 1: 대화형" translate=no>​</a></h4>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">~/proj $ claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 자동 위임 (description 매칭)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 결제 모듈 리팩토링 끝났어, 커밋 전에 점검하자</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 수정 직후 문맥이 code-reviewer를 자동 발동</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># @멘션으로 보장</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> @agent-code-reviewer 이번 diff 봐줘. 메모리의 과거 패턴 먼저 확인하고 시작해.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 체이닝</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 리뷰에서 Critical만 debugger 서브에이전트로 바로 수정하고 재검토까지 돌려줘</span><br/></div></code></pre></div></div>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=경로-2-헤드리스-스크립트hook>경로 2: 헤드리스 (스크립트/Hook)<a href=#경로-2-헤드리스-스크립트hook class=hash-link aria-label="Direct link to 경로 2: 헤드리스 (스크립트/Hook)" title="Direct link to 경로 2: 헤드리스 (스크립트/Hook)" translate=no>​</a></h4>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 단발 실행</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p "code-reviewer 서브에이전트로 현재 diff를 리뷰하고 Critical 개수를 마지막 줄에 N건 형식으로" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --allowed-tools "Agent,Read,Grep,Glob,Bash(git diff:*)"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># pre-push Hook 게이트 예시</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">RESULT=$(claude -p "code-reviewer 서브에이전트로 현재 diff 리뷰, 마지막 줄에 Critical N건" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --allowed-tools "Agent,Read,Grep,Glob,Bash(git diff:*)")</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "$RESULT" | tail -1 | grep -q "0건" || {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  echo "Critical 발견, push 중단"; exit 1;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div></code></pre></div></div>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=경로-3-github-actions>경로 3: GitHub Actions<a href=#경로-3-github-actions class=hash-link aria-label="Direct link to 경로 3: GitHub Actions" title="Direct link to 경로 3: GitHub Actions" translate=no>​</a></h4>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic># .github/workflows/agent-review.yml</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain">pull_request</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>jobs</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>review</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>runs-on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> ubuntu</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">latest</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>steps</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>uses</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> actions/checkout@v4</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token key atrule" style=color:#00a4db>with</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>fetch-depth</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token number" style=color:#36acaa>0</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> curl </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">fsSL https</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain">//claude.ai/install.sh </span><span class="token punctuation" style=color:#393A34>|</span><span class="token plain"> bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>|</span><span class="token scalar string" style=color:#e3116c></span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>          claude -p "code-reviewer 서브에이전트로 이 PR diff 리뷰, 결과를 review.md로 저장" \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>            --allowed-tools "Agent,Read,Grep,Glob,Bash,Write"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token key atrule" style=color:#00a4db>env</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">          </span><span class="token key atrule" style=color:#00a4db>ANTHROPIC_API_KEY</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> $</span><span class="token punctuation" style=color:#393A34>{</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> secrets.ANTHROPIC_API_KEY </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>}</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=주의점>주의점<a href=#주의점 class=hash-link aria-label="Direct link to 주의점" title="Direct link to 주의점" translate=no>​</a></h3>
+<ul>
+<li class=""><code>description</code>에 시점이 없으면 자동 위임 불발 → <code>Use immediately after...</code> 명시</li>
+<li class=""><code>Bash</code> 누락하면 <code>git diff</code> 실행 불가</li>
+<li class="">출력 형식 미지정 시 산문으로 흩어짐 → 우선순위 3단계 + 파일:라인 형식 강제</li>
+<li class="">CI에서 <code>--allowed-tools</code>에 <code>Agent</code> 포함 필수</li>
+</ul>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=5-pattern-2-tester>5. Pattern 2: Tester<a href=#5-pattern-2-tester class=hash-link aria-label="Direct link to 5. Pattern 2: Tester" title="Direct link to 5. Pattern 2: Tester" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: 테스트 스위트를 직접 실행하면 수천 줄의 로그가 메인 컨텍스트를 채웁니다. 또한 커버리지 확장은 반복적이고 독립적인 작업이라 메인 대화와 분리하기에 적합합니다. <code>worktree</code> 격리를 사용하면 내 작업 트리를 전혀 건드리지 않고 테스트를 작성·실행할 수 있습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=시나리오-1>시나리오<a href=#시나리오-1 class=hash-link aria-label="Direct link to 시나리오" title="Direct link to 시나리오" translate=no>​</a></h3>
+<p>커버리지를 자동으로 확장하고, 엣지 케이스를 발굴하며, worktree 격리로 내 작업 트리를 건드리지 않는 테스트 전문 워커입니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=정의-파일-복붙용-1>정의 파일 (복붙용)<a href=#정의-파일-복붙용-1 class=hash-link aria-label="Direct link to 정의 파일 (복붙용)" title="Direct link to 정의 파일 (복붙용)" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>&lt;!-- .claude/agents/test-writer.md --></span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token hr punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">name: test-writer</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: Test coverage specialist. Use proactively when new code lacks tests or coverage drops below threshold.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">tools: Read, Write, Edit, Bash, Grep, Glob</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">model: sonnet</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">isolation: worktree</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">maxTurns: 40</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important">memory: project</span><br/></div><div class=token-line style=color:#393A34><span class="token title important"></span><span class="token title important punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are a test automation expert.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Workflow:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Measure current coverage (</span><span class="token code-snippet code keyword" style=color:#00009f>`npm run coverage`</span><span class="token plain"> or equivalent)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Identify gaps — prioritize critical paths (auth, payments, data)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Write tests matching project conventions (check existing tests first)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>4.</span><span class="token plain"> Run tests, fix failures while preserving test intent</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>5.</span><span class="token plain"> Report: before/after coverage numbers + new test case list</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Edge case mining axes:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 경계값: 0, 음수, 최대치, 빈 문자열, 빈 배열</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 예외 경로: 타임아웃, 재시도, 부분 실패, 예외 전파</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 동시성: 중복 요청, 경합, 순서 역전</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 시간/로캘: 시간대, 월말, 윤년, 다국어 입력</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Principles:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 외부 IO만 mock, 내부 로직은 실물 실행</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 기존 fixture와 helper 재사용 우선</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 테스트가 통과하도록 약화(assertion 제거)하지 않을 것</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 실패 수정 시 </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">의도 보존</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain"> — 왜 이 assertion인지 주석</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-대화형-호출>실습: 대화형 호출<a href=#실습-대화형-호출 class=hash-link aria-label="Direct link to 실습: 대화형 호출" title="Direct link to 실습: 대화형 호출" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">~/proj $ claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> @agent-test-writer src/payments의 커버리지를 80% 이상으로 올려줘.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  만료 카드와 부분 환불 경로를 반드시 포함하고,</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  끝나면 전후 수치로 보고해.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 백그라운드 패널에서 진행 관찰</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 완료 보고:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   커버리지 62% -> 84%</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   신규 12 케이스: 만료 카드 3, 부분 환불 4, 경계값 5</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   전체 스위트 통과</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=ci-통합-주간-커버리지-보강>CI 통합: 주간 커버리지 보강<a href=#ci-통합-주간-커버리지-보강 class=hash-link aria-label="Direct link to CI 통합: 주간 커버리지 보강" title="Direct link to CI 통합: 주간 커버리지 보강" translate=no>​</a></h3>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic># .github/workflows/coverage-guard.yml</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>schedule</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>cron</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"0 21 * * 0"</span><span class="token plain">  </span><span class="token comment" style=color:#999988;font-style:italic># 매주 일 06시 KST</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>jobs</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>expand</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>runs-on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> ubuntu</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">latest</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>steps</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>uses</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> actions/checkout@v4</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> curl </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">fsSL https</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain">//claude.ai/install.sh </span><span class="token punctuation" style=color:#393A34>|</span><span class="token plain"> bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>|</span><span class="token scalar string" style=color:#e3116c></span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>          claude -p "test-writer 서브에이전트로 커버리지 최하위 모듈 1개를 보강하고 PR 브랜치 생성" \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>            --allowed-tools "Agent,Read,Write,Edit,Bash,Grep,Glob"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token key atrule" style=color:#00a4db>env</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">          </span><span class="token key atrule" style=color:#00a4db>ANTHROPIC_API_KEY</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> $</span><span class="token punctuation" style=color:#393A34>{</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> secrets.ANTHROPIC_API_KEY </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>}</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=핵심-포인트>핵심 포인트<a href=#핵심-포인트 class=hash-link aria-label="Direct link to 핵심 포인트" title="Direct link to 핵심 포인트" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>안전장치<th>설정<tbody><tr><td><strong>격리</strong><td><code>isolation: worktree</code> — 임시 git worktree에서 실행, 내 checkout 무관<tr><td><strong>상한</strong><td><code>maxTurns: 40</code> — 폭주 방지<tr><td><strong>의도 보존</strong><td>프롬프트에 "assertion 약화 금지" 명시</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=6-pattern-3-security-scanner>6. Pattern 3: Security Scanner<a href=#6-pattern-3-security-scanner class=hash-link aria-label="Direct link to 6. Pattern 3: Security Scanner" title="Direct link to 6. Pattern 3: Security Scanner" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: 보안 스캐너가 실수로 코드를 수정하면 재앙입니다. 특히 무인 환경(CI, pre-commit Hook)에서는 "실수로 Edit를 호출"하는 것을 원천 차단해야 합니다. 도구 목록에서 Edit/Write를 빼는 것만으로는 충분하지 않다 — Bash로 <code>sed</code>를 실행하면 우회할 수 있기 때문입니다. 이 패턴은 <strong>도구 제한 + PreToolUse Hook</strong>의 이중 잠금으로 물리적 안전을 보장합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=시나리오-2>시나리오<a href=#시나리오-2 class=hash-link aria-label="Direct link to 시나리오" title="Direct link to 시나리오" translate=no>​</a></h3>
+<p>읽기 전용 + PreToolUse Hook의 <strong>이중 잠금</strong>으로, 무인 환경에서도 코드를 절대 수정하지 못하는 보안 스캐너입니다. 커밋 전 자동 발동해 Critical 이슈를 차단합니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=정의-파일-복붙용-2>정의 파일 (복붙용)<a href=#정의-파일-복붙용-2 class=hash-link aria-label="Direct link to 정의 파일 (복붙용)" title="Direct link to 정의 파일 (복붙용)" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>&lt;!-- .claude/agents/security-scanner.md --></span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token hr punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">name: security-scanner</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: Security specialist. MUST BE USED before commits touching auth, payments, or user data.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">tools: Read, Grep, Glob, Bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">model: opus</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">memory: project</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">permissionMode: dontAsk</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">hooks:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  PreToolUse:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> matcher: "Bash"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      hooks:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> type: command</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">          </span><span class="token title important">command: "./scripts/ro-guard.sh"</span><br/></div><div class=token-line style=color:#393A34><span class="token title important"></span><span class="token title important punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are a senior security engineer performing a thorough security audit.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Scan for:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Injection: SQL, command, template injection과 escape 누락</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Auth/AuthZ: 검증 우회, 권한 상승, 세션 고정</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Sensitive data: 시크릿 하드코딩, 로그 노출, 평문 저장</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>4.</span><span class="token plain"> Input validation: 경계 미검증, 역직렬화, 경로 조작</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>5.</span><span class="token plain"> Configuration: CORS 과개방, 디버그 모드, 기본 자격증명</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>6.</span><span class="token plain"> Dependencies: npm audit / pip-audit 실행, 알려진 CVE</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Before scanning, check memory for confirmed false positives.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Output format:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">Critical</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain">: 공격 시나리오 + 파일:라인 + 수정 예시</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">Warning</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain">: 위험 설명 + 위치</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">Info</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain">: 참고 사항</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">마지막 줄에 </span><span class="token code-snippet code keyword" style=color:#00009f>`Critical N건`</span><span class="token plain"> 형식으로 판정.</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=hook-검증-스크립트-복붙용>Hook 검증 스크립트 (복붙용)<a href=#hook-검증-스크립트-복붙용 class=hash-link aria-label="Direct link to Hook 검증 스크립트 (복붙용)" title="Direct link to Hook 검증 스크립트 (복붙용)" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">#!/bin/bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># ./scripts/ro-guard.sh — Bash 명령 중 읽기 계열만 통과</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">INPUT=$(cat)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">CMD=$(echo "$INPUT" | jq -r '.tool_input.command // empty')</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 허용: 조회 계열만</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "$CMD" | grep -qE \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  '^(git (diff|log|show|status)|grep|rg|cat|head|ls|find|npm audit|pip-audit|trivy)' \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  && exit 0</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "Blocked: read-only commands only" >&2</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">exit 2</span><br/></div></code></pre></div></div>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 실행 권한 부여</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">chmod +x ./scripts/ro-guard.sh</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=pre-commit-게이트-통합>pre-commit 게이트 통합<a href=#pre-commit-게이트-통합 class=hash-link aria-label="Direct link to pre-commit 게이트 통합" title="Direct link to pre-commit 게이트 통합" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">#!/bin/bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># .git/hooks/pre-commit</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">STAGED=$(git diff --cached --name-only | grep -E 'auth|payment|user' || true)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">[ -z "$STAGED" ] && exit 0  # 민감 경로 없으면 통과</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">RESULT=$(claude -p "security-scanner 서브에이전트로 스테이징된 변경을 스캔, 마지막 줄에 Critical N건" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --allowed-tools "Agent,Read,Grep,Glob,Bash")</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "$RESULT" | tail -1 | grep -q "Critical 0건" || {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  echo "보안 Critical 발견, 커밋 중단"; exit 1;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=오탐-처리-순환>오탐 처리 순환<a href=#오탐-처리-순환 class=hash-link aria-label="Direct link to 오탐 처리 순환" title="Direct link to 오탐 처리 순환" translate=no>​</a></h3>
+<ol>
+<li class="">발견 항목을 사람이 판정 (진짜 vs 오탐)</li>
+<li class="">오탐은 사유와 함께 메모리에 기록</li>
+<li class="">다음 스캔 전에 메모리의 오탐 목록을 선대조</li>
+<li class="">분기별 오탐 기록 재검토 (만료 관리)</li>
+</ol>
+<blockquote>
+<p>💡 <code>permissionMode: dontAsk</code>는 확인 프롬프트를 자동 거부합니다. 읽기 중심 에이전트의 무인 운용에 적합합니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=7-pattern-4-docs-writer>7. Pattern 4: Docs Writer<a href=#7-pattern-4-docs-writer class=hash-link aria-label="Direct link to 7. Pattern 4: Docs Writer" title="Direct link to 7. Pattern 4: Docs Writer" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: 문서는 코드와 분리되면 빠르게 부패합니다. API가 바뀌었는데 README는 그대로인 상황이 반복됩니다. 이 패턴은 코드 변경 시 자동으로 문서를 갱신하며, <code>skills</code> 프리로드로 팀 스타일 가이드를 처음부터 알고 출발합니다. CI로 "코드-문서 괴리"를 원천 차단합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=시나리오-3>시나리오<a href=#시나리오-3 class=hash-link aria-label="Direct link to 시나리오" title="Direct link to 시나리오" translate=no>​</a></h3>
+<p>코드를 따라가는 문서 전담 에이전트입니다. <code>skills</code> 프리로드로 스타일 가이드를 처음부터 알고 출발하며, CI로 API 변경 시 문서 부패를 원천 차단합니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=정의-파일-복붙용-3>정의 파일 (복붙용)<a href=#정의-파일-복붙용-3 class=hash-link aria-label="Direct link to 정의 파일 (복붙용)" title="Direct link to 정의 파일 (복붙용)" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>&lt;!-- .claude/agents/docs-writer.md --></span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token hr punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">name: docs-writer</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: Documentation specialist. Use proactively when public APIs change or docs drift from code.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">tools: Read, Write, Edit, Grep, Glob, Bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">model: sonnet</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important">skills: [docs-style-guide, api-doc-template]</span><br/></div><div class=token-line style=color:#393A34><span class="token title important"></span><span class="token title important punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are a technical writer. </span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Principles:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Read the code FIRST, document what it ACTUALLY does</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Follow the preloaded style guide exactly</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Commands and procedures must be verified by execution before documenting</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Never document assumptions — only verified behavior</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Document types you produce:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> README: Quick Start, 구성(환경변수 표), 개발 절차</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> API docs: 메서드, 경로, 스키마(타입에서 추출), 에러 코드 표</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> ADR: Status, Context, Decision, Alternatives, Consequences</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Changelog: Added/Changed/Fixed/Deprecated/Removed, Breaking은 최상단</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=skills-파일-예시>Skills 파일 예시<a href=#skills-파일-예시 class=hash-link aria-label="Direct link to Skills 파일 예시" title="Direct link to Skills 파일 예시" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>&lt;!-- .claude/skills/docs-style-guide/skill.md --></span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token hr punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">name: docs-style-guide</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important">description: Team documentation style conventions</span><br/></div><div class=token-line style=color:#393A34><span class="token title important"></span><span class="token title important punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important punctuation" style=color:#393A34>##</span><span class="token title important"> 어투</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 한국어 본문, 기술 용어와 명령어는 영문 유지</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token strike punctuation" style=color:#393A34>~</span><span class="token strike content">이다/</span><span class="token strike punctuation" style=color:#393A34>~</span><span class="token plain">다 존칭</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 금지: </span><span class="token strike punctuation" style=color:#393A34>~</span><span class="token strike content">해라, </span><span class="token strike punctuation" style=color:#393A34>~</span><span class="token plain">해라 (명령/명령형)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important punctuation" style=color:#393A34>##</span><span class="token title important"> 구조</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> H1은 문서당 1개</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 코드 블록에는 반드시 언어 태그</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 표는 Markdown pipe 형식, 최소 3행</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important punctuation" style=color:#393A34>##</span><span class="token title important"> 금지 표현</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> "간단하게", "쉽게" (독자에게 주관적)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> "최신" (날짜를 명시할 것)</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-readme-자동-생성>실습: README 자동 생성<a href=#실습-readme-자동-생성 class=hash-link aria-label="Direct link to 실습: README 자동 생성" title="Direct link to 실습: README 자동 생성" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">> @agent-docs-writer 이 저장소 README를 표준 구조로 재작성해줘.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  실제 package.json 스크립트와 .env.example 기준으로 설치, 실행 절차를 검증해서.</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=ci-문서-부패-방지>CI: 문서 부패 방지<a href=#ci-문서-부패-방지 class=hash-link aria-label="Direct link to CI: 문서 부패 방지" title="Direct link to CI: 문서 부패 방지" translate=no>​</a></h3>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic># .github/workflows/docs-sync.yml</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>pull_request</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>paths</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"src/api/**"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>jobs</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>docs</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>runs-on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> ubuntu</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">latest</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>steps</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>uses</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> actions/checkout@v4</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> curl </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">fsSL https</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain">//claude.ai/install.sh </span><span class="token punctuation" style=color:#393A34>|</span><span class="token plain"> bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>|</span><span class="token scalar string" style=color:#e3116c></span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>          claude -p "docs-writer 서브에이전트로 이 PR의 API 변경을 docs/api.md에 반영, 변경 없으면 무동작" \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>            --allowed-tools "Agent,Read,Write,Edit,Grep,Glob,Bash"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token key atrule" style=color:#00a4db>env</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">          </span><span class="token key atrule" style=color:#00a4db>ANTHROPIC_API_KEY</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> $</span><span class="token punctuation" style=color:#393A34>{</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> secrets.ANTHROPIC_API_KEY </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>}</span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 <code>paths: ["src/api/**"]</code> 필터로 API 변경 PR에만 발동하여 불필요한 실행을 방지합니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=8-pattern-5-migration-bot>8. Pattern 5: Migration Bot<a href=#8-pattern-5-migration-bot class=hash-link aria-label="Direct link to 8. Pattern 5: Migration Bot" title="Direct link to 8. Pattern 5: Migration Bot" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: 대규모 일괄 변경(lodash → 네이티브 ES, React 16 → 18 등)은 수십~수백 파일에 영향을 줍니다. 한 번에 전부 바꾸면 실패 시 원인을 찾기 어렵고, 중간에 멈추면 절반만 마이그레이션된 상태가 됩니다. 이 패턴은 10파일 단위 배치 + 매 배치마다 빌드/테스트 검증 + worktree 격리 + maxTurns 상한의 <strong>4겹 방어</strong>로 안전하게 진행합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=시나리오-4>시나리오<a href=#시나리오-4 class=hash-link aria-label="Direct link to 시나리오" title="Direct link to 시�나리오" translate=no>​</a></h3>
+<p>대규모 일괄 변경(라이브러리 업그레이드, import 경로 변경, deprecated API 교체)을 <strong>4겹 방어</strong>로 안전하게 수행하는 워커입니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=정의-파일-복붙용-4>정의 파일 (복붙용)<a href=#정의-파일-복붙용-4 class=hash-link aria-label="Direct link to 정의 파일 (복붙용)" title="Direct link to 정의 파일 (복붙용)" translate=no>​</a></h3>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>&lt;!-- .claude/agents/migration-bot.md --></span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token hr punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">name: migration-bot</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">description: Large-scale migration specialist. Use for library upgrades, import path changes, deprecated API swaps.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">tools: Read, Write, Edit, Bash, Grep, Glob</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">model: sonnet</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">isolation: worktree</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">maxTurns: 60</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token title important">memory: project</span><br/></div><div class=token-line style=color:#393A34><span class="token title important"></span><span class="token title important punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are a migration specialist.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Process:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Migrate in small verifiable batches (10 files per batch)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Each batch: apply changes → build → test → record progress</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Stop immediately if failure rate exceeds 20%</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>4.</span><span class="token plain"> Record progress to memory after each batch</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Safety rules:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 기계적 치환이 가능한 것만 자동 수행</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 의미가 바뀌는 변경은 </span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token bold content">목록만 만들고 사람에게</span><span class="token bold punctuation" style=color:#393A34>**</span><span class="token plain"> 보고</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 순환 참조 발견 시 목록화 후 중단</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Output:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 배치별 진행 현황 (N/M files done, tests green/red)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 치환 불가 항목 목록과 사유</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> 최종: worktree diff를 브랜치로, 리뷰 요청</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=4겹-방어-구조>4겹 방어 구조<a href=#4겹-방어-구조 class=hash-link aria-label="Direct link to 4겹 방어 구조" title="Direct link to 4겹 방어 구조" translate=no>​</a></h3>
+<!-- -->
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-라이브러리-업그레이드>실습: 라이브러리 업그레이드<a href=#실습-라이브러리-업그레이드 class=hash-link aria-label="Direct link to 실습: 라이브러리 업그레이드" title="Direct link to 실습: 라이브러리 업그레이드" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">> @agent-migration-bot lodash 4를 제거하고 네이티브 ES 메서드로 전환해줘.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  대체 불가 유틸은 src/utils/에 자체 구현하고,</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  10파일 단위로 빌드와 테스트 검증하면서 진행해.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 진행 보고 (배치마다 메모리 기록):</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   batch 3/9: 28 files done, tests green</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   치환 불가 2건: debounce, cloneDeep -> utils 구현</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 완료 후 worktree diff를 브랜치로 회수</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=비용-효율-모델-분업>비용 효율: 모델 분업<a href=#비용-효율-모델-분업 class=hash-link aria-label="Direct link to 비용 효율: 모델 분업" title="Direct link to 비용 효율: 모델 분업" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>단계<th>모델<th>역할<tbody><tr><td><strong>탐색</strong> (대상 수집, 분류)<td><code>haiku</code><td>대상 호출부 전수 수집, 파일별 영향도 분류<tr><td><strong>변환</strong> (정밀 치환, 검증)<td><code>sonnet</code><td>배치 계획대로 정밀 치환, 관문 검증</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=batch와의-관계>/batch와의 관계<a href=#batch와의-관계 class=hash-link aria-label="Direct link to /batch와의 관계" title="Direct link to /batch와의 관계" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>/batch (내장 오케스트레이션)<th>migration-bot (맞춤)<tbody><tr><td>코드베이스 조사와 단위 분해 자동<td>배치 크기, 관문, 규칙을 세밀 통제<tr><td>5~30개 워커 병렬 스폰<td>메모리로 회차 간 연속성<tr><td>워크트리 격리 + 단위별 PR<td>판단 분리 등 도메인 규칙 내장<tr><td><strong>대규모 균질 변경에 최적</strong><td><strong>중간 규모, 반복 마이그레이션에 최적</strong></table>
+<hr/>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=9-실전-데모-finops-agent--sub-agent-병렬-분석>9. 실전 데모: FinOps Agent — Sub-agent 병렬 분석<a href=#9-실전-데모-finops-agent--sub-agent-병렬-분석 class=hash-link aria-label="Direct link to 9. 실전 데모: FinOps Agent — Sub-agent 병렬 분석" title="Direct link to 9. 실전 데모: FinOps Agent — Sub-agent 병렬 분석" translate=no>​</a></h2>
+<blockquote>
+<p>📕 출처: <em>Claude Code on Bedrock Online Program — 모듈07</em> (정재민 SA, AWS)</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=시나리오-5>시나리오<a href=#시나리오-5 class=hash-link aria-label="Direct link to 시나리오" title="Direct link to 시나리오" translate=no>​</a></h3>
+<blockquote>
+<p>"AWS 비용이 지난달 대비 증가했습니다. 원인 파악 및 절감 방안을 제시해주라."</p>
+</blockquote>
+<p>단일 대화에서 이 질문을 하면 일반론만 돌아옵니다. <strong>전문가 3명에게 병렬 위임</strong>하면 구체적 분석이 가능합니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=sub-agent-정의-3개-전문가>Sub-agent 정의 (3개 전문가)<a href=#sub-agent-정의-3개-전문가 class=hash-link aria-label="Direct link to Sub-agent 정의 (3개 전문가)" title="Direct link to Sub-agent 정의 (3개 전문가)" translate=no>​</a></h3>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=claudeagentscost-analystmd><code>.claude/agents/cost-analyst.md</code><a href=#claudeagentscost-analystmd class=hash-link aria-label="Direct link to claudeagentscost-analystmd" title="Direct link to claudeagentscost-analystmd" translate=no>​</a></h4>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token front-matter-block punctuation" style=color:#393A34>---</span><span class="token front-matter-block"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>name</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> cost</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>-</span><span class="token front-matter-block front-matter yaml language-yaml">analyst</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>description</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> AWS 비용 분석 전문 에이전트.</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml">  Use proactively when analyzing AWS costs</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml">  comparing billing periods</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> or detecting anomalies.</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>tools</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> Read</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Grep</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Glob</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Bash</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>model</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> sonnet</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>background</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> </span><span class="token front-matter-block front-matter yaml language-yaml boolean important" style=color:#36acaa>true</span><span class="token front-matter-block front-matter yaml language-yaml"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>memory</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> project</span><span class="token front-matter-block"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block"></span><span class="token front-matter-block punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are an AWS cost analyst specializing in FinOps.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">When invoked:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Run cost comparison commands (aws ce get-cost-and-usage)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Identify top cost drivers by service</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Detect anomalies and unexpected spikes</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>4.</span><span class="token plain"> Return structured report:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">   </span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> service, cost_delta_%, root_cause, action</span><br/></div></code></pre></div></div>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=claudeagentsobservability-analystmd><code>.claude/agents/observability-analyst.md</code><a href=#claudeagentsobservability-analystmd class=hash-link aria-label="Direct link to claudeagentsobservability-analystmd" title="Direct link to claudeagentsobservability-analystmd" translate=no>​</a></h4>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token front-matter-block punctuation" style=color:#393A34>---</span><span class="token front-matter-block"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>name</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> observability</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>-</span><span class="token front-matter-block front-matter yaml language-yaml">analyst</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>description</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> AWS 모니터링 및 리소스 활용 분석 전문 에이전트.</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml">  Use when diagnosing underutilized resources</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml">  analyzing CloudWatch metrics</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> or checking instance health.</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>tools</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> Read</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Grep</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Glob</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Bash</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>model</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> sonnet</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>background</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> </span><span class="token front-matter-block front-matter yaml language-yaml boolean important" style=color:#36acaa>true</span><span class="token front-matter-block front-matter yaml language-yaml"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>memory</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> project</span><span class="token front-matter-block"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block"></span><span class="token front-matter-block punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are an AWS observability specialist.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">When invoked:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Check instance utilization (CPU, Memory, GPU)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Identify idle or underutilized resources</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Analyze scaling patterns and peak usage windows</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>4.</span><span class="token plain"> Return structured diagnosis:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">   </span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> resource, utilization_%, anomaly, recommendation</span><br/></div></code></pre></div></div>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=claudeagentsoptimization-advisormd><code>.claude/agents/optimization-advisor.md</code><a href=#claudeagentsoptimization-advisormd class=hash-link aria-label="Direct link to claudeagentsoptimization-advisormd" title="Direct link to claudeagentsoptimization-advisormd" translate=no>​</a></h4>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token front-matter-block punctuation" style=color:#393A34>---</span><span class="token front-matter-block"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>name</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> optimization</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>-</span><span class="token front-matter-block front-matter yaml language-yaml">advisor</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>description</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> AWS 비용 최적화 전문 에이전트.</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml">  Use when evaluating rightsizing</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> RI/Savings Plan coverage</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml">  or generating cost optimization recommendations.</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>tools</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> Read</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Grep</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Glob</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>,</span><span class="token front-matter-block front-matter yaml language-yaml"> Bash</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>model</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> sonnet</span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>background</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> </span><span class="token front-matter-block front-matter yaml language-yaml boolean important" style=color:#36acaa>true</span><span class="token front-matter-block front-matter yaml language-yaml"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block front-matter yaml language-yaml"></span><span class="token front-matter-block front-matter yaml language-yaml key atrule" style=color:#00a4db>memory</span><span class="token front-matter-block front-matter yaml language-yaml punctuation" style=color:#393A34>:</span><span class="token front-matter-block front-matter yaml language-yaml"> project</span><span class="token front-matter-block"></span><br/></div><div class=token-line style=color:#393A34><span class="token front-matter-block"></span><span class="token front-matter-block punctuation" style=color:#393A34>---</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">You are an AWS cost optimization specialist.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">When invoked:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Evaluate rightsizing opportunities (EC2, RDS, Lambda)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Analyze RI/Savings Plan coverage gaps</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Compare pricing options (On-Demand vs RI vs SP vs Spot)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>4.</span><span class="token plain"> Prioritize by impact:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">   </span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> resource, current_cost, optimized_cost, savings_%, action</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실행>실행<a href=#실행 class=hash-link aria-label="Direct link to 실행" title="Direct link to 실행" translate=no>​</a></h3>
+<p><strong>Claude의 내부 동작 순서 (step-by-step)</strong>:</p>
+<ol>
+<li class="">사용자 요청을 받은 메인 Claude가 <code>cost-analyst</code>, <code>observability-analyst</code>, <code>optimization-advisor</code>의 description을 확인한다</li>
+<li class="">세 에이전트 모두 이 요청에 관련된다고 판단하여 동시에 스폰한다 (background: true)</li>
+<li class="">각 에이전트는 자기 컨텍스트에서 독립적으로 <code>aws ce get-cost-and-usage</code> 등의 명령을 실행한다</li>
+<li class=""><strong>cost-analyst</strong>가 먼저 완료 — 서비스별 비용 비교와 이상치 보고가 메인에 도착한다</li>
+<li class=""><strong>observability-analyst</strong>가 완료 — 리소스 활용률 진단이 메인에 도착한다</li>
+<li class=""><strong>optimization-advisor</strong>가 완료 — 절감 권장 사항이 메인에 도착한다</li>
+<li class="">메인 Claude가 세 보고를 종합하여 사용자에게 구조화된 리포트를 제공한다</li>
+</ol>
+<blockquote>
+<p>💡 3개가 동시에 끝날 필요 없다 — 각자 완료되는 순서대로 결과가 도착하며, 모두 도착하면 종합합니다.</p>
+</blockquote>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">cd your-project</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> AWS 비용이 지난달 대비 증가했습니다.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  cost-analyst, observability-analyst, optimization-advisor</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  세 서브에이전트로 병렬 분석하고 종합 리포트를 만들어줘.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># Claude가 3개 에이전트를 백그라운드로 동시 스폰</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 각자 자기 컨텍스트에서 분석</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 완료되는 대로 요약이 메인에 도착</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → Claude가 종합 리포트 생성</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=결과-예시>결과 예시<a href=#결과-예시 class=hash-link aria-label="Direct link to 결과 예시" title="Direct link to 결과 예시" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>전문가<th>분석 결과<tbody><tr><td><strong>cost-analyst</strong><td>ML팀 p3.8xlarge +280%, 태깅 미적용 40% 증가 주 원인<tr><td><strong>observability-analyst</strong><td>GPU 활용 12% → p3.2xlarge 전환 시 월 $15,200 절감, dev EC2 22대 야간 CPU 2%<tr><td><strong>optimization-advisor</strong><td>On-Demand 72% → 1yr Compute SP 적용 시 연 $142,000 절감</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=설계-판단-프레임워크>설계 판단 프레임워크<a href=#설계-판단-프레임워크 class=hash-link aria-label="Direct link to 설계 판단 프레임워크" title="Direct link to 설계 판단 프레임워크" translate=no>​</a></h3>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">이 작업에 전문성 분리가 필요한가?</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">├── 단일 관점이면 → Main 대화 (또는 /btw)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">├── 독립적 분석 여럿 → Sub-agent 병렬</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">└── 앞 결과에 의존 → Sub-agent 체이닝 (순차)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">⚠️ 주 대화로 충분하면 Sub-agent를 쓰지 마라.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">   단순한 일을 과도 분해하면 비용만 늘어납니다.</span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 <strong>핵심</strong>: 코드 0줄 — <code>.claude/agents/</code> 파일 3개만으로 전문가 팀이 구성됩니다. 각 에이전트의 <code>description</code>이 자동 위임의 트리거 역할을 합니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=10--anthropic-skilljar-보충-sub-agent-설계-핵심-원칙>10. 💡 Anthropic Skilljar 보충: Sub-agent 설계 핵심 원칙<a href=#10--anthropic-skilljar-보충-sub-agent-설계-핵심-원칙 class=hash-link aria-label="Direct link to 10. 💡 Anthropic Skilljar 보충: Sub-agent 설�계 핵심 원칙" title="Direct link to 10. 💡 Anthropic Skilljar 보충: Sub-agent 설계 핵심 원칙" translate=no>​</a></h2>
+<blockquote>
+<p>📕 출처: <em>Introduction to Sub-agents</em> (Anthropic Skilljar, 4 lessons)</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=핵심-판단-기준--단-하나의-질문>핵심 판단 기준 — 단 하나의 질문<a href=#핵심-판단-기준--단-하나의-질문 class=hash-link aria-label="Direct link to 핵심 판단 기준 — 단 하나의 질문" title="Direct link to 핵심 판단 기준 — 단 하나의 질문" translate=no>​</a></h3>
+<blockquote>
+<p><strong>"중간 과정(intermediate work)이 메인 스레드에 중요한가?"</strong></p>
+<ul>
+<li class=""><strong>No</strong> → Sub-agent에 위임 (결과만 필요)</li>
+<li class=""><strong>Yes</strong> → 메인 스레드에서 직접 (과정을 보고 반응해야 함)</li>
+</ul>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=description의-이중-역할-가장-중요한-통찰>Description의 이중 역할 (가장 중요한 통찰)<a href=#description의-이중-역할-가장-중요한-통찰 class=hash-link aria-label="Direct link to Description의 이중 역할 (가장 중요한 통찰)" title="Direct link to Description의 이중 역할 (가장 중요한 통찰)" translate=no>​</a></h3>
+<p>Description은 단순히 "언제 실행할지"만 결정하는 게 아닙니다 — <strong>sub-agent가 무엇을 하라고 지시받는지</strong>까지 형성합니다.</p>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic># ❌ 모호함 → 메인이 모호한 지시를 작성</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>description</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> Use this agent to review code changes.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token comment" style=color:#999988;font-style:italic># ✅ 구체적 → 메인이 파일 목록과 함께 구체적으로 지시</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>description</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> Use this agent to review code changes.</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  You must tell the agent precisely which files you want it to review.</span><br/></div></code></pre></div></div>
+<p>메인 에이전트는 description을 읽고:</p>
+<ol>
+<li class=""><strong>위임 여부</strong>를 판단하고</li>
+<li class=""><strong>task description(입력 프롬프트)를 작성</strong>할 때도 가이드로 사용한다</li>
+</ol>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=출력-포맷-정의--가장-중요한-단일-개선>출력 포맷 정의 — 가장 중요한 단일 개선<a href=#출력-포맷-정의--가장-중요한-단일-개선 class=hash-link aria-label="Direct link to 출력 포맷 정의 — 가장 중요한 단일 개선" title="Direct link to 출력 포맷 정의 — 가장 중요한 단일 개선" translate=no>​</a></h3>
+<blockquote>
+<p>Sub-agent에 할 수 있는 <strong>가장 중요한 단일 개선</strong>은 시스템 프롬프트에 출력 포맷을 정의하는 것입니다.</p>
+</blockquote>
+<p>출력 포맷이 해결하는 2가지 문제:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>문제<th>해결<tbody><tr><td>Sub-agent가 언제 끝내야 할지 모름<td>각 섹션을 채우면 완료 → 자연스러운 종료점<tr><td>너무 오래 실행됨<td>포맷 없으면 "충분히 조사했나?" 판단 불가</table>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token title important punctuation" style=color:#393A34>#</span><span class="token title important"> 시스템 프롬프트에 추가하는 출력 포맷 예시:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Provide your review in a structured format:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>1.</span><span class="token plain"> Summary: Brief overview and overall assessment</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>2.</span><span class="token plain"> Critical Issues: Security vulnerabilities, data integrity risks</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>3.</span><span class="token plain"> Suggestions: Improvements for readability, performance, patterns</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>4.</span><span class="token plain"> Questions: Ambiguous areas needing clarification</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=장애물-보고--오래-실행되는-진짜-원인>장애물 보고 — 오래 실행되는 진짜 원인<a href=#장애물-보고--오래-실행되는-진짜-원인 class=hash-link aria-label="Direct link to 장애물 보고 — 오래 실행되는 진짜 원인" title="Direct link to 장애물 보고 — 오래 실행되는 진짜 원인" translate=no>​</a></h3>
+<p>Sub-agent가 오래 도는 가장 흔한 이유: <strong>길을 잃었지만 보고하지 않음</strong>.</p>
+<p>시스템 프롬프트에 추가:</p>
+<div class="language-markdown codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-markdown codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">If you encounter blockers, report them immediately instead of</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">working around them silently:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Cannot find the relevant files</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Unclear which pattern to follow</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token list punctuation" style=color:#393A34>-</span><span class="token plain"> Missing context about business logic</span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=-skilljar가-정의한-3대-안티패턴>❌ Skilljar가 정의한 3대 안티패턴<a href=#-skilljar가-정의한-3대-안티패턴 class=hash-link aria-label="Direct link to ❌ Skilljar가 정의한 3대 안티패턴" title="Direct link to ❌ Skilljar가 정의한 3대 안티패턴" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>안티패턴<th>왜 해로운가<th>대신 이렇게<tbody><tr><td><strong>Expert Claims</strong> (<code>"You are a Python expert"</code>)<td>Claude는 이미 그 지식을 보유. 격리의 이점 없이 오버헤드만 추가<td>전문성이 아닌 <strong>작업 격리</strong>가 필요할 때만 sub-agent 사용<tr><td><strong>Sequential Pipelines</strong> (A→B→C 순차 위임)<td>각 단계 사이에 컨텍스트가 끊김, 앞 결과에 의존하는 작업은 비효율<td>의존 관계 있으면 메인에서 순차 실행, 독립이면 병렬<tr><td><strong>Premature Split</strong> (간단한 일을 과도 분해)<td>Sub-agent 스핀업 + 컨텍스트 수집 + 요약 회수 비용 > 직접 하는 비용<td>10초면 끝나는 일은 메인에서 직접</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=-추가-안티패턴-test-runner-anthropic-실험-결과>❌ 추가 안티패턴: Test Runner (Anthropic 실험 결과)<a href=#-추가-안티패턴-test-runner-anthropic-실험-결과 class=hash-link aria-label="Direct link to ❌ 추가 안티패턴: Test Runner (Anthropic 실험 결과)" title="Direct link to ❌ 추가 안티패턴: Test Runner (Anthropic 실험 결과)" translate=no>​</a></h3>
+<blockquote>
+<p>⚠️ Anthropic Skilljar 실험에서 <strong>Test Runner 패턴은 모든 구성 중 가장 낮은 성능</strong>을 보였습니다.</p>
+</blockquote>
+<p><strong>문제</strong>: 테스트가 실패하면 <strong>전체 출력</strong>(스택트레이스, 에러 메시지, 실패 라인)이 필요합니다. Sub-agent가 "tests failed"만 요약 반환하면, 디버깅을 위해 추가 스크립트를 만들어야 한다 — 직접 실행했으면 바로 보였을 정보입니다.</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># ❌ Test Runner Sub-agent 패턴</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">사용자 → Sub-agent "테스트 실행해줘" → "3개 실패" (요약만 반환)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">→ 디버깅 불가 → 추가 요청 필요 → 비효율</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># ✅ 대안: 메인에서 직접 실행</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">사용자 → "테스트 실행하고 실패하면 고쳐줘"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">→ 전체 출력 즉시 확인 → 바로 수정 루프</span><br/></div></code></pre></div></div>
+<p><strong>판단 기준</strong>: "중간 과정(테스트 출력 전체)이 메인 스레드에 필요한가?" → <strong>Yes</strong> → 직접 실행</p>
+<blockquote>
+<p>💡 단, <strong>커버리지 분석</strong> 같은 대량 정적 출력은 Sub-agent에 적합한다 (결과 요약만 필요하므로). Pattern 2: Tester는 이 구분을 지키며 설계되어 있습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=sub-agent가-빛나는-3가지-상황>Sub-agent가 빛나는 3가지 상황<a href=#sub-agent가-빛나는-3가지-상황 class=hash-link aria-label="Direct link to Sub-agent가 빛나는 3가지 상황" title="Direct link to Sub-agent가 빛나는 3가지 상황" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>상황<th>왜 sub-agent가 나은가<tbody><tr><td><strong>Research</strong> (코드베이스 탐색)<td>수십 개 파일 읽기가 메인을 오염시키지 않음<tr><td><strong>Code Review</strong> (작성 후 리뷰)<td>작성에 참여한 컨텍스트 없이 신선한 시선으로 검토<tr><td><strong>Custom System Prompt</strong> (다른 톤/스타일)<td>기본 프롬프트(간결/기술적)와 다른 행동이 필요할 때</table>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=11-선택-가이드--안티패턴>11. 선택 가이드 & 안티패턴<a href=#11-선택-가이드--안티패턴 class=hash-link aria-label="Direct link to 11. 선택 가이드 & 안티패턴" title="Direct link to 11. 선택 가이드 & 안티패턴" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=상황별-최적-수단>상황별 최적 수단<a href=#상황별-최적-수단 class=hash-link aria-label="Direct link to 상황별 최적 수단" title="Direct link to 상황별 최적 수단" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>상황<th>최적 수단<th>이유<tbody><tr><td>잦은 왕복, 반복 다듬기<td><strong>Main 대화</strong><td>격리가 걸림돌<tr><td>계획, 구현, 테스트가 맥락 공유<td><strong>Main 대화</strong><td>한 흐름 유지<tr><td>대량 출력 작업, 요약만 필요<td><strong>Subagent</strong><td>격리의 본령<tr><td>도구·권한 제약을 강제할 작업<td><strong>Subagent</strong><td>역할 설계<tr><td>대화 맥락에 대한 빠른 질문<td><strong>/btw</strong><td>전체 참조, 이력 미기록<tr><td>재사용할 프롬프트, 워크플로<td><strong>Skill</strong><td>메인 컨텍스트에서 실행<tr><td>배경 설명이 긴 곁가지<td><strong>/fork</strong><td>전체 상속 + 캐시 공유</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=안티패턴-정리>안티패턴 정리<a href=#안티패턴-정리 class=hash-link aria-label="Direct link to 안티패턴 정리" title="Direct link to 안티패턴 정리" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>❌ 피해야 할 것<th>✅ 대신 이렇게<tbody><tr><td>잦은 왕복이 필요한 대화형 작업 위임<td>메인 대화에서 직접<tr><td>계획→구현→테스트가 맥락 공유하는 일 분리<td>한 흐름으로 유지<tr><td>한 줄 수정 같은 초단발 작업 위임<td><code>/btw</code>나 직접<tr><td>전 단계 결과에 의존하는 조사들의 병렬화<td>체이닝으로 순차 실행<tr><td>만능 에이전트 하나로 모든 역할<td>역할별 단일 책임 에이전트<tr><td>description에 시점 없는 막연한 역할 설명<td><code>Use immediately after...</code> 시점 문구<tr><td>CI에서 <code>--allowed-tools</code>에 <code>Agent</code> 누락<td>위임 도구 포함 확인</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=비용--지연-고려>비용 & 지연 고려<a href=#비용--지연-고려 class=hash-link aria-label="Direct link to 비용 & 지연 고려" title="Direct link to 비용 & 지연 고려" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>요소<th>설명<tbody><tr><td><strong>기동 비용</strong><td>새 출발이라 컨텍스트 수집 시간 → 빠른 단발 작업엔 비효율<tr><td><strong>회수 비용</strong><td>다수 에이전트의 상세 결과가 메인을 다시 채울 수 있음 → 요약 형식 지시<tr><td><strong>모델 배분</strong><td>탐색성 워커는 <code>haiku</code> → 비용 절감<tr><td><strong>캐시</strong><td><code>/fork</code>는 프롬프트 캐시 공유 → 신규 스폰보다 저렴</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=references>References<a href=#references class=hash-link aria-label="Direct link to References" title="Direct link to References" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=1차-출처>1차 출처<a href=#1차-출처 class=hash-link aria-label="Direct link to 1차 출처" title="Direct link to 1차 출처" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>#<th>출처<th>상세<tbody><tr><td>[1]<td><strong>Claude Code Deep Dive Workshop — Chapter 2: Agents (Subagents)</strong><td>Choi WooHyung (Prin. SA, AWS Korea), 2026.07. 120 슬라이드, 9 Parts.<tr><td>[2]<td><strong>Claude Code in Action</strong><td>Anthropic Skilljar. Lesson NEW-03 (Verification Skills), Lesson NEW-05 (Hooks).<tr><td>[3]<td><strong>Agentic AI Explained</strong><td>AWS Training. Module 05 (Architecture), Module 08 (Design Patterns).<tr><td>[4]<td><strong>Introduction to Sub-agents</strong><td>Anthropic Skilljar. 4 lessons (What Are Sub-agents, Creating Custom, Designing Effective, When To Use).<tr><td>[5]<td><strong>모듈07: MCP와 Sub-agents</strong><td>정재민 SA, AWS Bedrock Online Program. FinOps Agent 데모.</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=공식문서-교차-검증>공식문서 (교차 검증)<a href=#공식문서-교차-검증 class=hash-link aria-label="Direct link to 공식문서 (교차 검증)" title="Direct link to 공식문서 (교차 검증)" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>#<th>문서<th>URL<tbody><tr><td>[6]<td>Claude Code Overview<td><a href=https://docs.anthropic.com/en/docs/claude-code/overview target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/overview</a><tr><td>[7]<td><strong>Create custom subagents</strong><td><a href=https://docs.anthropic.com/en/docs/claude-code/sub-agents target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/sub-agents</a><tr><td>[8]<td>Claude Code Hooks<td><a href=https://docs.anthropic.com/en/docs/claude-code/hooks target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/hooks</a><tr><td>[9]<td>Claude Code Settings<td><a href=https://docs.anthropic.com/en/docs/claude-code/settings target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/settings</a></table>
+<hr/>
+<p><em>마지막 업데이트: 2026.08.08 · 작성 도구: Amazon Quick</em></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-tags-row"><div class=col><b>Tags:</b><ul class="tags_jXut padding--none margin-left--sm"><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/claude-code/>Claude Code</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/anthropic/>Anthropic</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/sub-agents/>Sub-agents</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/ai-agent/>AI Agent</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/agentic-coding/>Agentic Coding</a></ul></div></div><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href=https://github.com/ddiiwoong/newblog/tree/main/docs/claude-code/subagents.md target=_blank rel="noopener noreferrer" class=theme-edit-this-page><svg fill=currentColor height=20 width=20 viewBox="0 0 40 40" class=iconEdit_Z9Sw aria-hidden=true><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"/></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href=#들어가며 class="table-of-contents__link toc-highlight">들어가며</a><li><a href=#목차 class="table-of-contents__link toc-highlight">목차</a><li><a href=#1-subagent란-무엇인가 class="table-of-contents__link toc-highlight">1. Subagent란 무엇인가</a><ul><li><a href=#정의 class="table-of-contents__link toc-highlight">정의</a><li><a href=#왜-위임하는가--컨텍스트-오염-문제 class="table-of-contents__link toc-highlight">왜 위임하는가 — 컨텍스트 오염 문제</a><li><a href=#main-agent-vs-subagent-비교 class="table-of-contents__link toc-highlight">Main Agent vs Subagent 비교</a><li><a href=#subagent-시작-시-로드되는-것-초기-컨텍스트-5요소 class="table-of-contents__link toc-highlight">Subagent 시작 시 로드되는 것 (초기 컨텍스트 5요소)</a><li><a href=#built-in-에이전트 class="table-of-contents__link toc-highlight">Built-in 에이전트</a><li><a href=#실행-모델-foreground-vs-background class="table-of-contents__link toc-highlight">실행 모델: Foreground vs Background</a></ul><li><a href=#2-정의-방법 class="table-of-contents__link toc-highlight">2. 정의 방법</a><ul><li><a href=#정의-파일-구조--yaml-frontmatter--시스템-프롬프트 class="table-of-contents__link toc-highlight">정의 파일 구조 — YAML Frontmatter + 시스템 프롬프트</a><li><a href=#스코프-5계층-같은-이름-충돌-시-위가-이김 class="table-of-contents__link toc-highlight">스코프 5계층 (같은 이름 충돌 시 위가 이김)</a><li><a href=#프론트매터-주요-필드-요약 class="table-of-contents__link toc-highlight">프론트매터 주요 필드 요약</a><li><a href=#description-작성--위임되는-설명-vs-무시되는-설명 class="table-of-contents__link toc-highlight">description 작성 — 위임되는 설명 vs 무시되는 설명</a><li><a href=#실습-첫-에이전트-만들기 class="table-of-contents__link toc-highlight">실습: 첫 에이전트 만들기</a></ul><li><a href=#3-디스패치 class="table-of-contents__link toc-highlight">3. 디스패치</a><ul><li><a href=#호출-3단계-사다리 class="table-of-contents__link toc-highlight">호출 3단계 사다리</a><li><a href=#멘션-실습 class="table-of-contents__link toc-highlight">@멘션 실습</a><li><a href=#--agent-세션-전체-실행 class="table-of-contents__link toc-highlight">--agent 세션 전체 실행</a><li><a href=#병렬-리서치-패턴 class="table-of-contents__link toc-highlight">병렬 리서치 패턴</a><li><a href=#체이닝-순차-연결 class="table-of-contents__link toc-highlight">체이닝 (순차 연결)</a><li><a href=#resume--종료된-에이전트-이어서-깨우기 class="table-of-contents__link toc-highlight">Resume — 종료된 에이전트 이어서 깨우기</a><li><a href=#fork--대화-전체를-물려받는-특수-서브에이전트 class="table-of-contents__link toc-highlight">/fork — 대화 전체를 물려받는 특수 서브에이전트</a><li><a href=#resume과-sendmessage--종료된-에이전트를-이어서-깨우기 class="table-of-contents__link toc-highlight">Resume과 SendMessage — 종료된 에이전트를 이어서 깨우기</a><li><a href=#에러-처리-v21199 class="table-of-contents__link toc-highlight">에러 처리 (v2.1.199+)</a></ul><li><a href=#4-pattern-1-code-reviewer class="table-of-contents__link toc-highlight">4. Pattern 1: Code Reviewer</a><ul><li><a href=#시나리오 class="table-of-contents__link toc-highlight">시나리오</a><li><a href=#정의-파일-복붙용 class="table-of-contents__link toc-highlight">정의 파일 (복붙용)</a><li><a href=#호출-경로-3가지 class="table-of-contents__link toc-highlight">호출 경로 3가지</a><li><a href=#주의점 class="table-of-contents__link toc-highlight">주의점</a></ul><li><a href=#5-pattern-2-tester class="table-of-contents__link toc-highlight">5. Pattern 2: Tester</a><ul><li><a href=#시나리오-1 class="table-of-contents__link toc-highlight">시나리오</a><li><a href=#정의-파일-복붙용-1 class="table-of-contents__link toc-highlight">정의 파일 (복붙용)</a><li><a href=#실습-대화형-호출 class="table-of-contents__link toc-highlight">실습: 대화형 호출</a><li><a href=#ci-통합-주간-커버리지-보강 class="table-of-contents__link toc-highlight">CI 통합: 주간 커버리지 보강</a><li><a href=#핵심-포인트 class="table-of-contents__link toc-highlight">핵심 포인트</a></ul><li><a href=#6-pattern-3-security-scanner class="table-of-contents__link toc-highlight">6. Pattern 3: Security Scanner</a><ul><li><a href=#시나리오-2 class="table-of-contents__link toc-highlight">시나리오</a><li><a href=#정의-파일-복붙용-2 class="table-of-contents__link toc-highlight">정의 파일 (복붙용)</a><li><a href=#hook-검증-스크립트-복붙용 class="table-of-contents__link toc-highlight">Hook 검증 스크립트 (복붙용)</a><li><a href=#pre-commit-게이트-통합 class="table-of-contents__link toc-highlight">pre-commit 게이트 통합</a><li><a href=#오탐-처리-순환 class="table-of-contents__link toc-highlight">오탐 처리 순환</a></ul><li><a href=#7-pattern-4-docs-writer class="table-of-contents__link toc-highlight">7. Pattern 4: Docs Writer</a><ul><li><a href=#시나리오-3 class="table-of-contents__link toc-highlight">시나리오</a><li><a href=#정의-파일-복붙용-3 class="table-of-contents__link toc-highlight">정의 파일 (복붙용)</a><li><a href=#skills-파일-예시 class="table-of-contents__link toc-highlight">Skills 파일 예시</a><li><a href=#실습-readme-자동-생성 class="table-of-contents__link toc-highlight">실습: README 자동 생성</a><li><a href=#ci-문서-부패-방지 class="table-of-contents__link toc-highlight">CI: 문서 부패 방지</a></ul><li><a href=#8-pattern-5-migration-bot class="table-of-contents__link toc-highlight">8. Pattern 5: Migration Bot</a><ul><li><a href=#시나리오-4 class="table-of-contents__link toc-highlight">시나리오</a><li><a href=#정의-파일-복붙용-4 class="table-of-contents__link toc-highlight">정의 파일 (복붙용)</a><li><a href=#4겹-방어-구조 class="table-of-contents__link toc-highlight">4겹 방어 구조</a><li><a href=#실습-라이브러리-업그레이드 class="table-of-contents__link toc-highlight">실습: 라이브러리 업그레이드</a><li><a href=#비용-효율-모델-분업 class="table-of-contents__link toc-highlight">비용 효율: 모델 분업</a><li><a href=#batch와의-관계 class="table-of-contents__link toc-highlight">/batch와의 관계</a></ul><li><a href=#9-실전-데모-finops-agent--sub-agent-병렬-분석 class="table-of-contents__link toc-highlight">9. 실전 데모: FinOps Agent — Sub-agent 병렬 분석</a><ul><li><a href=#시나리오-5 class="table-of-contents__link toc-highlight">시나리오</a><li><a href=#sub-agent-정의-3개-전문가 class="table-of-contents__link toc-highlight">Sub-agent 정의 (3개 전문가)</a><li><a href=#실행 class="table-of-contents__link toc-highlight">실행</a><li><a href=#결과-예시 class="table-of-contents__link toc-highlight">결과 예시</a><li><a href=#설계-판단-프레임워크 class="table-of-contents__link toc-highlight">설계 판단 프레임워크</a></ul><li><a href=#10--anthropic-skilljar-보충-sub-agent-설계-핵심-원칙 class="table-of-contents__link toc-highlight">10. 💡 Anthropic Skilljar 보충: Sub-agent 설계 핵심 원칙</a><ul><li><a href=#핵심-판단-기준--단-하나의-질문 class="table-of-contents__link toc-highlight">핵심 판단 기준 — 단 하나의 질문</a><li><a href=#description의-이중-역할-가장-중요한-통찰 class="table-of-contents__link toc-highlight">Description의 이중 역할 (가장 중요한 통찰)</a><li><a href=#출력-포맷-정의--가장-중요한-단일-개선 class="table-of-contents__link toc-highlight">출력 포맷 정의 — 가장 중요한 단일 개선</a><li><a href=#장애물-보고--오래-실행되는-진짜-원인 class="table-of-contents__link toc-highlight">장애물 보고 — 오래 실행되는 진짜 원인</a><li><a href=#-skilljar가-정의한-3대-안티패턴 class="table-of-contents__link toc-highlight">❌ Skilljar가 정의한 3대 안티패턴</a><li><a href=#-추가-안티패턴-test-runner-anthropic-실험-결과 class="table-of-contents__link toc-highlight">❌ 추가 안티패턴: Test Runner (Anthropic 실험 결과)</a><li><a href=#sub-agent가-빛나는-3가지-상황 class="table-of-contents__link toc-highlight">Sub-agent가 빛나는 3가지 상황</a></ul><li><a href=#11-선택-가이드--안티패턴 class="table-of-contents__link toc-highlight">11. 선택 가이드 & 안티패턴</a><ul><li><a href=#상황별-최적-수단 class="table-of-contents__link toc-highlight">상황별 최적 수단</a><li><a href=#안티패턴-정리 class="table-of-contents__link toc-highlight">안티패턴 정리</a><li><a href=#비용--지연-고려 class="table-of-contents__link toc-highlight">비용 & 지연 고려</a></ul><li><a href=#references class="table-of-contents__link toc-highlight">References</a><ul><li><a href=#1차-출처 class="table-of-contents__link toc-highlight">1차 출처</a><li><a href=#공식문서-교차-검증 class="table-of-contents__link toc-highlight">공식문서 (교차 검증)</a></ul></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Blog</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/>Home</a><li class=footer__item><a class=footer__link-item href=/archive/>Archive</a><li class=footer__item><a class=footer__link-item href=/tags/>Tags</a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Sponsors</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/pang4u/>Pang4U</a><li class=footer__item><a href=https://ko-fi.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Buy Me a Coffee<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>More</div><ul class="footer__items clean-list"><li class=footer__item><a href=https://github.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>GitHub<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://twitter.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Twitter<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://www.facebook.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Facebook<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://kr.linkedin.com/in/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>LinkedIn<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div></div></div></footer></div></body>
