@@ -17,17 +17,6 @@ tags:
 
 이 글에서는 Claude Code의 서브에이전트(Sub-agent) 개념, 정의 방법, 디스패치 전략부터 5가지 실전 패턴까지 — Claude Code Deep Dive Workshop Chapter 2 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.
 
-> **주요 출처**:
-> - 📕 AWS Korea 워크샵 — *Claude Code Deep Dive Workshop Ch.2* (Choi WooHyung, 2026.07)
-> - 📕 AWS Bedrock 온라인 프로그램 — *모듈07: MCP와 Sub-agents* (정재민 SA)
-> - 🎓 Anthropic 공식 교육 — *Introduction to Sub-agents* (Anthropic Skilljar)
-> - 📖 Anthropic 공식문서 — [docs.anthropic.com/en/docs/claude-code/sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents)
-> - **기준 시점**: 2026년 7월 · Claude Code v2.1
-
-> - 📕 AWS Korea 워크샵 — *Claude Code Deep Dive Workshop Chapter 2* (Choi WooHyung, Prin. SA, AWS Korea, 2026.07)
-> - 🎓 Anthropic Skilljar — *Claude Code in Action* (2026 리뉴얼 커리큘럼)
-> - 📖 Anthropic 공식문서 — [docs.anthropic.com/en/docs/claude-code](https://docs.anthropic.com/en/docs/claude-code/overview)
-
 ---
 
 ## 목차
@@ -841,7 +830,7 @@ graph TD
 
 ## 9. 실전 데모: FinOps Agent — Sub-agent 병렬 분석
 
-> 📕 출처: *Claude Code on Bedrock Online Program — 모듈07* (정재민 SA, AWS)
+> 출처: *Claude Code on Bedrock Online Program — 모듈07* (AWS)
 
 ### 시나리오
 
@@ -1111,25 +1100,22 @@ working around them silently:
 
 ## References
 
-### 1차 출처
+### 1차 출처 (본문 작성 기반)
 
 | # | 출처 | 상세 |
 |---|------|------|
-| [1] | **Claude Code Deep Dive Workshop — Chapter 2: Agents (Subagents)** | Choi WooHyung (Prin. SA, AWS Korea), 2026.07. 120 슬라이드, 9 Parts. |
-| [2] | **Claude Code in Action** | Anthropic Skilljar. Lesson NEW-03 (Verification Skills), Lesson NEW-05 (Hooks). |
-| [3] | **Agentic AI Explained** | AWS Training. Module 05 (Architecture), Module 08 (Design Patterns). |
-| [4] | **Introduction to Sub-agents** | Anthropic Skilljar. 4 lessons (What Are Sub-agents, Creating Custom, Designing Effective, When To Use). |
-| [5] | **모듈07: MCP와 Sub-agents** | 정재민 SA, AWS Bedrock Online Program. FinOps Agent 데모. |
+| [1] | **Claude Code Deep Dive Workshop — Chapter 2: Agents (Subagents)** | AWS Korea, 2026.07. [github.com/whchoi98/claude-code-workshop](https://github.com/whchoi98/claude-code-workshop) |
+| [2] | **Introduction to Sub-agents** | Anthropic Skilljar. 4 lessons. [anthropic.skilljar.com](https://anthropic.skilljar.com/claude-code-in-action) |
+| [3] | **Claude Code in Action** | Anthropic Skilljar. Lesson NEW-03, NEW-05. [anthropic.skilljar.com](https://anthropic.skilljar.com/claude-code-in-action) |
+| [4] | **Claude Code on Amazon Bedrock 온라인 프로그램** | AWS Skill Builder. Module 05 (Architecture), Module 07 (MCP와 Sub-agents), Module 08 (Design Patterns). [skillbuilder.aws](https://skillbuilder.aws/learning-plan/Y3XKP5ET3T/claude-code-on-amazon-bedrockccb-----10--ai----/39WWTYBUM2) |
 
 ### 공식문서 (교차 검증)
 
 | # | 문서 | URL |
 |---|------|-----|
 | [6] | Claude Code Overview | [docs.anthropic.com/en/docs/claude-code/overview](https://docs.anthropic.com/en/docs/claude-code/overview) |
-| [7] | **Create custom subagents** | [docs.anthropic.com/en/docs/claude-code/sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) |
+| [7] | Create custom subagents | [docs.anthropic.com/en/docs/claude-code/sub-agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents) |
 | [8] | Claude Code Hooks | [docs.anthropic.com/en/docs/claude-code/hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) |
 | [9] | Claude Code Settings | [docs.anthropic.com/en/docs/claude-code/settings](https://docs.anthropic.com/en/docs/claude-code/settings) |
 
 ---
-
-*마지막 업데이트: 2026.08.08 · 작성 도구: Amazon Quick*
