@@ -1,6 +1,6 @@
 ---
 id: subagents
-title: Claude Code Deep Dive — Chapter 2: Subagents
+title: Claude Code Deep Dive — 맞춤 서브에이전트로 작업 분담하기
 sidebar_position: 2
 sidebar_label: "Ch.2: Subagents"
 tags:
@@ -11,14 +11,9 @@ tags:
   - Agentic Coding
 ---
 
-# Claude Code Deep Dive — Chapter 2: Subagents
-## 맞춤 서브에이전트로 작업을 분담하고 병렬화하기
-
 > 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
----
-
-### 들어가며
+## 들어가며
 
 이 글에서는 Claude Code의 서브에이전트(Sub-agent) 개념, 정의 방법, 디스패치 전략부터 5가지 실전 패턴까지 — Claude Code Deep Dive Workshop Chapter 2 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.
 
