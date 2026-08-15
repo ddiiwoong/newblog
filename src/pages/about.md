@@ -10,30 +10,21 @@ author_profile: true
 기술이야기 듣는것, 말하는것, 공부하는것 좋아합니다.
 저의 모든 행동, 말, 글이 주변 모든분들에게 동기부여가 되고 영감을 주는 촉매(觸媒)같은 사람이 되고 싶습니다.  
 
-## Translation
+## Career
 
-* 2020.1 
-  * [프로메테우스 인프라스트럭처 모니터링 [가상머신, 컨테이너 환경의 프로메테우스 모니터링 실습과 활용]](http://www.acornpub.co.kr/book/monitoring-prometheus)
-* 2022.3
-  * [클라우드 네이티브 트랜스포메이션 [클라우드를 도입하기 위한 치밀한 준비]](http://www.acornpub.co.kr/book/cloud-native)
-* 2023.12
-  * [쿠버네티스 - 엔터프라이즈 가이드 2/e [컨테이너 기술을 활용한 엔터프라이즈 환경 통합과 확장]](http://www.acornpub.co.kr/book/kubernetes-enterprise)
-* 2024.08
-  * [스프링 부트 3.0 3/e [프로덕션급 애플리케이션 개발 간소화]](http://www.acornpub.co.kr/book/spring-boot-3.0-3e)
-
-## AWS Korea
+### AWS Korea
 
 * 2021.9 ~ 
 * Cloud Architect(Consultant), Professional Services
 
-## NexCloud
+### NexCloud
 
 [NexCloud](https://www.nexcloud.co.kr/)
 
 * 2020.4 ~ 2021.9
 * [NexClipper](https://www.nexclipper.io/) Product Owner
 
-## SK Holdings C&C
+### SK Holdings C&C
 
 * 2019.1 ~ 2020.4
   * BM Innovation Leading division
@@ -61,10 +52,10 @@ author_profile: true
       * Deep Learning Platform Develop
         * Nvidia Tesla GPU Cloud Platform Develop
 
-## Samsung SDS
+### Samsung SDS
 
 * 클라우드팀 운영파트 / 책임 / 클라우드호스팅운영 (2015.10 ~ 2016.11)
-  *	주요 업무 
+  * 주요 업무 
       * 클라우드팀 호스팅 네트워크 소그룹 운영(10개사) 
           * Cello, SDI, 제일기획, 그룹DR, 중공업, 물산, 라이온즈 호스팅 네트워크 서비스 운영
       * 하이브리드 클라우드 구축(VMware vSphere, vCenter NSX, vSAN, vROps, LogInsight)
@@ -73,19 +64,19 @@ author_profile: true
           * 네트워크, Security 영역 검토
       * 삼성그룹 NFV장비 FW, LB, WAF 표준화 TF 진행
           * 국내외 벤더 표준장비 선정 및 BMT/PoC수행
-  *	주요 업적
+  * 주요 업적
       * 삼성물산(리조트), 크레듀, 디스플레이 호스팅 서비스 Cloud Migration 구축 진행 (16.3~16.8)
 
-* 클라우드팀 운영그룹 / 책임 / 클라우드서비스운영	(2014.1 ~ 2015.9)
-  -	주요 업무  
-      + 클라우드팀/그룹 보안담당자 업무 수행
-      + VDI, OpenStack, CloudStack, Iaas, 호스팅 서비스
-      + 내외부 인증수검(ISMS, ISO 27001 등)
-  *	주요 업적
+* 클라우드팀 운영그룹 / 책임 / 클라우드서비스운영 (2014.1 ~ 2015.9)
+  * 주요 업무  
+      * 클라우드팀/그룹 보안담당자 업무 수행
+      * VDI, OpenStack, CloudStack, Iaas, 호스팅 서비스
+      * 내외부 인증수검(ISMS, ISO 27001 등)
+  * 주요 업적
       * 삼성관계사 IaaS 서비스 보안가이드(OpenStack, Vmware) 제정 (14.7~14.8)
 
 * 클라우드팀 클라우드그룹 / 선임 / VDI, IaaS서비스구축운영 (2010.3 ~ 2014.3)
-  *	주요 업무
+  * 주요 업무
       * 삼성그룹 관계사 VDI서비스 신규 구축, 서비스운영
       * 전자, 증권, 화재, 생명외 34개사 VDI 서비스 구축 (Office형: XenDesktop, R&D형: VMware View)
       * SDS서버클라우드, R&D클라우드 신규 구축 설계
@@ -102,7 +93,7 @@ author_profile: true
     * 삼성전자 수원사업장 네트워크 통합 Project
       * 무선사업부, VDI사업부, R&D연구소
     * 삼성전자 무선사업부 분산빌드 인프라구축
-      * Citrix 메타프레임, Perforce 연계를 통한 멀티 업무환경 구축(‘09년 07~10월)
+      * Citrix 메타프레임, Perforce 연계를 통한 멀티 업무환경 구축('09년 07~10월)
 
 ## Presentation
 
@@ -128,7 +119,7 @@ author_profile: true
     * [Amazon EKS Workshop 살펴보기](https://www.slideshare.net/JinwoongKim8/eks-workshop-140043415)
   * 4월 Kubernetes Korea Group 모니터링 소모임
     * [Opencensus with prometheus and kubernetes](https://www.slideshare.net/JinwoongKim8/open-census-with-prometheus-and-kubernetes)
-  * 4월  Google Cloud Next '19 Extended Korea
+  * 4월 Google Cloud Next '19 Extended Korea
     * [Knative로 서버리스 워크로드 구현](https://www.slideshare.net/JinwoongKim8/knative)
   * 6월 Korea DevOps MeetUP '19
     * [OpenCensus with Prometheus and Kubernetes](https://www.slideshare.net/JinwoongKim8/opencensus-with-prometheus-and-kubernetes)
@@ -164,3 +155,14 @@ author_profile: true
 * 2017
   * 7월 SK Broadband 미디어아카데미 
     * 클라우드 인프라 구성 및 아키텍처
+
+## Translation (출판)
+
+* 2024.08
+  * [스프링 부트 3.0 3/e [프로덕션급 애플리케이션 개발 간소화]](http://www.acornpub.co.kr/book/spring-boot-3.0-3e)
+* 2023.12
+  * [쿠버네티스 - 엔터프라이즈 가이드 2/e [컨테이너 기술을 활용한 엔터프라이즈 환경 통합과 확장]](http://www.acornpub.co.kr/book/kubernetes-enterprise)
+* 2022.3
+  * [클라우드 네이티브 트랜스포메이션 [클라우드를 도입하기 위한 치밀한 준비]](http://www.acornpub.co.kr/book/cloud-native)
+* 2020.1 
+  * [프로메테우스 인프라스트럭처 모니터링 [가상머신, 컨테이너 환경의 프로메테우스 모니터링 실습과 활용]](http://www.acornpub.co.kr/book/monitoring-prometheus)
