@@ -1,0 +1,1800 @@
+<!doctype html><html lang=en dir=ltr class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-claude-code/admin-setup" data-has-hydrated=false><head><meta charset=UTF-8><meta name=generator content="Docusaurus v3.10.1"><title data-rh=true>Claude Code Deep Dive — 개인의 도구를 조직의 플랫폼으로 | Cloud Catalyst</title><meta data-rh=true name=viewport content="width=device-width, initial-scale=1.0"/><meta data-rh=true name=twitter:card content=summary_large_image /><meta data-rh=true property=og:url content=https://ddii.dev/docs/claude-code/admin-setup/ /><meta data-rh=true property=og:locale content=en /><meta data-rh=true name=docusaurus_locale content=en /><meta data-rh=true name=docsearch:language content=en /><meta data-rh=true name=naver-site-verification content=cbcc03783e5594725d3951f4e7f16ede80e69881 /><meta data-rh=true name=docusaurus_version content=current /><meta data-rh=true name=docusaurus_tag content=docs-default-current /><meta data-rh=true name=docsearch:version content=current /><meta data-rh=true name=docsearch:docusaurus_tag content=docs-default-current /><meta data-rh=true property=og:title content="Claude Code Deep Dive — 개인의 도구를 조직의 플랫폼으로 | Cloud Catalyst"/><meta data-rh=true name=description content="해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다."/><meta data-rh=true property=og:description content="해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다."/><link data-rh=true rel=icon href=/img/favicon.ico /><link data-rh=true rel=canonical href=https://ddii.dev/docs/claude-code/admin-setup/ /><link data-rh=true rel=alternate href=https://ddii.dev/docs/claude-code/admin-setup/ hreflang=en /><link data-rh=true rel=alternate href=https://ddii.dev/docs/claude-code/admin-setup/ hreflang=x-default /><link data-rh=true rel=preconnect href=https://UTLA0DRN66-dsn.algolia.net crossorigin=anonymous /><script data-rh=true type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://ddii.dev/docs/claude-code/overview","name":"Claude Code","position":1},{"@type":"ListItem","item":"https://ddii.dev/docs/claude-code/admin-setup","name":"Admin Setup","position":2}]}</script><link rel=alternate type=application/rss+xml href=/rss.xml title="Act as a catalyst RSS Feed"><link rel=alternate type=application/atom+xml href=/atom.xml title="Act as a catalyst Atom Feed"><link rel=alternate type=application/json href=/feed.json title="Act as a catalyst JSON Feed"><link rel=preconnect href=https://www.google-analytics.com><link rel=preconnect href=https://www.googletagmanager.com><script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZT898XDT2"></script><script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-4ZT898XDT2",{anonymize_ip:!0})</script><link rel=search type=application/opensearchdescription+xml title="Cloud Catalyst" href=/opensearch.xml><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4362752107119680" crossorigin=anonymous></script><link rel=stylesheet href=/assets/css/styles.33061ed3.css /><script src=/assets/js/runtime~main.e0f90661.js defer></script><script src=/assets/js/main.676fe5a0.js defer></script></head><body><svg style="display: none;"><defs>
+<symbol id=theme-svg-external-link viewBox="0 0 24 24"><path fill=currentColor d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme-fac")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||"light"),document.documentElement.setAttribute("data-theme-choice",t||"light")}(),function(){try{for(var[t,e]of new URLSearchParams(window.location.search).entries())if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id=__docusaurus><div role=region aria-label="Skip to main content"><a class=skipToContent_fXgn href=#__docusaurus_skipToContent_fallback>Skip to main content</a></div><nav aria-label=Main class="theme-layout-navbar navbar navbar--fixed-top navbarHideable_m1mJ"><div class=navbar__inner><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded=false class="navbar__toggle clean-btn" type=button><svg width=30 height=30 viewBox="0 0 30 30" aria-hidden=true><path stroke=currentColor stroke-linecap=round stroke-miterlimit=10 stroke-width=2 d="M4 7h22M4 15h22M4 23h22"/></svg></button><a class=navbar__brand href=/><div class=navbar__logo><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--light_NVdE"/><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--dark_xIcU"/></div><b class="navbar__title text--truncate">Cloud Catalyst</b></a><a aria-current=page class="navbar__item navbar__link navbar__link--active" href=/>Posts</a><div class="navbar__item dropdown dropdown--hoverable"><a class=navbar__link aria-haspopup=true aria-expanded=false role=button docid=claude-code/overview href=/docs/claude-code/overview/>Docs</a><ul class=dropdown__menu><li><a class=dropdown__link href=/docs/claude-code/overview/>Claude Code</a></ul></div></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a class="navbar__item navbar__link" href=/tags/>Tags</a><a class="navbar__item navbar__link" href=/archive/>Archive</a><a class="navbar__item navbar__link" href=/about/>About</a><a href=https://github.com/ddiiwoong/newblog target=_blank rel="noopener noreferrer" class="navbar__item navbar__link header-github-link" aria-label="GitHub repository"></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type=button disabled title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill=currentColor d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill=currentColor d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill=currentColor d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"/></svg></button></div><div class=navbarSearchContainer_Bca1><button type=button class="DocSearch DocSearch-Button" aria-label="Search (Meta+k)" aria-keyshortcuts=Meta+k><span class=DocSearch-Button-Container><svg width=20 height=20 class=DocSearch-Search-Icon viewBox="0 0 24 24" aria-hidden=true><circle cx=11 cy=11 r=8 stroke=currentColor fill=none stroke-width=1.4 /><path d="m21 21-4.3-4.3" stroke=currentColor fill=none stroke-linecap=round stroke-linejoin=round /></svg><span class=DocSearch-Button-Placeholder>Search</span></span><span class=DocSearch-Button-Keys></span></button></div></div></div><div role=presentation class=navbar-sidebar__backdrop></div></nav><div id=__docusaurus_skipToContent_fallback class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class=docsWrapper_hBAB><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type=button></button><div class=docRoot_UBD9><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class=sidebarViewport_aRkj><div class="sidebar_njMd sidebarWithHideableNavbar_wUlq"><a tabindex=-1 class=sidebarLogo_isFc href=/><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--light_NVdE"/><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--dark_xIcU"/><b>Cloud Catalyst</b></a><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" href=/docs/claude-code/overview/><span title="Claude Code" class=categoryLinkLabel_W154>Claude Code</span></a><button aria-label="Collapse sidebar category 'Claude Code'" aria-expanded=true type=button class="clean-btn menu__caret"></button></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/docs/claude-code/overview/><span title=Overview class=linkLabel_WmDU>Overview</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/docs/claude-code/subagents/><span title=Subagents class=linkLabel_WmDU>Subagents</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current=page tabindex=0 href=/docs/claude-code/admin-setup/><span title="Admin Setup" class=linkLabel_WmDU>Admin Setup</span></a></ul></ul></nav></div></div></aside><main class=docMainContainer_TBSr><div class="container padding-top--md padding-bottom--lg"><div class=row><div class="col docItemCol_VOVn"><div class=docItemContainer_Djhp><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label=Breadcrumbs><ul class=breadcrumbs><li class=breadcrumbs__item><a aria-label="Home page" class=breadcrumbs__link href=/><svg viewBox="0 0 24 24" class=breadcrumbHomeIcon_YNFT><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill=currentColor /></svg></a><li class=breadcrumbs__item><a class=breadcrumbs__link href=/docs/claude-code/overview/><span>Claude Code</span></a><li class="breadcrumbs__item breadcrumbs__item--active"><span class=breadcrumbs__link>Admin Setup</span></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type=button class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Claude Code Deep Dive — 개인의 도구를 조직의 플랫폼으로</h1></header><blockquote>
+<p>해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.</p>
+</blockquote>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=들어가며>들어가며<a href=#들어가며 class=hash-link aria-label="Direct link to 들어가며" title="Direct link to 들어가며" translate=no>​</a></h2>
+<p>이 글에서는 Claude Code의 조직 배포, 인증 체계, 거버넌스, 모니터링까지 — Claude Code Deep Dive Workshop Chapter 3 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.</p>
+<hr/>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=목차>목차<a href=#목차 class=hash-link aria-label="Direct link to 목차" title="Direct link to 목차" translate=no>​</a></h3>
+<ol>
+<li class="">배포 전략</li>
+<li class="">공급자와 자격증명</li>
+<li class="">Claude apps gateway</li>
+<li class="">네트워크와 보안</li>
+<li class="">거버넌스와 정책</li>
+<li class="">모니터링과 비용</li>
+<li class="">신원, 데이터, 컴플라이언스</li>
+<li class="">트러블슈팅</li>
+<li class="">Recap & Labs</li>
+<li class="">References</li>
+</ol>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=1-배포-전략>1. 배포 전략<a href=#1-배포-전략 class=hash-link aria-label="Direct link to 1. 배포 전략" title="Direct link to 1. 배포 전략" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "500명에게 어떻게 설치하고 갱신하는가?"</p>
+</blockquote>
+<p>개발자 한 명이 <code>curl | bash</code>로 설치하는 것과 조직 전체에 배포하는 것은 완전히 다른 문제입니다. 조직 배포에서는 <strong>버전 일관성</strong> (모든 개발자가 같은 기능을 사용), <strong>보안 검증</strong> (바이너리 무결성 GPG 대조), <strong>갱신 통제</strong> (장애 시 즉시 롤백), <strong>감사 추적</strong> (누가 어떤 버전을 쓰는지)이 필수입니다.</p>
+<p>핵심 원칙 3가지:</p>
+<ol>
+<li class=""><strong>버전 고정</strong> — CI와 프로덕션 환경은 반드시 특정 버전을 명시합니다</li>
+<li class=""><strong>자동갱신 차단</strong> — 예기치 않은 변경을 방지합니다 (<code>DISABLE_AUTOUPDATER=1</code>)</li>
+<li class=""><strong>정책 내장</strong> — 이미지에 managed-settings.json을 포함해 "설치 = 정책 적용"을 동시에 달성합니다</li>
+</ol>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=설치-채널-4계열>설치 채널 4계열<a href=#설치-채널-4계열 class=hash-link aria-label="Direct link to 설치 채널 4계열" title="Direct link to 설치 채널 4계열" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>채널<th>특징<th>적합 대상<tbody><tr><td><strong>Native 스크립트</strong><td><code>claude.ai/install.sh</code>, 단일 바이너리, 자동 갱신<td>MDM 스크립트화, 표준 권장<tr><td><strong>OS 패키지 저장소</strong><td>apt, dnf, apk, GPG 서명<td>리눅스 서버 플릿<tr><td><strong>패키지 매니저</strong><td>Homebrew cask, WinGet<td>개발자 셀프 서비스<tr><td><strong>컨테이너</strong><td>표준 이미지, devcontainer<td>CI 러너, 통제 환경<tr><td>npm (레거시)<td>Node 의존<td>신규 배포 비권장</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-linux-플릿-gpg-저장소-등록>실습: Linux 플릿 GPG 저장소 등록<a href=#실습-linux-플릿-gpg-저장소-등록 class=hash-link aria-label="Direct link to 실습: Linux 플릿 GPG 저장소 등록" title="Direct link to 실습: Linux 플릿 GPG 저장소 등록" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># GPG 키 설치 및 지문 대조</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">sudo install -d -m 0755 /etc/apt/keyrings</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">sudo curl -fsSL https://downloads.claude.ai/keys/claude-code.asc \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  -o /etc/apt/keyrings/claude-code.asc</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">gpg --show-keys /etc/apt/keyrings/claude-code.asc</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 지문 대조: 31DD DE24 DDFA B679 F42D 7BD2 BAA9 29FF 1A7E CACE</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 저장소 등록 및 설치</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "deb [signed-by=/etc/apt/keyrings/claude-code.asc] \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  https://downloads.claude.ai/claude-code/apt/stable stable main" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  | sudo tee /etc/apt/sources.list.d/claude-code.list</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">sudo apt update && sudo apt install claude-code</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=windows-대량-배포>Windows 대량 배포<a href=#windows-대량-배포 class=hash-link aria-label="Direct link to Windows 대량 배포" title="Direct link to Windows 대량 배포" translate=no>​</a></h3>
+<div class="language-powershell codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-powershell codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># Intune/SCCM 배포 스크립트 골격</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">winget install Anthropic.ClaudeCode --silent --accept-package-agreements</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 관리 정책은 HKLM 레지스트리로 (Part 5 상세)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># HKLM\SOFTWARE\Policies\ClaudeCode</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># WSL 병행: wslInheritsWindowsSettings: true</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=표준-컨테이너-이미지>표준 컨테이너 이미지<a href=#표준-컨테이너-이미지 class=hash-link aria-label="Direct link to 표준 컨테이너 이미지" title="Direct link to 표준 컨테이너 이미지" translate=no>​</a></h3>
+<div class="language-dockerfile codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-dockerfile codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">FROM ubuntu:24.04</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">RUN apt-get update && apt-get install -y \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    curl git ca-certificates ripgrep jq</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">RUN curl -fsSL https://claude.ai/install.sh | bash -s 2.1.201</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">ENV PATH="/root/.local/bin:${PATH}"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">ENV DISABLE_AUTOUPDATER=1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">COPY managed-settings.json /etc/claude-code/</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">WORKDIR /workspace</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 <strong>3원칙</strong>: 버전 고정 + 자동갱신 차단 + 정책 내장</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=gpg-서명-검증의-의미>GPG 서명 검증의 의미<a href=#gpg-서명-검증의-의미 class=hash-link aria-label="Direct link to GPG 서명 검증의 의미" title="Direct link to GPG 서명 검증의 의미" translate=no>​</a></h3>
+<p>GPG 서명 검증은 "이 바이너리가 Anthropic이 빌드한 진짜 파일인지" 확인하는 과정입니다. 공급망 공격(supply chain attack)에서 공격자가 패키지 저장소를 변조하거나 미러를 탈취해도, GPG 서명이 일치하지 않으면 설치가 거부됩니다. 지문(<code>31DD DE24 DDFA B679...</code>)을 공식 채널과 대조하는 것은 "이 열쇠의 주인이 Anthropic이 맞는지" 최초 1회 확인하는 절차입니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=stable-vs-latest-채널-선택-기준>stable vs latest 채널 선택 기준<a href=#stable-vs-latest-채널-선택-기준 class=hash-link aria-label="Direct link to stable vs latest 채널 선택 기준" title="Direct link to stable vs latest 채널 선택 기준" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>기준<th><code>stable</code><th><code>latest</code><tbody><tr><td>지연<td>약 1주 뒤 반영<td>릴리스 즉시<tr><td>회귀<td>문제 릴리스 건너뜀<td>그대로 노출<tr><td>적합 대상<td>프로덕션 플릿, 대다수 개발자<td>Ring 0 챔피언, 얼리어답터<tr><td>롤백 필요성<td>낮음 (이미 검증됨)<td>높음 (미검증)</table>
+<blockquote>
+<p>결론: 플릿 기본은 <strong>stable</strong>, <code>latest</code>는 Ring 0(10명 이하)에만 적용합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=사내-미러-구성-시-고려사항>사내 미러 구성 시 고려사항<a href=#사내-미러-구성-시-고려사항 class=hash-link aria-label="Direct link to 사내 미러 구성 시 고려사항" title="Direct link to 사내 미러 구성 시 고려사항" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>고려사항<th>설명<tbody><tr><td><strong>프록시 저장소 방식</strong><td>Artifactory/Nexus의 "Remote Repository"로 상류(downloads.claude.ai)를 캐시합니다. 최초 요청만 외부에 나가고 이후는 로컬에서 서빙됩니다.<tr><td><strong>GPG 서명 유지</strong><td>미러라도 <code>.asc</code> 서명 파일을 함께 제공해야 합니다. 서명을 제거하면 클라이언트가 검증에 실패합니다.<tr><td><strong>대역폭 절감</strong><td>500대가 동시 갱신할 때 외부 트래픽 = 1회분만 발생합니다.<tr><td><strong>감사 로그</strong><td>Artifactory 접근 로그로 "누가 어떤 버전을 언제 다운로드했는지" 추적할 수 있습니다.<tr><td><strong>에어갭 대응</strong><td>인터넷 단절 환경에서는 정기적으로 오프라인 번들을 전달합니다: `curl -fsSL <a href=https://claude.ai/install.sh target=_blank rel="noopener noreferrer" class="">https://claude.ai/install.sh</a></table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=4링-롤아웃--왜-이-순서인가>4링 롤아웃 — 왜 이 순서인가<a href=#4링-롤아웃--왜-이-순서인가 class=hash-link aria-label="Direct link to 4링 롤아웃 — 왜 이 순서인가" title="Direct link to 4링 롤아웃 — 왜 이 순서인가" translate=no>​</a></h3>
+<p>각 링의 규모와 역할이 서로 다른 이유가 있습니다:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>링<th>규모<th>역할<th>왜 이 순서<tbody><tr><td><strong>Ring 0</strong><td>10명<td>챔피언<td>새 버전의 <strong>기능을 먼저 경험</strong>하고 결함을 빨리 보고하는 자원자들입니다. latest 채널.<tr><td><strong>Ring 1</strong><td>50명<td>파일럿<td><strong>정책 초판을 검증</strong>합니다. managed settings가 실무에 마찰을 주는지 여기서 확인합니다.<tr><td><strong>Ring 2</strong><td>200명<td>부문<td><strong>교육 자료와 함께</strong> 배포합니다. 대규모 적용 전 교육 효과를 확인합니다.<tr><td><strong>Ring 3</strong><td>전사<td>표준 온보딩<td>검증된 설정 + 교육 + 지원 채널이 준비된 상태에서 <strong>안전하게 확산</strong>합니다.</table>
+<blockquote>
+<p>핵심: 뒤로 갈수록 "발견"이 아닌 "적용"에 집중합니다. 문제는 앞 링에서 이미 걸러져야 합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=에어갭인터넷-단절-환경-대응>에어갭(인터넷 단절) 환경 대응<a href=#에어갭인터넷-단절-환경-대응 class=hash-link aria-label="Direct link to 에어갭(인터넷 단절) 환경 대응" title="Direct link to 에어갭(인터넷 단절) 환경 대응" translate=no>​</a></h3>
+<p>인터넷이 완전히 차단된 환경(군사, 금융 망분리 등)에서는:</p>
+<ol>
+<li class=""><strong>오프라인 번들 전달</strong>: 보안 구역 외부에서 설치 자산을 다운로드해 물리 매체로 반입</li>
+<li class=""><strong>사내 미러 세팅</strong>: 반입된 자산을 내부 Artifactory에 수동 업로드</li>
+<li class=""><strong>클라이언트 설정</strong>: <code>sources.list</code>를 내부 미러 주소로 지정</li>
+<li class=""><strong>갱신 차단</strong>: <code>DISABLE_AUTOUPDATER=1</code> + <code>DISABLE_UPDATES=1</code>로 외부 시도 원천 차단</li>
+<li class=""><strong>버전 관리</strong>: 보안 팀이 승인한 버전만 미러에 올려 "갱신 = 보안팀 승인"을 동치로 만듭니다</li>
+</ol>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=버전-통제-두-다이얼>버전 통제 두 다이얼<a href=#버전-통제-두-다이얼 class=hash-link aria-label="Direct link to 버전 통제 두 다이얼" title="Direct link to 버전 통제 두 다이얼" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>다이얼<th>역할<th>설정<tbody><tr><td><code>autoUpdatesChannel</code><td>갱신 속도 조절<td><code>stable</code> (플릿 기본), <code>latest</code> (얼리어답터)<tr><td><code>minimumVersion</code><td>하한선 강제<td>미달 버전은 강제 갱신 유도<tr><td>완전 고정<td>CI 전용<td><code>DISABLE_AUTOUPDATER=1</code> + 버전 지정 설치</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=점진-롤아웃-4-링>점진 롤아웃 (4 링)<a href=#점진-롤아웃-4-링 class=hash-link aria-label="Direct link to 점진 롤아웃 (4 링)" title="Direct link to 점진 롤아웃 (4 링)" translate=no>​</a></h3>
+<!-- -->
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=2-공급자와-자격증명>2. 공급자와 자격증명<a href=#2-공급자와-자격증명 class=hash-link aria-label="Direct link to 2. 공급자와 자격증명" title="Direct link to 2. 공급자와 자격증명" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "키를 나눠주지 않고 인증하려면?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=공급자-결정표>공급자 결정표<a href=#공급자-결정표 class=hash-link aria-label="Direct link to 공급자 결정표" title="Direct link to 공급자 결정표" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>공급자<th>특징<th>적합 조직<tbody><tr><td><strong>Teams / Enterprise</strong><td>좌석제, 인프라 불필요<td>기본 권장<tr><td><strong>Claude Console</strong><td>API 종량 과금<td>파이프라인 중심<tr><td><strong>Amazon Bedrock</strong><td>AWS 컴플라이언스·과금 상속<td>AWS 표준 기업<tr><td><strong>Google Vertex AI</strong><td>GCP 통제 상속<td>GCP 표준 기업<tr><td><strong>Microsoft Foundry</strong><td>Azure 통제 상속<td>Azure 표준 기업<tr><td><strong>혼합</strong><td>LLM gateway로 단일 엔드포인트<td>중앙 로깅 요구 시</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=인증-우선순위-충돌-시>인증 우선순위 (충돌 시)<a href=#인증-우선순위-충돌-시 class=hash-link aria-label="Direct link to 인증 우선순위 (충돌 시)" title="Direct link to 인증 우선순위 (충돌 시)" translate=no>​</a></h3>
+<ol>
+<li class=""><code>CLAUDE_CODE_USE_BEDROCK</code> / <code>USE_VERTEX</code> / <code>USE_FOUNDRY</code> — 강제 스위치</li>
+<li class=""><code>ANTHROPIC_API_KEY</code> — 환경변수 키</li>
+<li class=""><code>apiKeyHelper</code> — 동적 키 헬퍼 스크립트 (볼트 연동)</li>
+<li class="">OAuth 토큰 — <code>setup-token</code> 장기 토큰, 구독 로그인</li>
+</ol>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-bedrock-sso-설정>실습: Bedrock SSO 설정<a href=#실습-bedrock-sso-설정 class=hash-link aria-label="Direct link to 실습: Bedrock SSO 설정" title="Direct link to 실습: Bedrock SSO 설정" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 조직 프로파일 (/etc/profile.d/claude.sh)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export CLAUDE_CODE_USE_BEDROCK=1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export AWS_REGION=ap-northeast-2</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># SSO 로그인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">aws sso login --profile dev && export AWS_PROFILE=dev</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> /status   # Provider: Bedrock 표기 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=bedrock-iam-최소-권한-정책>Bedrock IAM 최소 권한 정책<a href=#bedrock-iam-최소-권한-정책 class=hash-link aria-label="Direct link to Bedrock IAM 최소 권한 정책" title="Direct link to Bedrock IAM 최소 권한 정책" translate=no>​</a></h3>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"Version"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"2012-10-17"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"Statement"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"Sid"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"ClaudeCodeInvoke"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"Effect"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"Allow"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"Action"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token string" style=color:#e3116c>"bedrock:InvokeModel"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token string" style=color:#e3116c>"bedrock:InvokeModelWithResponseStream"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"Resource"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"arn:aws:bedrock:*::foundation-model/anthropic.*"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=apikeyhelper--볼트-통합>apiKeyHelper / 볼트 통합<a href=#apikeyhelper--볼트-통합 class=hash-link aria-label="Direct link to apiKeyHelper / 볼트 통합" title="Direct link to apiKeyHelper / 볼트 통합" translate=no>​</a></h3>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>// ~/.claude/settings.json</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"apiKeyHelper"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"/opt/claude/get-key.sh"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"env"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token property" style=color:#36acaa>"CLAUDE_CODE_API_KEY_HELPER_TTL_MS"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"300000"</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">#!/bin/bash  # /opt/claude/get-key.sh</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">aws secretsmanager get-secret-value \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --secret-id claude/team-api-key \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --query SecretString --output text</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 TTL마다 재호출되어 회전이 클라이언트에 자동 반영됩니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=iam-정책-라인별-설명>IAM 정책 라인별 설명<a href=#iam-정책-라인별-설명 class=hash-link aria-label="Direct link to IAM 정책 라인별 설명" title="Direct link to IAM 정책 라인별 설명" translate=no>​</a></h3>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">"Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<ul>
+<li class=""><code>InvokeModel</code>: 동기 호출 (짧은 응답)</li>
+<li class=""><code>InvokeModelWithResponseStream</code>: 스트리밍 호출 (Claude Code의 기본 모드)</li>
+<li class="">이 두 개만 있으면 Claude Code가 동작합니다. 다른 Bedrock 액션(모델 관리, 파인튜닝 등)은 불필요합니다.</li>
+</ul>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">"Resource": "arn:aws:bedrock:*::foundation-model/anthropic.*"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<ul>
+<li class=""><code>*</code> 리전: 모든 리전에서 호출 가능 (단일 리전으로 좁힐 수 있음: <code>ap-northeast-2</code>)</li>
+<li class=""><code>anthropic.*</code>: Anthropic의 모든 모델 허용. 특정 모델만 허용하려면 <code>anthropic.claude-sonnet-5-v1*</code>처럼 좁힙니다.</li>
+</ul>
+<p><strong>모델 차단 예시</strong> (Deny 조합):</p>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"Sid"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"DenyOpus"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"Effect"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"Deny"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"Action"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"bedrock:InvokeModel*"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"Resource"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"arn:aws:bedrock:*::foundation-model/anthropic.claude-opus*"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=privatelink--왜-필요하고-어떻게-격리하는가>PrivateLink — 왜 필요하고 어떻게 격리하는가<a href=#privatelink--왜-필요하고-어떻게-격리하는가 class=hash-link aria-label="Direct link to PrivateLink — 왜 필요하고 어떻게 격리하는가" title="Direct link to PrivateLink — 왜 필요하고 어떻게 격리하는가" translate=no>​</a></h3>
+<p>PrivateLink는 Bedrock 호출 트래픽이 <strong>인터넷을 거치지 않고 AWS 내부 네트워크만으로</strong> 전달되게 합니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>관점<th>인터넷 경유<th>PrivateLink<tbody><tr><td>경로<td>VPC → IGW → 인터넷 → Bedrock<td>VPC → VPC Endpoint → Bedrock (내부)<tr><td>규제<td>일부 산업에서 "추론 데이터가 인터넷을 통과" 불허<td>내부 경로만 사용, 규제 충족<tr><td>증적<td>경로 증명 어려움<td>VPC Flow Logs로 트래픽 경로 증적<tr><td>추가 통제<td>—<td>Endpoint Policy로 호출 가능 모델/주체 제한</table>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># VPC Endpoint 생성 (Terraform 예시 개요)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># aws_vpc_endpoint "bedrock" {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   service_name = "com.amazonaws.ap-northeast-2.bedrock-runtime"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   vpc_endpoint_type = "Interface"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#   private_dns_enabled = true  # SDK 무수정 전환</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>Private DNS를 활성화하면 SDK가 기존 퍼블릭 엔드포인트 주소를 그대로 사용해도 내부로 라우팅됩니다 — 코드 변경 0줄.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=자격증명-회전-4단계-체계>자격증명 회전 4단계 체계<a href=#자격증명-회전-4단계-체계 class=hash-link aria-label="Direct link to 자격증명 회전 4단계 체계" title="Direct link to 자격증명 회전 4단계 체계" translate=no>​</a></h3>
+<p>정적 키를 써야 하는 경우(apiKeyHelper 기반), 회전을 무사고로 만드는 4단계:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>단계<th>동작<th>포인트<tbody><tr><td>1. 이중화<td>신키 발급, 볼트에 병행 저장<td>구키와 신키가 동시 유효<tr><td>2. 전환<td>볼트 포인터를 신키로 스위치<td>이후 헬퍼 호출은 신키 반환<tr><td>3. 관찰<td>TTL 경과 후 구키 호출 0건 확인<td>잔여 사용자 없음 검증<tr><td>4. 폐기<td>구키 비활성화 + 감사 기록<td>증적 보존</table>
+<blockquote>
+<p>SSO 경로(Identity Center)는 STS 단기 토큰이 자동 회전되므로 이 절차 자체가 불필요합니다 — SSO가 권장되는 이유입니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=자격증명-의사결정표>자격증명 의사결정표<a href=#자격증명-의사결정표 class=hash-link aria-label="Direct link to 자격증명 의사결정표" title="Direct link to 자격증명 의사결정표" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>주체<th>표준 경로<th>원칙<tbody><tr><td>개발자 (일상)<td>Bedrock + Identity Center SSO<td>정적 키 0<tr><td>CI 파이프라인<td>OIDC 역할 인수, 필요 시 setup-token<td>장기 시크릿 최소화<tr><td>공유 서비스<td>Secrets Manager + apiKeyHelper<td>TTL 회전 자동화<tr><td>폐쇄망<td>PrivateLink + SSO<td>경로와 인증 동시 해결</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=3-claude-apps-gateway>3. Claude apps gateway<a href=#3-claude-apps-gateway class=hash-link aria-label="Direct link to 3. Claude apps gateway" title="Direct link to 3. Claude apps gateway" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "조직 로그인 UX, 그룹별 모델 차등, 개인 지출 한도를 어떻게?"</p>
+</blockquote>
+<p><strong>게이트웨이가 없으면</strong> 발생하는 문제:</p>
+<ul>
+<li class="">개발자마다 API 키를 개별 관리해야 합니다 → 유출 위험</li>
+<li class="">모든 사용자가 동일 모델에 무제한 접근합니다 → 비용 폭증</li>
+<li class="">누가 얼마나 사용하는지 추적할 단일 지점이 없습니다 → 감사 불가</li>
+<li class="">조직 SSO와 별개로 별도 로그인 과정이 필요합니다 → UX 저하</li>
+</ul>
+<p>Claude apps gateway는 이 네 가지를 <strong>단일 인프라</strong>로 해결합니다. 조직의 IdP로 로그인하면 그룹에 따라 모델과 지출이 자동 결정되고, 모든 요청이 한 지점을 통과하므로 로깅과 비용 귀속이 자연스럽게 따라옵니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=아키텍처-5층>아키텍처 5층<a href=#아키텍처-5층 class=hash-link aria-label="Direct link to 아키텍처 5층" title="Direct link to 아키텍처 5층" translate=no>​</a></h3>
+<!-- -->
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=개발자-경험>개발자 경험<a href=#개발자-경험 class=hash-link aria-label="Direct link to 개발자 경험" title="Direct link to 개발자 경험" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 클라이언트는 게이트웨이만 바라봄</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export ANTHROPIC_BASE_URL=https://claude-gw.corp.example</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 브라우저가 열리고 조직 IdP 로그인 (OIDC)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># AWS 프로파일, 정적 키, 리전 설정이 전부 사라짐</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> /status   # Provider: gateway 경유, 그룹과 허용 모델 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=그룹별-모델-라우팅>그룹별 모델 라우팅<a href=#그룹별-모델-라우팅 class=hash-link aria-label="Direct link to 그룹별 모델 라우팅" title="Direct link to 그룹별 모델 라우팅" translate=no>​</a></h3>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic># gateway.yaml (routing)</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>routing</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>groups</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>match</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"eng-platform"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token key atrule" style=color:#00a4db>allowedModels</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain">opus</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> sonnet</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> haiku</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>match</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"eng-default"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token key atrule" style=color:#00a4db>allowedModels</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain">sonnet</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> haiku</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token key atrule" style=color:#00a4db>rewrite</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>opus</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> sonnet </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain">   </span><span class="token comment" style=color:#999988;font-style:italic># opus 요청을 sonnet으로 하향</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>match</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"contractors"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token key atrule" style=color:#00a4db>allowedModels</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain">haiku</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=지출-한도-api>지출 한도 API<a href=#지출-한도-api class=hash-link aria-label="Direct link to 지출 한도 API" title="Direct link to 지출 한도 API" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">curl -X PUT https://claude-gw.corp.example/admin/limits \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  -H "Authorization: Bearer $ADMIN_TOKEN" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  -d '{ "subject": "user:jdoe", "period": "month", "usd": 300 }'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 한도 도달 시 요청 거부, 사용자에게 사유 표시</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=gatewayyaml-각-섹션의-역할>gateway.yaml 각 섹션의 역할<a href=#gatewayyaml-각-섹션의-역할 class=hash-link aria-label="Direct link to gateway.yaml 각 섹션의 역할" title="Direct link to gateway.yaml 각 섹션의 역할" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>섹션<th>역할<th>관리자 관점<tbody><tr><td><strong>Listener + TLS</strong><td>수신 포트와 인증서 설정<td>조직 도메인(claude-gw.corp.example)으로 서비스<tr><td><strong>OIDC + Session</strong><td>IdP 연동, 세션 저장(Postgres)<td>기존 IdP 하나만 등록하면 개발자 로그인 완성<tr><td><strong>Policy</strong><td>managed 정책, 그룹 매핑, 지출 한도 판정<td>요청마다 실시간으로 정책 적용<tr><td><strong>Model Routing</strong><td>그룹 규칙에 따라 모델 허용/치환<td>Opus를 요청해도 Sonnet으로 하향 가능<tr><td><strong>Upstream</strong><td>Bedrock, Agent Platform, Foundry로 전달<td>상류 인증은 게이트웨이가 대행</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=지출-한도의-실무적-활용>지출 한도의 실무적 활용<a href=#지출-한도의-실무적-활용 class=hash-link aria-label="Direct link to 지출 한도의 실무적 활용" title="Direct link to 지출 한도의 실무적 활용" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>설정<th>동작<th>활용<tbody><tr><td><code>period: "day"</code><td>일 한도<td>실수로 루프 돌릴 때 보호<tr><td><code>period: "week"</code><td>주 한도<td>스프린트 단위 관리<tr><td><code>period: "month"</code><td>월 한도<td>예산 기준 관리<tr><td>그룹 기본값 + 개인 예외<td>2단 구성<td>팀 기본 $200, 특정 파워유저 $500<tr><td>한도 초과 시<td>요청 거부 + 사유 메시지 표시<td>사용자가 원인을 바로 인지</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=claude-apps-gateway-vs-일반-llm-gateway-비교>Claude apps gateway vs 일반 LLM gateway 비교<a href=#claude-apps-gateway-vs-일반-llm-gateway-비교 class=hash-link aria-label="Direct link to Claude apps gateway vs 일반 LLM gateway 비교" title="Direct link to Claude apps gateway vs 일반 LLM gateway 비교" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>비교 항목<th>일반 LLM gateway (LiteLLM 등)<th>Claude apps gateway<tbody><tr><td>목적<td>다중 벤더 추상화<td>Claude Code 조직 운영 전용<tr><td>정책<td>Claude Code 정책 모델 미인지<td>managed 정책과 자연 결합<tr><td>기능<td>한도/라우팅을 직접 구현해야 함<td>SSO, 라우팅, 한도가 내장 완제품<tr><td>유지보수<td>범용 프록시 유지보수 부담<td>공식 배포, 운영 문서 제공<tr><td>시작 방법<td><code>claude gateway --config gateway.yaml</code> (v2.1.195+)<td>—</table>
+<blockquote>
+<p>이미 LiteLLM 등 범용 게이트웨이를 쓰고 있다면 병행 가능합니다. 하지만 Claude Code 전용 정책(모드 통제, 지출 한도, 그룹 라우팅)이 필요하면 apps gateway가 마찰 없는 답입니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=4-네트워크와-보안>4. 네트워크와 보안<a href=#4-네트워크와-보안 class=hash-link aria-label="Direct link to 4. 네트워크와 보안" title="Direct link to 4. 네트워크와 보안" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "사내망에서 안전하게 통과시키고, 나가는 길은 좁히기"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=필수-아웃바운드-도메인>필수 아웃바운드 도메인<a href=#필수-아웃바운드-도메인 class=hash-link aria-label="Direct link to 필수 아웃바운드 도메인" title="Direct link to 필수 아웃바운드 도메인" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>도메인<th>용도<th>대체<tbody><tr><td><code>api.anthropic.com</code><td>추론 API<td>Bedrock 경로 시 불필요<tr><td><code>claude.ai</code><td>구독 로그인, 서버 관리 설정<td>Teams/Enterprise<tr><td><code>downloads.claude.ai</code><td>설치, 갱신<td>미러 운영 시 대체<tr><td><code>bedrock-runtime.&lt;region>.amazonaws.com</code><td>Bedrock 추론<td>PrivateLink 대체 가능</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=프록시-설정>프록시 설정<a href=#프록시-설정 class=hash-link aria-label="Direct link to 프록시 설정" title="Direct link to 프록시 설정" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">export HTTPS_PROXY=http://proxy.corp.example:8080</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export HTTP_PROXY=http://proxy.corp.example:8080</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export NO_PROXY=localhost,127.0.0.1,.corp.example</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 조직 배포: /etc/profile.d 또는 MDM 프로파일로</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=사내-ca-인증서>사내 CA 인증서<a href=#사내-ca-인증서 class=hash-link aria-label="Direct link to 사내 CA 인증서" title="Direct link to 사내 CA 인증서" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># TLS 검사 장비 뒤에서 SELF_SIGNED_CERT_IN_CHAIN 오류 시</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export NODE_EXTRA_CA_CERTS=/etc/ssl/corp/corp-root-ca.pem</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># OS 신뢰 저장소 병행 등록</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># Debian: /usr/local/share/ca-certificates + update-ca-certificates</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># RHEL: /etc/pki/ca-trust/source/anchors + update-ca-trust</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># ⚠️ 금지: NODE_TLS_REJECT_UNAUTHORIZED=0 (검증 무력화)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=각-도메인이-왜-필요한가>각 도메인이 왜 필요한가<a href=#각-도메인이-왜-필요한가 class=hash-link aria-label="Direct link to 각 도메인이 왜 필요한가" title="Direct link to 각 도메인이 왜 필요한가" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>도메인<th>역할<th>차단 시 증상<tbody><tr><td><code>api.anthropic.com</code><td>모델 추론 API 호출<td>응답 생성 불가 (Bedrock 경로 시 불필요)<tr><td><code>claude.ai</code><td>OAuth 로그인 + 서버 managed 설정 수신<td>로그인 불가, managed 정책 미수신<tr><td><code>downloads.claude.ai</code><td>바이너리 업데이트, 패키지 저장소<td>자동 갱신 실패 (미러 운영 시 대체 가능)<tr><td><code>statsig</code> 계열<td>기능 플래그(Feature Flag) 수신<td>차단 가능, 기본값으로 동작<tr><td><code>sentry</code> 계열<td>오류 리포트 송신<td>차단 가능, 진단 정보 저하<tr><td><code>bedrock-runtime.&lt;region>.amazonaws.com</code><td>Bedrock 추론<td>PrivateLink로 대체 가능</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=프록시-설정-3가지-방법과-우선순위>프록시 설정 3가지 방법과 우선순위<a href=#프록시-설정-3가지-방법과-우선순위 class=hash-link aria-label="Direct link to 프록시 설정 3가지 방법과 우선순위" title="Direct link to 프록시 설정 3가지 방법과 우선순위" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>방법<th>설정 위치<th>범위<tbody><tr><td>1. 환경변수<td><code>HTTPS_PROXY</code>, <code>HTTP_PROXY</code>, <code>NO_PROXY</code><td>해당 세션/프로세스<tr><td>2. 시스템 프로파일<td><code>/etc/profile.d/proxy.sh</code> 또는 MDM<td>조직 전체, 영구<tr><td>3. managed env<td><code>managed-settings.json</code>의 <code>env</code> 섹션<td>Claude Code 전용, 영구</table>
+<p>우선순위: 환경변수 > managed env 값 (managed env는 프로세스 시작 시 주입됨)</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=인증-프록시-대응-basic-ntlm-kerberos>인증 프록시 대응 (Basic, NTLM, Kerberos)<a href=#인증-프록시-대응-basic-ntlm-kerberos class=hash-link aria-label="Direct link to 인증 프록시 대응 (Basic, NTLM, Kerberos)" title="Direct link to 인증 프록시 대응 (Basic, NTLM, Kerberos)" translate=no>​</a></h3>
+<p>자격증명을 요구하는 프록시에서는 URL에 인증 정보를 삽입하지 말아야 합니다 (유출 위험):</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># ❌ 지양: 평문 자격증명이 환경변수에 남음</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export HTTPS_PROXY=http://user:pass@proxy:8080</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># ✅ 권장: 로컬 중계 (Px, Cntlm 등)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># NTLM/Kerberos를 로컬에서 처리, Claude Code는 localhost만 가리킴</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">export HTTPS_PROXY=http://localhost:3128</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>가능하면 인증 프록시 자체를 **ZTNA(Zero Trust Network Access)**로 대체하는 것이 구조적 해법입니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=vpn--ztna-환경-점검-사항>VPN / ZTNA 환경 점검 사항<a href=#vpn--ztna-환경-점검-사항 class=hash-link aria-label="Direct link to VPN / ZTNA 환경 점검 사항" title="Direct link to VPN / ZTNA 환경 점검 사항" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>환경<th>점검 항목<tbody><tr><td><strong>VPN</strong><td>스플릿 터널 시 API 도메인 경로 확인, MTU 문제로 스트리밍 끊김 진단, DNS 사내 리졸버 경유 여부<tr><td><strong>ZTNA</strong><td>앱 단위 정책에 Claude Code 등록, 도메인 허용을 커넥터 정책에 반영, 디바이스 포스처 요건과 CLI 호환 확인</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=sandbox-네트워크-curl-갭-봉쇄>Sandbox 네트워크 (curl 갭 봉쇄)<a href=#sandbox-네트워크-curl-갭-봉쇄 class=hash-link aria-label="Direct link to Sandbox 네트워크 (curl 갭 봉쇄)" title="Direct link to Sandbox 네트워크 (curl 갭 봉쇄)" translate=no>​</a></h3>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>// managed-settings.json</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"sandbox"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"enabled"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token boolean" style=color:#36acaa>true</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"network"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token property" style=color:#36acaa>"allowedDomains"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token string" style=color:#e3116c>"api.anthropic.com"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token string" style=color:#e3116c>"*.corp.example"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token string" style=color:#e3116c>"github.corp.example"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 <strong>왜 Sandbox가 필요한가</strong>: WebFetch를 deny해도 Bash가 허용이면 <code>curl</code>, <code>wget</code>으로 임의 URL에 접근 가능합니다. 권한 규칙(permissions)은 "Claude가 도구를 쓸 때" 적용되지만, Bash 안에서 무엇을 실행하는지까지는 추적하지 못합니다. <strong>Sandbox는 OS 레벨에서 이 갭을 봉쇄</strong>합니다 — 파일시스템 격리와 네트워크 허용 도메인 지정으로 Bash 내부 명령까지 통제합니다. 이것은 Anthropic 공식문서(Security)에서도 강조하는 핵심 보안 레이어입니다: "Sandboxed bash tool: Sandbox bash commands with filesystem and network isolation, reducing permission prompts while maintaining security." (docs.anthropic.com/en/docs/claude-code/security)</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=dlp-훅-유출-패턴-차단>DLP 훅 (유출 패턴 차단)<a href=#dlp-훅-유출-패턴-차단 class=hash-link aria-label="Direct link to DLP 훅 (유출 패턴 차단)" title="Direct link to DLP 훅 (유출 패턴 차단)" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">#!/bin/bash  # ./scripts/dlp-guard.sh (PreToolUse)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">INPUT=$(cat)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">CMD=$(echo "$INPUT" | jq -r '.tool_input.command // empty')</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 외부 전송 명령 + 민감 패턴 결합 시 차단</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">if echo "$CMD" | grep -qE 'curl|wget|nc |scp ' && \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">   echo "$CMD" | grep -qE 'sk-ant-|AKIA[0-9A-Z]{16}|BEGIN.*PRIVATE KEY'; then</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  echo "Blocked by DLP: credential exfil pattern" >&2</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  exit 2</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">fi</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">exit 0</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=5-거버넌스와-정책>5. 거버넌스와 정책<a href=#5-거버넌스와-정책 class=hash-link aria-label="Direct link to 5. 거버넌스와 정책" title="Direct link to 5. 거버넌스와 정책" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "개인이 못 바꾸는 것을 어떻게 설계하는가?"</p>
+</blockquote>
+<p>거버넌스의 본질은 "<strong>사용자 스스로 완화할 수 없는 강제선</strong>"을 만드는 것입니다. Claude Code는 이를 위해 두 가지 메커니즘을 제공합니다:</p>
+<ol>
+<li class=""><strong>managed settings</strong> — 파일/레지스트리/서버를 통해 배포되며, 사용자 설정보다 항상 우선합니다. settings.json에서 <code>deny</code>에 추가된 규칙은 개발자가 제거할 수 없습니다.</li>
+<li class=""><strong>Permission Modes</strong> — 6가지 모드(Manual, Accept Edits, Plan, Auto, Don't Ask, Bypass)로 Claude의 자율성 범위를 결정합니다. <code>disableBypassPermissionsMode: "disable"</code> 설정으로 조직 차원에서 위험한 모드를 영구 차단할 수 있습니다.</li>
+</ol>
+<blockquote>
+<p>💡 <strong>Anthropic Skilljar 핵심 통찰 (Permission Modes Lesson)</strong>:</p>
+<ul>
+<li class="">Auto Mode의 분류기는 **의도(intent)**를 검사하지, **정확성(correctness)**을 검사하지 않습니다</li>
+<li class="">깨진 코드를 쓰는 것은 "위험한 것"이 아니므로 분류기가 통과시킵니다</li>
+<li class="">따라서 Auto Mode + <strong>Stop Hook</strong> (테스트 실행)을 조합해야 무인 실행이 안전합니다</li>
+</ul>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=managed-settings-4채널-우선순위-순>managed settings 4채널 (우선순위 순)<a href=#managed-settings-4채널-우선순위-순 class=hash-link aria-label="Direct link to managed settings 4채널 (우선순위 순)" title="Direct link to managed settings 4채널 (우선순위 순)" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>순위<th>채널<th>도달 방식<th>플랫폼<tbody><tr><td>1<td><strong>Server-managed</strong><td>claude.ai 어드민 콘솔<td>Teams/Enterprise 전용<tr><td>2<td><strong>plist / HKLM</strong><td>MDM, 레지스트리<td>macOS, Windows<tr><td>3<td><strong>파일 기반</strong><td><code>/etc/claude-code/managed-settings.json</code><td>전 플랫폼<tr><td>4<td><strong>HKCU</strong><td>사용자 레지스트리<td>Windows (비강제)</table>
+<blockquote>
+<p>규칙: 기기에서 처음 발견되는 채널 하나를 사용합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=병합-규칙>병합 규칙<a href=#병합-규칙 class=hash-link aria-label="Direct link to 병합 규칙" title="Direct link to 병합 규칙" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>타입<th>동작<th>결과<tbody><tr><td><strong>스칼라</strong> (model, minimumVersion 등)<td>managed가 덮어쓰기<td>개인 설정 무시됨<tr><td><strong>배열</strong> (permissions.allow, deny)<td>전 소스 합집합<td>개발자가 allow 추가 가능, deny 제거 불가</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=managed-settingsjson-예시-조직-기준선>managed-settings.json 예시 (조직 기준선)<a href=#managed-settingsjson-예시-조직-기준선 class=hash-link aria-label="Direct link to managed-settings.json 예시 (조직 기준선)" title="Direct link to managed-settings.json 예시 (조직 기준선)" translate=no>​</a></h3>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"permissions"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"deny"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"Read(./.env*)"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"Bash(rm -rf:*)"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"Bash(curl * | bash:*)"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"disableBypassPermissionsMode"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"disable"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"sandbox"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"enabled"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token boolean" style=color:#36acaa>true</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"network"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token property" style=color:#36acaa>"allowedDomains"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"api.anthropic.com"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"*.corp.example"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"allowedMcpServers"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"github"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"corp-wiki"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"minimumVersion"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"2.1.190"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"env"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token property" style=color:#36acaa>"CLAUDE_CODE_USE_BEDROCK"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"1"</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=잠금-키-6종>잠금 키 6종<a href=#잠금-키-6종 class=hash-link aria-label="Direct link to 잠금 키 6종" title="Direct link to 잠금 키 6종" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>키<th>효과<tbody><tr><td><code>allowManagedPermissionRulesOnly</code><td>managed 규칙만 유효, 개인 allow 무시<tr><td><code>disableBypassPermissionsMode</code><td><code>--dangerously-skip</code> 우회 봉쇄<tr><td><code>allowManagedHooksOnly</code><td>managed 훅만 로드<tr><td><code>allowedHttpHookUrls</code><td>HTTP 훅 목적지 허용 목록<tr><td><code>strict/blockedMarketplaces</code><td>플러그인 마켓 소스 통제<tr><td><code>minimumVersion</code><td>구버전 강제 상향</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=-skilljar-보충-팀-전체-배포를-위한-plugin-시스템>💡 Skilljar 보충: 팀 전체 배포를 위한 Plugin 시스템<a href=#-skilljar-보충-팀-전체-배포를-위한-plugin-시스템 class=hash-link aria-label="Direct link to 💡 Skilljar 보충: 팀 전체 배포를 위한 Plugin 시스템" title="Direct link to 💡 Skilljar 보충: 팀 전체 배포를 위한 Plugin 시스템" translate=no>​</a></h3>
+<p>managed settings가 "무엇을 금지하는가"를 결정한다면, <strong>Plugin</strong>은 "무엇을 표준으로 제공하는가"를 결정합니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Plugin 구성요소<th>관리자 관점 효용<tbody><tr><td><strong>Skills</strong><td>팀 전체의 반복 절차 표준화<tr><td><strong>Subagents</strong><td>코드 리뷰어, 보안 스캐너 등 팀 도구 배포<tr><td><strong>Hooks</strong><td>건너뛸 수 없는 게이트 (테스트, 린트 강제)<tr><td><strong>MCP configs</strong><td>팀 필수 외부 도구 연결 자동화</table>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># Plugin 설치 (팀 멤버가 실행)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">/plugin install org-name@security-standards</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 관리자가 Private Marketplace로 중앙 관리</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">/plugin marketplace add your-org/claude-plugins</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>⚠️ <strong>보안 주의</strong> (Skilljar Lesson 09): Plugin은 사용자 권한으로 코드를 실행합니다. Hook이 매칭되는 모든 도구 호출에서 발동하므로, 설치 전 hooks/agents/MCP 구성을 반드시 확인해야 합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=-skilljar-보충-무인-실행-검증-원칙>💡 Skilljar 보충: 무인 실행 검증 원칙<a href=#-skilljar-보충-무인-실행-검증-원칙 class=hash-link aria-label="Direct link to 💡 Skilljar 보충: 무인 실행 검증 원칙" title="Direct link to 💡 Skilljar 보충: 무인 실행 검증 원칙" translate=no>​</a></h3>
+<p>managed settings로 Auto Mode를 허용한 뒤, 무인 실행 결과를 어떻게 검증하는가가 관리자의 핵심 과제입니다.</p>
+<blockquote>
+<p><strong>"감시하지 않을수록, 더 많이 검증한다."</strong> — Anthropic Skilljar, Lesson 08</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>검증 단계<th>방법<tbody><tr><td>1. Diff부터 시작<td>Claude의 요약이 아닌 <code>git diff</code> 자체를 먼저 확인<tr><td>2. 테스트를 게이트로<td>Stop Hook으로 테스트 실행 → 실패 시 턴 종료 거부<tr><td>3. Cold Second Opinion<td>별도 sub-agent로 리뷰 (작성에 참여하지 않은 신선한 시선)</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=auto-mode-조직-구성--분류기에게-신뢰-경계를-알려주기>Auto Mode 조직 구성 — 분류기에게 신뢰 경계를 알려주기<a href=#auto-mode-조직-구성--분류기에게-신뢰-경계를-알려주기 class=hash-link aria-label="Direct link to Auto Mode 조직 구성 — 분류기에게 신뢰 경계를 알려주기" title="Direct link to Auto Mode 조직 구성 — 분류기에게 신뢰 경계를 알려주기" translate=no>​</a></h3>
+<p>Auto Mode의 분류기는 "이 행동이 안전한가?"를 판단하지만, <strong>조직의 신뢰 경계</strong>를 모릅니다. managed settings로 이를 알려줍니다:</p>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>// managed-settings.json 발췌</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"autoMode"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"trustedRepositories"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"github.corp.example/*"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"trustedBuckets"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"s3://corp-data-*"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"trustedDomains"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"*.corp.example"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"blockOverrides"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"Bash(aws iam *:*)"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"allowOverrides"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token string" style=color:#e3116c>"Bash(kubectl get:*)"</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>키<th>효과<tbody><tr><td><code>trustedRepositories</code><td>이 저장소의 코드를 신뢰 → 분류기가 더 관대하게 판정<tr><td><code>trustedDomains</code><td>이 도메인으로의 네트워크 요청을 안전으로 분류<tr><td><code>blockOverrides</code><td>분류기 판정과 무관하게 <strong>무조건 차단</strong> (IAM 변조 등)<tr><td><code>allowOverrides</code><td>분류기 판정과 무관하게 <strong>무조건 허용</strong> (읽기 명령 등)</table>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 배포 전 시뮬레이션</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude auto-mode show              # 유효 구성 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude auto-mode test "aws iam create-user x"   # 판정 미리보기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=감사-훅--누가-무엇을-실행했는가>감사 훅 — 누가 무엇을 실행했는가<a href=#감사-훅--누가-무엇을-실행했는가 class=hash-link aria-label="Direct link to 감사 훅 — 누가 무엇을 실행했는가" title="Direct link to 감사 훅 — 누가 무엇을 실행했는가" translate=no>​</a></h3>
+<p>managed hooks로 모든 도구 호출을 중앙 로그에 기록할 수 있습니다:</p>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>// managed-settings.json 발췌</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"allowManagedHooksOnly"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token boolean" style=color:#36acaa>true</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"hooks"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"PostToolUse"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token property" style=color:#36acaa>"type"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"command"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token property" style=color:#36acaa>"command"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"./scripts/audit-log.sh"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p><code>allowManagedHooksOnly: true</code>이면 사용자가 자체 훅을 추가할 수 없으므로, 감사 훅이 우회되지 않습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=권한-패턴-설계-전략>권한 패턴 설계 전략<a href=#권한-패턴-설계-전략 class=hash-link aria-label="Direct link to 권한 패턴 설계 전략" title="Direct link to 권한 패턴 설계 전략" translate=no>​</a></h3>
+<blockquote>
+<p><strong>deny는 좁고 단단하게, allow는 넓고 명시적으로</strong></p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>영역<th>패턴<th>예시<tbody><tr><td><strong>managed deny</strong> (최소, 불변)<td>논쟁 없는 위험만<td><code>rm -rf</code>, <code>.env 읽기</code>, `curl<tr><td><strong>명시 allow</strong> (넉넉히)<td>생산성 도구<td>빌드, 테스트, 린트, git 조회<tr><td><strong>ask (회색지대)</strong><td>사람 확인<td>git push, 배포 명령<tr><td><strong>auto 분류기</strong><td>나머지<td>신뢰 경계 설정으로 보완</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=적용-검증>적용 검증<a href=#적용-검증 class=hash-link aria-label="Direct link to 적용 검증" title="Direct link to 적용 검증" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> /status</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># Enterprise managed settings (file)  ← 괄호 안 소스 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># Provider: Bedrock (env 강제)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">### Auto Mode 조직 구성 — 분류기에게 신뢰 경계를 알려주기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Auto Mode의 분류기는 "이 행동이 안전한가?"를 판단하지만, **조직의 신뢰 경계**를 모릅니다. managed settings로 이를 알려줍니다:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">```json</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">// managed-settings.json 발췌</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "autoMode": {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "trustedRepositories": ["github.corp.example/*"],</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "trustedBuckets": ["s3://corp-data-*"],</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "trustedDomains": ["*.corp.example"],</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "blockOverrides": ["Bash(aws iam *:*)"],</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "allowOverrides": ["Bash(kubectl get:*)"]</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>키<th>효과<tbody><tr><td><code>trustedRepositories</code><td>이 저장소의 코드를 신뢰 → 분류기가 더 관대하게 판정<tr><td><code>trustedDomains</code><td>이 도메인으로의 네트워크 요청을 안전으로 분류<tr><td><code>blockOverrides</code><td>분류기 판정과 무관하게 <strong>무조건 차단</strong> (IAM 변조 등)<tr><td><code>allowOverrides</code><td>분류기 판정과 무관하게 <strong>무조건 허용</strong> (읽기 명령 등)</table>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 배포 전 시뮬레이션</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude auto-mode show              # 유효 구성 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude auto-mode test "aws iam create-user x"   # 판정 미리보기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=감사-훅--누가-무엇을-실행했는가-1>감사 훅 — 누가 무엇을 실행했는가<a href=#감사-훅--누가-무엇을-실행했는가-1 class=hash-link aria-label="Direct link to 감사 훅 — 누가 무엇을 실행했는가" title="Direct link to 감사 훅 — 누가 무엇을 실행했는가" translate=no>​</a></h3>
+<p>managed hooks로 모든 도구 호출을 중앙 로그에 기록할 수 있습니다:</p>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic>// managed-settings.json 발췌</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"allowManagedHooksOnly"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token boolean" style=color:#36acaa>true</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token property" style=color:#36acaa>"hooks"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"PostToolUse"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token property" style=color:#36acaa>"type"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"command"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token property" style=color:#36acaa>"command"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"./scripts/audit-log.sh"</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p><code>allowManagedHooksOnly: true</code>이면 사용자가 자체 훅을 추가할 수 없으므로, 감사 훅이 우회되지 않습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=권한-패턴-설계-전략-1>권한 패턴 설계 전략<a href=#권한-패턴-설계-전략-1 class=hash-link aria-label="Direct link to 권한 패턴 설계 전략" title="Direct link to 권한 패턴 설계 전략" translate=no>​</a></h3>
+<blockquote>
+<p><strong>deny는 좁고 단단하게, allow는 넓고 명시적으로</strong></p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>영역<th>패턴<th>예시<tbody><tr><td><strong>managed deny</strong> (최소, 불변)<td>논쟁 없는 위험만<td><code>rm -rf</code>, <code>.env 읽기</code>, `curl<tr><td><strong>명시 allow</strong> (넉넉히)<td>생산성 도구<td>빌드, 테스트, 린트, git 조회<tr><td><strong>ask (회색지대)</strong><td>사람 확인<td>git push, 배포 명령<tr><td><strong>auto 분류기</strong><td>나머지<td>신뢰 경계 설정으로 보완</table>
+<h1>Sandbox: enabled</h1>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">---</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">## 6. 모니터링과 비용</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> **해결하는 문제**: "누가 얼마나 쓰는지, 이상은 없는지"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">### 관측 3축</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">| 축 | 도구 | 지원 범위 |</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">|----|------|----------|</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">| **OTel** | 세션·도구·토큰 메트릭 송출 | 전 공급자 |</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">| **Analytics** | claude.ai/analytics/claude-code | Anthropic 경로 전용 |</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">| **Cost tracking** | 지출 한도, 비용 귀속 | 경로별 상이 |</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">### OTel 전사 배포</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">```json</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">// managed-settings.json의 env로 전사 배포</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "env": {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "CLAUDE_CODE_ENABLE_TELEMETRY": "1",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "OTEL_METRICS_EXPORTER": "otlp",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "OTEL_LOGS_EXPORTER": "otlp",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel-collector.corp.example:4317",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "OTEL_RESOURCE_ATTRIBUTES": "department=platform,team=payments"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=메트릭-카탈로그>메트릭 카탈로그<a href=#메트릭-카탈로그 class=hash-link aria-label="Direct link to 메트릭 카탈로그" title="Direct link to 메트릭 카탈로그" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>카테고리<th>메트릭<th>활용<tbody><tr><td>세션<td>세션 수, 활성 시간<td>채택률<tr><td>토큰<td>입력, 출력, 캐시<td>비용 근사<tr><td>비용<td>추정 비용 카운터<td>모델 단가 반영<tr><td>도구<td>호출 수, 승인/거부<td>정책 마찰 신호<tr><td>코드 변화<td>수정 라인, 커밋, PR<td>기여 추적</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=aws-budgets-예산-알람>AWS Budgets 예산 알람<a href=#aws-budgets-예산-알람 class=hash-link aria-label="Direct link to AWS Budgets 예산 알람" title="Direct link to AWS Budgets 예산 알람" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">aws budgets create-budget \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --account-id 111122223333 \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --budget '{ "BudgetName": "claude-code-monthly",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "BudgetLimit": {"Amount":"5000","Unit":"USD"},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "TimeUnit": "MONTHLY", "BudgetType": "COST",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "CostFilters": {"Service":["Amazon Bedrock"]} }' \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --notifications-with-subscribers '[{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "Notification": {"NotificationType":"ACTUAL",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "ComparisonOperator":"GREATER_THAN","Threshold":80},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "Subscribers": [{"SubscriptionType":"SNS",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "Address":"arn:aws:sns:...:cost-alerts"}] }]'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=siem-연계--보안-관점-활용>SIEM 연계 — 보안 관점 활용<a href=#siem-연계--보안-관점-활용 class=hash-link aria-label="Direct link to SIEM 연계 — 보안 관점 활용" title="Direct link to SIEM 연계 — 보안 관점 활용" translate=no>​</a></h3>
+<p>OTel Collector에서 Splunk, OpenSearch 등 SIEM으로 분기하면 보안 관점 탐지가 가능합니다:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>탐지 규칙<th>조건<th>대응<tbody><tr><td>거부 급증<td>정책 거부 이벤트 단기 폭증<td>자동 티켓 발부, 정책 우회 시도 점검<tr><td>심야 대량<td>비업무 시간 대량 토큰 사용<td>행태 축 알림<tr><td>민감 경로<td><code>.env</code>, 키 파일 접근 시도<td>DLP 훅 로그와 조인<tr><td>신규 목적지<td>허용 밖 도메인/MCP 시도<td>deniedMcpServers 긴급 배포</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=비용-귀속--3단-절단>비용 귀속 — 3단 절단<a href=#비용-귀속--3단-절단 class=hash-link aria-label="Direct link to 비용 귀속 — 3단 절단" title="Direct link to 비용 귀속 — 3단 절단" translate=no>​</a></h3>
+<p>OTel의 사용자 차원과 클라우드 호출 신원을 결합하면 비용을 정확히 귀속시킬 수 있습니다:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>소스<th>차원<th>활용<tbody><tr><td><strong>OTel</strong><td><code>user.id</code>, 부서 리소스 속성<td>토큰/비용 개인·팀별 절단<tr><td><strong>CloudTrail</strong><td>역할 세션 이름<td>AWS 호출 주체 식별<tr><td><strong>apps gateway</strong><td>사용자, 그룹 태그 기본 제공<td>경유 시 별도 구현 불필요</table>
+<p>→ 부서, 팀, 개인 3단 리포트를 월간 자동 생성합니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=비용-최적화-6가지-손잡이>비용 최적화 6가지 손잡이<a href=#비용-최적화-6가지-손잡이 class=hash-link aria-label="Direct link to 비용 최적화 6가지 손잡이" title="Direct link to 비용 최적화 6가지 손잡이" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>#<th>레버<th>방법<tbody><tr><td>1<td><strong>모델 배분</strong><td>탐색은 haiku, 본대는 sonnet, opus는 선별<tr><td>2<td><strong>캐시 활용</strong><td>프롬프트 캐시 적중 관리, fork의 캐시 공유<tr><td>3<td><strong>컨텍스트 위생</strong><td><code>/clear</code> 습관, compact 임계 조정<tr><td>4<td><strong>서브에이전트</strong><td>고볼륨 출력 격리로 메인 토큰 절약<tr><td>5<td><strong>배치 시간대</strong><td>무인 작업은 야간 예약으로 피크 회피<tr><td>6<td><strong>한도 계층</strong><td>그룹 기본 + 개인 예외의 지출 캡</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=분기-운영-리뷰--숫자로-도는-회의>분기 운영 리뷰 — 숫자로 도는 회의<a href=#분기-운영-리뷰--숫자로-도는-회의 class=hash-link aria-label="Direct link to 분기 운영 리뷰 — 숫자로 도는 회의" title="Direct link to 분기 운영 리뷰 — 숫자로 도는 회의" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>주제<th>메트릭<th>의사결정<tbody><tr><td>채택<td>활성 사용자, 세션 추세<td>링 확산 판단<tr><td>비용<td>부서별 절단, 모델 믹스 변화<td>배분 정책 조정<tr><td>정책<td>거부 상위 규칙, 문의량<td>완화/강화 결정<tr><td>안전<td>이상 신호, DLP 적중<td>탐지 규칙 갱신<tr><td>성과<td>기여 지표(커밋, PR), 만족도<td>경영 보고</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=이상-사용-감지-신호>이상 사용 감지 신호<a href=#이상-사용-감지-신호 class=hash-link aria-label="Direct link to 이상 사용 감지 신호" title="Direct link to 이상 사용 감지 신호" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>신호<th>기준<th>대응<tbody><tr><td>토큰 급증<td>이동 평균 3배 초과<td>자동 티켓<tr><td>심야 대량<td>비업무 시간 지속 호출<td>행태 축<tr><td>거부 급증<td>정책 거부 단기 폭증<td>정책 마찰 점검<tr><td>신규 목적지<td>허용 밖 도메인 시도<td>보안 알림</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=7-신원-데이터-컴플라이언스>7. 신원, 데이터, 컴플라이언스<a href=#7-신원-데이터-컴플라이언스 class=hash-link aria-label="Direct link to 7. 신원, 데이터, 컴플라이언스" title="Direct link to 7. 신원, 데이터, 컴플라이언스" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "감사관의 질문에 어떻게 답하는가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=sso-두-레벨>SSO 두 레벨<a href=#sso-두-레벨 class=hash-link aria-label="Direct link to SSO 두 레벨" title="Direct link to SSO 두 레벨" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>레벨<th>범위<th>관리<tbody><tr><td><strong>Claude 계정</strong><td>SSO, SCIM, 좌석 배정<td>claude.ai 콘솔<tr><td><strong>클라우드 IAM</strong><td>Bedrock 호출 권한, 그룹 매핑<td>Identity Center, Permission Set</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=데이터-정책-핵심>데이터 정책 핵심<a href=#데이터-정책-핵심 class=hash-link aria-label="Direct link to 데이터 정책 핵심" title="Direct link to 데이터 정책 핵심" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>항목<th>정책<tbody><tr><td>학습 사용<td>Team/Enterprise/API/클라우드 경로 <strong>미사용</strong><tr><td>보존<td>경로별 retention, 공급자 정책 상속<tr><td>ZDR<td>요청 완료 후 무저장, Enterprise 제공<tr><td>로컬 데이터<td>세션 트랜스크립트 30일 기본 정리 (<code>cleanupPeriodDays</code>)</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=cloudtrail-통합-bedrock>CloudTrail 통합 (Bedrock)<a href=#cloudtrail-통합-bedrock class=hash-link aria-label="Direct link to CloudTrail 통합 (Bedrock)" title="Direct link to CloudTrail 통합 (Bedrock)" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># InvokeModel은 데이터 이벤트: 트레일에 명시 활성 필요</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">aws cloudtrail put-event-selectors \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --trail-name org-trail \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --advanced-event-selectors '[{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "Name": "BedrockInvoke",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "FieldSelectors": [</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      {"Field":"eventCategory","Equals":["Data"]},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      {"Field":"resources.type","Equals":["AWS::Bedrock::Model"]}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    ] }]'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 기록: 시각, 주체(역할 세션), 모델 ARN, 소스 IP</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=soc-2--iso-27001-매핑>SOC 2 / ISO 27001 매핑<a href=#soc-2--iso-27001-매핑 class=hash-link aria-label="Direct link to SOC 2 / ISO 27001 매핑" title="Direct link to SOC 2 / ISO 27001 매핑" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>통제 항목<th>구현<th>관련 파트<tbody><tr><td>접근 통제<td>SSO, Permission Set, 그룹 매핑<td>Part 2, 7<tr><td>변경 관리<td>Policy as Code, PR 리뷰, 링 배포<td>Part 5<tr><td>로깅·감시<td>CloudTrail, OTel, 감사 훅, SIEM<td>Part 5, 6, 7<tr><td>공급망<td>GPG 서명, 마켓플레이스 통제<td>Part 1, 5<tr><td>데이터 보호<td>학습 미사용, ZDR, 암호화 전송<td>Part 7<tr><td>가용성<td>게이트웨이 수평 확장, 버전 하한<td>Part 1, 3</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=그룹-매핑-전략--한-그룹-체계로-두-층을-움직인다>그룹 매핑 전략 — 한 그룹 체계로 두 층을 움직인다<a href=#그룹-매핑-전략--한-그룹-체계로-두-층을-움직인다 class=hash-link aria-label="Direct link to 그룹 매핑 전략 — 한 그룹 체계로 두 층을 움직인다" title="Direct link to 그룹 매핑 전략 — 한 그룹 체계로 두 층을 움직인다" translate=no>​</a></h3>
+<p>IdP 그룹을 단일 원천(Single Source of Groups)으로 삼아, 두 층에서 동시에 매핑합니다:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>IdP 그룹<th>클라우드 층 (Permission Set)<th>게이트웨이 층 (라우팅)<tbody><tr><td><code>eng-platform</code><td>PS-Claude-Full (전 모델)<td>opus, sonnet, haiku 허용, 월 $500<tr><td><code>eng-default</code><td>PS-Claude-Std (sonnet까지)<td>sonnet, haiku 허용, opus→sonnet 치환<tr><td><code>contractors</code><td>PS-Claude-Min (haiku만)<td>haiku만, 월 $100</table>
+<blockquote>
+<p>그룹 변경이 곧 권한 변경 — 별도 작업 없이 IdP 하나만 수정하면 양 층이 동시에 반영됩니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=세션과-오프보딩--떠나는-순간-접근도-끝난다>세션과 오프보딩 — 떠나는 순간 접근도 끝난다<a href=#세션과-오프보딩--떠나는-순간-접근도-끝난다 class=hash-link aria-label="Direct link to 세션과 오프보딩 — 떠나는 순간 접근도 끝난다" title="Direct link to 세션과 오프보딩 — 떠나는 순간 접근도 끝난다" translate=no>​</a></h3>
+<p>SSO 구조에서는 IdP 비활성화가 곧 접근 종료입니다:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>단계<th>동작<th>잔여 위험<tbody><tr><td><strong>원천 절단</strong><td>IdP 계정 비활성 즉시 신규 인증 불가<td>—<tr><td><strong>세션 만료</strong><td>SSO 세션과 STS 만료를 업무 리듬에 맞게 단축 (예: 8시간)<td>만료 전 시간창<tr><td><strong>잔여 정리</strong><td>setup-token 등 장기 토큰 발급 대장 기반 회수<td>미회수 토큰<tr><td><strong>증적</strong><td>비활성 시각과 마지막 호출 시각의 대조 리포트<td>—</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=cloudtrail-감사--무엇이-기록되�는가>CloudTrail 감사 — 무엇이 기록되는가<a href=#cloudtrail-감사--무엇이-기록되는가 class=hash-link aria-label="Direct link to CloudTrail 감사 — 무엇이 기록되는가" title="Direct link to CloudTrail 감사 — 무엇이 기록되는가" translate=no>​</a></h3>
+<p>Bedrock의 <code>InvokeModel</code>은 <strong>데이터 이벤트</strong>이므로 트레일에 명시적으로 활성화해야 합니다:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">aws cloudtrail put-event-selectors \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --trail-name org-trail \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --advanced-event-selectors '[{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "Name": "BedrockInvoke",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "FieldSelectors": [</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      {"Field":"eventCategory","Equals":["Data"]},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      {"Field":"resources.type","Equals":["AWS::Bedrock::Model"]}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    ]</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  }]'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>기록되는 정보: 시각, 주체(역할 세션), 모델 ARN, 소스 IP → 개인 귀속 가능</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=규제-매핑표-soc2-iso-27001>규제 매핑표 (SOC2, ISO 27001)<a href=#규제-매핑표-soc2-iso-27001 class=hash-link aria-label="Direct link to 규제 매핑표 (SOC2, ISO 27001)" title="Direct link to 규제 매핑표 (SOC2, ISO 27001)" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>통제 항목<th>Claude Code 구현<tbody><tr><td>접근 통제<td>SSO, Permission Set, 그룹 매핑<tr><td>변경 관리<td>Policy as Code, PR 리뷰, 링 배포<tr><td>로깅·감시<td>CloudTrail, OTel, 감사 훅, SIEM<tr><td>공급망<td>GPG 서명, 마켓플레이스 통제<tr><td>데이터 보호<td>학습 미사용, ZDR, 암호화 전송<tr><td>가용성<td>게이트웨이 수평 확장, 버전 하한</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=외부-감사-대응--미리-싸두는-증적-패키지>외부 감사 대응 — 미리 싸두는 증적 패키지<a href=#외부-감사-대응--미리-싸두는-증적-패키지 class=hash-link aria-label="Direct link to 외부 감사 대응 — 미리 싸두는 증적 패키지" title="Direct link to 외부 감사 대응 — 미리 싸두는 증적 패키지" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>패키지<th>내용<tbody><tr><td>정책 원본<td>managed-settings 이력, PR 기록, 배포 태그<tr><td>적용 증명<td><code>/status</code> 소스 표기 수집본, 링별 검증 기록<tr><td>행위 원장<td>CloudTrail, 감사 훅, SIEM 조회 절차서<tr><td>데이터 근거<td>학습 미사용·ZDR·retention 공식 문서 스냅샷</table>
+<blockquote>
+<p>감사 통지 후 모으기 시작하면 늦습니다. 분기 리뷰 산출물과 함께 상시 갱신 상태를 유지합니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=8-트러블슈팅>8. 트러블슈팅<a href=#8-트러블슈팅 class=hash-link aria-label="Direct link to 8. 트러블슈팅" title="Direct link to 8. 트러블슈팅" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "관리자에게 오는 문의를 기계적으로 해결"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=인증-진단표>인증 진단표<a href=#인증-진단표 class=hash-link aria-label="Direct link to 인증 진단표" title="Direct link to 인증 진단표" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>증상<th>원인<th>처방<tbody><tr><td>로그인 루프<td>세션 혼선<td><code>/logout</code> 후 <code>/login</code> 재시도<tr><td>Enterprise 옵션 안보임<td>구버전<td><code>claude update</code> 후 재시작<tr><td>조직 미배정<td>좌석에 Code 권한 미포함<td>어드민 콘솔 갱신<tr><td>Bedrock 자격 실패<td>SSO 만료<td><code>aws sso login</code>, <code>sts get-caller-identity</code><tr><td>헬퍼 키 오류<td>볼트 권한/TTL<td>스크립트 단독 실행 검증</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=네트워크-진단표>네트워크 진단표<a href=#네트워크-진단표 class=hash-link aria-label="Direct link to 네트워크 진단표" title="Direct link to 네트워크 진단표" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>증상<th>원인<th>처방<tbody><tr><td>타임아웃<td>프록시/방화벽<td><code>curl -v</code> 계층 분리<tr><td>TLS 오류<td>사내 CA 미등록<td><code>NODE_EXTRA_CA_CERTS</code><tr><td>407 응답<td>인증 프록시<td>로컬 중계<tr><td>부분 기능 실패<td>도메인 부분 차단<td>필수 도메인 표 대조<tr><td>샌드박스 차단<td>allowedDomains 누락<td>정책에 도메인 추가</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=진단-수집-표준-세트>진단 수집 표준 세트<a href=#진단-수집-표준-세트 class=hash-link aria-label="Direct link to 진단 수집 표준 세트" title="Direct link to 진단 수집 표준 세트" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude doctor                    # 환경 진단, f 키 자동 수정</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude --version                 # 버전 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> /status                         # 공급자, 모델, managed 소스</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> /context                        # 컨텍스트 점유 현황</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude --verbose 2> claude-debug.log   # 재현 로그</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">curl -v https://api.anthropic.com/     # 네트워크 경로 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=에스컬레이션-경로>에스컬레이션 경로<a href=#에스컬레이션-경로 class=hash-link aria-label="Direct link to 에스컬레이션 경로" title="Direct link to 에스컬레이션 경로" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>선<th>범위<th>담당<tbody><tr><td>1선<td>진단표 매칭, 계정, 좌석<td>헬프데스크<tr><td>2선<td>정책, 네트워크, 게이트웨이<td>플랫폼 팀<tr><td>3선<td>Bedrock 쿼터, 서비스 이슈<td>AWS Support<tr><td>3선<td>제품 결함, 문서 괴리<td>Anthropic 지원</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=성능-문제-4갈래-분해>성능 문제 4갈래 분해<a href=#성능-문제-4갈래-분해 class=hash-link aria-label="Direct link to 성능 문제 4갈래 분해" title="Direct link to 성능 문제 4갈래 분해" translate=no>​</a></h3>
+<p>"느리다"는 문의가 오면 4가지 원인 중 어디인지 분해합니다:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>원인<th>진단 방법<th>해결<tbody><tr><td><strong>경로 지연</strong><td><code>curl -v</code>로 프록시/검사장비 홉 측정<td>프록시 우회, 리전 변경<tr><td><strong>모델 선택</strong><td>무거운 모델 기본값 여부 점검<td>sonnet이면 충분한 작업에 opus 쓰는지 확인<tr><td><strong>컨텍스트 비대</strong><td><code>/context</code> 명령으로 점유 확인<td><code>/clear</code> 또는 <code>/compact</code> 안내<tr><td><strong>쿼터 스로틀</strong><td>429 응답 비율 관측<td>리전 TPM 한도 증설 요청</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=진단-수집--�문의-접수-시-표준-세트>진단 수집 — 문의 접수 시 표준 세트<a href=#진단-수집--문의-접수-시-표준-세트 class=hash-link aria-label="Direct link to 진단 수집 — 문의 접수 시 표준 세트" title="Direct link to 진단 수집 — 문의 접수 시 표준 세트" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 1차 자가 진단</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude doctor              # 환경 진단, f 키 자동 수정</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude --version           # 버전 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 세션 내 진단</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> /status                  # 공급자, 모델, managed 소스</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> /context                 # 컨텍스트 점유 현황</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 재현 로그 수집</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude --verbose 2> claude-debug.log</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 재현 후 로그 회수</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 네트워크 분리 진단</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">curl -v https://api.anthropic.com/</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>접수 양식에 <strong>시각, 사용자, 저장소 경로, claude --version, /status 출력</strong>을 표준으로 요구합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=에스컬레이션-경로-상세>에스컬레이션 경로 상세<a href=#에스컬레이션-경로-상세 class=hash-link aria-label="Direct link to 에스컬레이션 경로 상세" title="Direct link to 에스컬레이션 경로 상세" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>선<th>담당<th>범위<th>도구<tbody><tr><td><strong>1선</strong> (헬프데스크)<td>진단표 매칭, 계정·좌석<td>재로그인, 업데이트 안내<td>doctor, /status<tr><td><strong>2선</strong> (플랫폼팀)<td>정책, 네트워크, 게이트웨이<td>정책 수정, 프록시 경로 조정<td>managed settings, gateway logs<tr><td><strong>3선 AWS</strong><td>Bedrock 쿼터, 서비스 이슈<td>쿼터 증설, 서비스 상태 확인<td>AWS Support Case<tr><td><strong>3선 Anthropic</strong><td>제품 결함, 문서 괴리<td>버그 리포트<td>/feedback, HackerOne</table>
+<blockquote>
+<p>진단 번들 표준화가 각 선을 잇는 공용어입니다 — 정보 누락으로 반복 질문하는 시간을 없앱니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=9-recap--labs>9. Recap & Labs<a href=#9-recap--labs class=hash-link aria-label="Direct link to 9. Recap & Labs" title="Direct link to 9. Recap & Labs" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=핵심-요약-6문장>핵심 요약 6문장<a href=#핵심-요약-6문장 class=hash-link aria-label="Direct link to 핵심 요약 6문장" title="Direct link to 핵심 요약 6문장" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>영역<th>한 문장<tbody><tr><td><strong>배포</strong><td>플랫폼별 표준 조합, <code>stable</code> + <code>minimumVersion</code>, 링 롤아웃<tr><td><strong>자격증명</strong><td>사람은 SSO, 기계는 볼트 헬퍼, CI는 OIDC, 키 배포 0<tr><td><strong>게이트웨이</strong><td>SSO 로그인 + 그룹 모델 라우팅 + 지출 한도 + OTLP<tr><td><strong>네트워크</strong><td>프록시·CA로 열고, sandbox 도메인과 DLP로 좁힘<tr><td><strong>거버넌스</strong><td>managed 4채널, 배열 병합, 잠금 키, Policy as Code<tr><td><strong>관측</strong><td>OTel 전사 계측, 귀속 태그, 예산 알람, 분기 리뷰</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-3종>실습 3종<a href=#실습-3종 class=hash-link aria-label="Direct link to 실습 3종" title="Direct link to 실습 3종" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Lab<th>소요<th>핵심<tbody><tr><td><strong>Lab 1: managed 정책 배포</strong><td>15분<td><code>/etc/claude-code/</code>에 정책 배치 → <code>/status</code> 확인 → deny 체험<tr><td><strong>Lab 2: Bedrock SSO 전환</strong><td>25분<td>USE_BEDROCK=1 + SSO 로그인 → <code>/status</code> Provider 확인<tr><td><strong>Lab 3: OTel 관측 배선</strong><td>20분<td>docker compose로 컬렉터 → ENABLE_TELEMETRY=1 → 대시보드 확인</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실행-로드맵>실행 로드맵<a href=#실행-로드맵 class=hash-link aria-label="Direct link to 실행 로드맵" title="Direct link to 실행 로드맵" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>기간<th>마일스톤<tbody><tr><td><strong>Day 0-30</strong><td>공급자 확정, 파일럿 링, 정책 초판<tr><td><strong>Day 31-60</strong><td>managed 전 채널, 샌드박스, OTel 배포<tr><td><strong>Day 61-90</strong><td>전사 링, 게이트웨이, 분기 리뷰 1회차</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=references>References<a href=#references class=hash-link aria-label="Direct link to References" title="Direct link to References" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=1차-출처-본문-작성-기반>1차 출처 (본문 작성 기반)<a href=#1차-출처-본문-작성-기반 class=hash-link aria-label="Direct link to 1차 출처 (본문 작성 기반)" title="Direct link to 1차 출처 (본문 작성 기반)" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>#<th>출처<th>상세<tbody><tr><td>[1]<td><strong>Claude Code Deep Dive Workshop — Chapter 3: Admin Setup</strong><td>AWS Korea, 2026.07. <a href=https://github.com/whchoi98/claude-code-workshop target=_blank rel="noopener noreferrer" class="">github.com/whchoi98/claude-code-workshop</a><tr><td>[2]<td><strong>Claude Code in Action</strong><td>Anthropic Skilljar. Lesson NEW-04 (Permission Modes), NEW-05 (Hooks), NEW-08 (Verifying Runs), NEW-09 (Plugins). <a href=https://anthropic.skilljar.com target=_blank rel="noopener noreferrer" class="">anthropic.skilljar.com</a><tr><td>[3]<td><strong>Claude Code on Amazon Bedrock 온라인 프로그램</strong><td>AWS Skill Builder. Module 07 (MCP와 Sub-agents). <a href=https://skillbuilder.aws target=_blank rel="noopener noreferrer" class="">skillbuilder.aws</a></table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=공식문서-교차-검증>공식문서 (교차 검증)<a href=#공식문서-교차-검증 class=hash-link aria-label="Direct link to 공식문서 (교차 검증)" title="Direct link to 공식문서 (교차 검증)" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>#<th>문서<th>URL<tbody><tr><td>[4]<td>Admin setup<td><a href=https://docs.anthropic.com/en/docs/claude-code/admin-setup target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/admin-setup</a><tr><td>[5]<td>Server-managed settings<td><a href=https://docs.anthropic.com/en/docs/claude-code/server-managed-settings target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/server-managed-settings</a><tr><td>[6]<td>Claude apps gateway<td><a href=https://docs.anthropic.com/en/docs/claude-code/claude-apps-gateway target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/claude-apps-gateway</a><tr><td>[7]<td>Network config<td><a href=https://docs.anthropic.com/en/docs/claude-code/network-config target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/network-config</a><tr><td>[8]<td>Monitoring usage<td><a href=https://docs.anthropic.com/en/docs/claude-code/monitoring-usage target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/monitoring-usage</a><tr><td>[9]<td>Security<td><a href=https://docs.anthropic.com/en/docs/claude-code/security target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/security</a></table>
+<hr/></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-tags-row"><div class=col><b>Tags:</b><ul class="tags_jXut padding--none margin-left--sm"><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/claude-code/>Claude Code</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/anthropic/>Anthropic</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/enterprise/>Enterprise</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/governance/>Governance</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/authentication/>Authentication</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/monitoring/>Monitoring</a></ul></div></div><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href=https://github.com/ddiiwoong/newblog/tree/main/docs/claude-code/admin-setup.md target=_blank rel="noopener noreferrer" class=theme-edit-this-page><svg fill=currentColor height=20 width=20 viewBox="0 0 40 40" class=iconEdit_Z9Sw aria-hidden=true><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"/></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href=/docs/claude-code/subagents/><div class=pagination-nav__sublabel>Previous</div><div class=pagination-nav__label>Subagents</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href=#들어가며 class="table-of-contents__link toc-highlight">들어가며</a><ul><li><a href=#목차 class="table-of-contents__link toc-highlight">목차</a></ul><li><a href=#1-배포-전략 class="table-of-contents__link toc-highlight">1. 배포 전략</a><ul><li><a href=#설치-채널-4계열 class="table-of-contents__link toc-highlight">설치 채널 4계열</a><li><a href=#실습-linux-플릿-gpg-저장소-등록 class="table-of-contents__link toc-highlight">실습: Linux 플릿 GPG 저장소 등록</a><li><a href=#windows-대량-배포 class="table-of-contents__link toc-highlight">Windows 대량 배포</a><li><a href=#표준-컨테이너-이미지 class="table-of-contents__link toc-highlight">표준 컨테이너 이미지</a><li><a href=#gpg-서명-검증의-의미 class="table-of-contents__link toc-highlight">GPG 서명 검증의 의미</a><li><a href=#stable-vs-latest-채널-선택-기준 class="table-of-contents__link toc-highlight">stable vs latest 채널 선택 기준</a><li><a href=#사내-미러-구성-시-고려사항 class="table-of-contents__link toc-highlight">사내 미러 구성 시 고려사항</a><li><a href=#4링-롤아웃--왜-이-순서인가 class="table-of-contents__link toc-highlight">4링 롤아웃 — 왜 이 순서인가</a><li><a href=#에어갭인터넷-단절-환경-대응 class="table-of-contents__link toc-highlight">에어갭(인터넷 단절) 환경 대응</a><li><a href=#버전-통제-두-다이얼 class="table-of-contents__link toc-highlight">버전 통제 두 다이얼</a><li><a href=#점진-롤아웃-4-링 class="table-of-contents__link toc-highlight">점진 롤아웃 (4 링)</a></ul><li><a href=#2-공급자와-자격증명 class="table-of-contents__link toc-highlight">2. 공급자와 자격증명</a><ul><li><a href=#공급자-결정표 class="table-of-contents__link toc-highlight">공급자 결정표</a><li><a href=#인증-우선순위-충돌-시 class="table-of-contents__link toc-highlight">인증 우선순위 (충돌 시)</a><li><a href=#실습-bedrock-sso-설정 class="table-of-contents__link toc-highlight">실습: Bedrock SSO 설정</a><li><a href=#bedrock-iam-최소-권한-정책 class="table-of-contents__link toc-highlight">Bedrock IAM 최소 권한 정책</a><li><a href=#apikeyhelper--볼트-통합 class="table-of-contents__link toc-highlight">apiKeyHelper / 볼트 통합</a><li><a href=#iam-정책-라인별-설명 class="table-of-contents__link toc-highlight">IAM 정책 라인별 설명</a><li><a href=#privatelink--왜-필요하고-어떻게-격리하는가 class="table-of-contents__link toc-highlight">PrivateLink — 왜 필요하고 어떻게 격리하는가</a><li><a href=#자격증명-회전-4단계-체계 class="table-of-contents__link toc-highlight">자격증명 회전 4단계 체계</a><li><a href=#자격증명-의사결정표 class="table-of-contents__link toc-highlight">자격증명 의사결정표</a></ul><li><a href=#3-claude-apps-gateway class="table-of-contents__link toc-highlight">3. Claude apps gateway</a><ul><li><a href=#아키텍처-5층 class="table-of-contents__link toc-highlight">아키텍처 5층</a><li><a href=#개발자-경험 class="table-of-contents__link toc-highlight">개발자 경험</a><li><a href=#그룹별-모델-라우팅 class="table-of-contents__link toc-highlight">그룹별 모델 라우팅</a><li><a href=#지출-한도-api class="table-of-contents__link toc-highlight">지출 한도 API</a><li><a href=#gatewayyaml-각-섹션의-역할 class="table-of-contents__link toc-highlight">gateway.yaml 각 섹션의 역할</a><li><a href=#지출-한도의-실무적-활용 class="table-of-contents__link toc-highlight">지출 한도의 실무적 활용</a><li><a href=#claude-apps-gateway-vs-일반-llm-gateway-비교 class="table-of-contents__link toc-highlight">Claude apps gateway vs 일반 LLM gateway 비교</a></ul><li><a href=#4-네트워크와-보안 class="table-of-contents__link toc-highlight">4. 네트워크와 보안</a><ul><li><a href=#필수-아웃바운드-도메인 class="table-of-contents__link toc-highlight">필수 아웃바운드 도메인</a><li><a href=#프록시-설정 class="table-of-contents__link toc-highlight">프록시 설정</a><li><a href=#사내-ca-인증서 class="table-of-contents__link toc-highlight">사내 CA 인증서</a><li><a href=#각-도메인이-왜-필요한가 class="table-of-contents__link toc-highlight">각 도메인이 왜 필요한가</a><li><a href=#프록시-설정-3가지-방법과-우선순위 class="table-of-contents__link toc-highlight">프록시 설정 3가지 방법과 우선순위</a><li><a href=#인증-프록시-대응-basic-ntlm-kerberos class="table-of-contents__link toc-highlight">인증 프록시 대응 (Basic, NTLM, Kerberos)</a><li><a href=#vpn--ztna-환경-점검-사항 class="table-of-contents__link toc-highlight">VPN / ZTNA 환경 점검 사항</a><li><a href=#sandbox-네트워크-curl-갭-봉쇄 class="table-of-contents__link toc-highlight">Sandbox 네트워크 (curl 갭 봉쇄)</a><li><a href=#dlp-훅-유출-패턴-차단 class="table-of-contents__link toc-highlight">DLP 훅 (유출 패턴 차단)</a></ul><li><a href=#5-거버넌스와-정책 class="table-of-contents__link toc-highlight">5. 거버넌스와 정책</a><ul><li><a href=#managed-settings-4채널-우선순위-순 class="table-of-contents__link toc-highlight">managed settings 4채널 (우선순위 순)</a><li><a href=#병합-규칙 class="table-of-contents__link toc-highlight">병합 규칙</a><li><a href=#managed-settingsjson-예시-조직-기준선 class="table-of-contents__link toc-highlight">managed-settings.json 예시 (조직 기준선)</a><li><a href=#잠금-키-6종 class="table-of-contents__link toc-highlight">잠금 키 6종</a><li><a href=#-skilljar-보충-팀-전체-��배포를-위한-plugin-시스템 class="table-of-contents__link toc-highlight">💡 Skilljar 보충: 팀 전체 배포를 위한 Plugin 시스템</a><li><a href=#-skilljar-보충-무인-실행-검증-원칙 class="table-of-contents__link toc-highlight">💡 Skilljar 보충: 무인 실행 검증 원칙</a><li><a href=#auto-mode-조직-구성--분류기에게-신뢰-경계를-알려주기 class="table-of-contents__link toc-highlight">Auto Mode 조직 구성 — 분류기에게 신뢰 경계를 알려주기</a><li><a href=#감사-훅--누가-무엇을-실행했는가 class="table-of-contents__link toc-highlight">감사 훅 — 누가 무엇을 실행했는가</a><li><a href=#권한-패턴-설계-전략 class="table-of-contents__link toc-highlight">권한 패턴 설계 전략</a><li><a href=#적용-검증 class="table-of-contents__link toc-highlight">적용 검증</a><li><a href=#감사-훅--누가-무엇을-실행했는가-1 class="table-of-contents__link toc-highlight">감사 훅 — 누가 무엇을 실행했는가</a><li><a href=#권한-패턴-설계-전략-1 class="table-of-contents__link toc-highlight">권한 패턴 설계 전략</a><li><a href=#메트릭-카탈로그 class="table-of-contents__link toc-highlight">메트릭 카탈로그</a><li><a href=#aws-budgets-예산-알람 class="table-of-contents__link toc-highlight">AWS Budgets 예산 알람</a><li><a href=#siem-연계--보안-관점-활용 class="table-of-contents__link toc-highlight">SIEM 연계 — 보안 관점 활용</a><li><a href=#비용-귀속--3단-절단 class="table-of-contents__link toc-highlight">비용 귀속 — 3단 절단</a><li><a href=#비용-최적화-6가지-손잡이 class="table-of-contents__link toc-highlight">비용 최적화 6가지 손잡이</a><li><a href=#분기-운영-리뷰--숫자로-도는-회의 class="table-of-contents__link toc-highlight">분기 운영 리뷰 — 숫자로 도는 회의</a><li><a href=#이상-사용-감지-신호 class="table-of-contents__link toc-highlight">이상 사용 감지 신호</a></ul><li><a href=#7-신원-데이터-컴플라이언스 class="table-of-contents__link toc-highlight">7. 신원, 데이터, 컴플라이언스</a><ul><li><a href=#sso-두-레벨 class="table-of-contents__link toc-highlight">SSO 두 레벨</a><li><a href=#데이터-정책-핵심 class="table-of-contents__link toc-highlight">데이터 정책 핵심</a><li><a href=#cloudtrail-통합-bedrock class="table-of-contents__link toc-highlight">CloudTrail 통합 (Bedrock)</a><li><a href=#soc-2--iso-27001-매핑 class="table-of-contents__link toc-highlight">SOC 2 / ISO 27001 매핑</a><li><a href=#그룹-매핑-전략--한-그룹-체계로-두-층을-움직인다 class="table-of-contents__link toc-highlight">그룹 매핑 전략 — 한 그룹 체계로 두 층을 움직인다</a><li><a href=#세션과-오프보딩--떠나는-순간-접근도-끝난다 class="table-of-contents__link toc-highlight">세션과 오프보딩 — 떠나는 순간 접근도 끝난다</a><li><a href=#cloudtrail-감사--무엇이-기록되는가 class="table-of-contents__link toc-highlight">CloudTrail 감사 — 무엇이 기록되는가</a><li><a href=#규제-매핑표-soc2-iso-27001 class="table-of-contents__link toc-highlight">규제 매핑표 (SOC2, ISO 27001)</a><li><a href=#외부-감사-대응--미리-싸두는-증적-패키지 class="table-of-contents__link toc-highlight">외부 감사 대응 — 미리 싸두는 증적 패키지</a></ul><li><a href=#8-트러블슈팅 class="table-of-contents__link toc-highlight">8. 트러블슈팅</a><ul><li><a href=#인증-진단표 class="table-of-contents__link toc-highlight">인증 진단표</a><li><a href=#네트워크-진단표 class="table-of-contents__link toc-highlight">네트워크 진단표</a><li><a href=#진단-수집-표준-세트 class="table-of-contents__link toc-highlight">진단 수집 표준 세트</a><li><a href=#에스컬레이션-경로 class="table-of-contents__link toc-highlight">에스컬레이션 경로</a><li><a href=#성능-문제-4갈래-분해 class="table-of-contents__link toc-highlight">성능 문제 4갈래 분해</a><li><a href=#진단-수집--문의-접수-시-표준-세트 class="table-of-contents__link toc-highlight">진단 수집 — 문의 접수 시 표준 세트</a><li><a href=#에스컬레이션-경로-상세 class="table-of-contents__link toc-highlight">에스컬레이션 경로 상세</a></ul><li><a href=#9-recap--labs class="table-of-contents__link toc-highlight">9. Recap & Labs</a><ul><li><a href=#핵심-요약-6문장 class="table-of-contents__link toc-highlight">핵심 요약 6문장</a><li><a href=#실습-3종 class="table-of-contents__link toc-highlight">실습 3종</a><li><a href=#실행-로드맵 class="table-of-contents__link toc-highlight">실행 로드맵</a></ul><li><a href=#references class="table-of-contents__link toc-highlight">References</a><ul><li><a href=#1차-출처-본문-작성-기반 class="table-of-contents__link toc-highlight">1차 출처 (본문 작성 기반)</a><li><a href=#공식문서-교차-검증 class="table-of-contents__link toc-highlight">공식문서 (교차 검증)</a></ul></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Blog</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/>Home</a><li class=footer__item><a class=footer__link-item href=/archive/>Archive</a><li class=footer__item><a class=footer__link-item href=/tags/>Tags</a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Sponsors</div><ul class="footer__items clean-list"><li class=footer__item><a href=https://ko-fi.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Buy Me a Coffee<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>More</div><ul class="footer__items clean-list"><li class=footer__item><a href=https://github.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>GitHub<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://twitter.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Twitter<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://www.facebook.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Facebook<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://kr.linkedin.com/in/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>LinkedIn<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div></div></div></footer></div></body>
