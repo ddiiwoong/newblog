@@ -124,10 +124,8 @@ const TwitterSvg =
             label: 'Tags',
             position: 'right',
           },
-          {to: 'presentation', label: 'Presentation', position: 'right'},
           {to: 'archive', label: 'Archive', position: 'right'},
           {to: 'about', label: 'About', position: 'right'},
-          {to: 'pang4u', label: 'Pang4u', position: 'right'},
           {
             href: 'https://github.com/ddiiwoong/newblog',
             position: 'right',
@@ -159,10 +157,6 @@ const TwitterSvg =
           {
             title: 'Sponsors',
             items: [
-              {
-                label: 'Pang4U',
-                to: 'pang4u',
-              },
               {
                 label: 'Buy Me a Coffee',
                 href: 'https://ko-fi.com/ddiiwoong',
