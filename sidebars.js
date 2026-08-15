@@ -17,7 +17,7 @@ module.exports = {
       type: 'category',
       label: 'Claude Code',
       link: {type: 'doc', id: 'claude-code/overview'},
-      items: ['claude-code/overview', 'claude-code/subagents'],
+      items: ['claude-code/overview', 'claude-code/subagents', 'claude-code/admin-setup'],
     },
   ],
 
