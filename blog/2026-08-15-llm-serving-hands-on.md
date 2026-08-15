@@ -27,7 +27,9 @@ tags:
 # LLM 서빙 실습 가이드 — 저장소 코드를 AWS GPU에서 끝까지 돌려보기
 
 > 실습 저장소: [llm-model-inference](https://github.com/orca3/llm-model-inference) (검증 커밋 `80dcd9f`)
+>
 > 참고: *Hands-On LLM Serving and Optimization* (O'Reilly 2026) Ch.3~4
+>
 > 검증 환경: AWS EC2 `g5.xlarge` / `g5.2xlarge` (NVIDIA A10G 24GB), us-east-1
 
 이 글은 세 파트로 구성된다. Part 1에서는 Ch.3의 서빙 코드를 GPU 인스턴스에 올려서
