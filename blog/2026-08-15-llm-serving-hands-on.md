@@ -136,10 +136,10 @@ transformers 경로와 vLLM 경로로 나란히 서빙해서 둘을 비교할 �
 ```mermaid
 flowchart TD
     A["저장소 클론"] --> B["환경 준비<br/>python 3.12 + venv 8.0GB"]
-    B --> C["🔧 model.to(device) 2줄<br/>없으면 엔드포인트 3개 영구 정지"]
+    B --> C["model.to(device) 2줄<br/>없으면 엔드포인트 3개 영구 정지"]
     C --> D["단일 모델 서버 기동<br/>프로세스 3개 / GPU 20,594MiB"]
     D --> E["엔드포인트 4개 실측<br/>단건 0.378s · 배치 0.80s · SSE 21개"]
-    E --> F["🔧 daemon=True 1줄<br/>없으면 GPU 붙잡은 채 안 죽음"]
+    E --> F["daemon=True 1줄<br/>없으면 GPU 붙잡은 채 안 죽음"]
     F --> G["멀티 모델 서버<br/>별도 venv (torch 2.2.1)"]
     G --> H["LRU 캐시 실측<br/>cold 3.013s vs warm 0.045s = 67배"]
     H --> I["Triton 컨테이너<br/>Triton만 GPU 320MiB, 워커는 CPU"]
@@ -151,7 +151,7 @@ flowchart TD
     style I fill:#e6f3ff,stroke:#36c
 ```
 
-🔧 표시가 실습을 진행하려면 먼저 고쳐야 하는 두 곳이다. 각각 §4와 §7에서 다룬다.
+표시가 실습을 진행하려면 먼저 고쳐야 하는 두 곳이다. 각각 §4와 §7에서 다룬다.
 
 ## 2. 환경 준비 — 왜 GPU 리눅스여야 하나
 
@@ -340,7 +340,7 @@ ch04/
     └── requirements.txt         ← 전부 `>=` (§10 경고)
 ```
 
-## 4. 🔴 GPU에서 반드시 먼저 고쳐야 하는 버그
+## 4. GPU에서 반드시 먼저 고쳐야 하는 버그
 
 **이 저장소를 GPU 환경에서 그대로 실행하면 `/basic_generate`, `/generate`,
 `/generate_stream` 세 엔드포인트가 응답 없이 영구 정지한다.** 맥(CPU)에서는 재현되지 않기
@@ -549,7 +549,7 @@ data: {"token": " the", "sequence_id": "f4e29b4a-8528-4802-83bb-932e1eb11f67"}
 프롬프트가 1개든 5개든 시간이 거의 같다. Continuous Batching이 5개를 한 스텝에 처리하기
 때문이다.
 
-### ⚠️ 단순 비교는 함정이다
+### 단순 비교는 함정이다
 
 | 경로 | 프롬프트 5개 | 생성 토큰 수 |
 |------|-------------|-------------|
@@ -608,7 +608,7 @@ PID     GPU Memory
 > 목록에 안 나올 수 있다. 첫 요청이 200을 돌려준 시점과 KV Cache 할당이 끝나는 시점이 조금
 > 어긋난다. 10초쯤 뒤에 다시 찍어야 위 세 줄이 온전히 보인다.
 
-## 7. 🔴 서버가 안 죽는다 — 원인과 1줄 수정
+## 7. 서버가 안 죽는다 — 원인과 1줄 수정
 
 `main.py`는 `signal_handler`에서 `cleanup()` 후 `exit(0)`을 부른다. 그런데 **실측상 SIGTERM으로는
 죽지 않았다.** `pkill -f main.py`를 보낸 뒤에도 부모 프로세스가 살아남아 포트를 계속 점유했고,
@@ -716,7 +716,7 @@ ss -ltn | grep 8000 || echo "port free"
 
 **하는 일**: 모델 4개를 등록해두고, 요청이 올 때 필요한 모델만 메모리에 올린다. 캐시는 2개까지.
 
-### ⚠️ 별도 venv가 필요하다
+### 별도 venv가 필요하다
 
 `multi_model_serving/requirements.txt`는 `torch==2.2.1`, `torchvision==0.17.1`을 핀한다.
 단일모델 venv(torch 2.7.0)에 그대로 설치하면 **torch가 다운그레이드되면서 vLLM이 깨진다.**
@@ -834,7 +834,7 @@ idx=728 prob=0.0166
 낮은데, 전처리 정규화 값이 가중치 학습 설정과 완전히 일치하지 않아 분포가 평탄해진 것으로
 보인다. 순위는 맞으므로 실습 목적에는 문제없다.
 
-### ⚠️ 이 실습은 GPU를 전혀 쓰지 않는다
+### 이 실습은 GPU를 전혀 쓰지 않는다
 
 실습 도중 `nvidia-smi --query-compute-apps=pid,used_memory --format=csv`를 찍으면 **결과가
 비어 있다.**
@@ -1147,7 +1147,7 @@ success: True / sections: 3 / wall 10.2s / LLM calls: 4
 `Planner 1회 + Action 3회` = 4회가 나왔지만, §11에서 실제 OpenAI 모델로 다시 돌리면 3회다.
 즉 4는 고정값이 아니다.
 
-### ⚠️ Action 조합은 고정이 아니다
+### Action 조합은 고정이 아니다
 
 원본 문서는 계획이 `query_rag → analyze → summarize`로 정해져 있다고 썼지만, 계획은 **LLM이
 매번 생성**하므로 비결정적이다. Qwen2.5-1.5B가 뽑은 계획은 이랬다.
@@ -1200,7 +1200,7 @@ flowchart LR
 
 Mantle은 챗 전용이라 임베딩은 별도로 조달해야 한다. 그래서 shim 하나가 끼어든다.
 
-### 🔴 함정 1: GPT-5.x는 `chat.completions`를 지원하지 않는다
+### 함정 1: GPT-5.x는 `chat.completions`를 지원하지 않는다
 
 Mantle 모델은 API 표면이 갈린다. `llm_manager.py`는 `client.chat.completions.create()`를 쓰는데,
 **최신 모델은 Responses API 전용**이다.
@@ -1218,7 +1218,7 @@ Mantle 모델은 API 표면이 갈린다. `llm_manager.py`는 `client.chat.compl
 `llm_manager.py`를 Responses API로 바꿔야 한다. 이 검증은 `openai.gpt-oss-120b`(120B)로 했다.
 호출 형태는 **원본 코드 그대로 통한다**(`max_tokens` + `temperature`).
 
-### 🔴 함정 2: Mantle에는 임베딩 모델이 없다
+### 함정 2: Mantle에는 임베딩 모델이 없다
 
 모델 55종을 조회해도 임베딩 계열은 **하나도 없다**(챗 전용). `rag_system.py`는
 `client.embeddings.create()`를 부르므로 별도 조달이 필요하다. **Bedrock Titan v2**
@@ -1353,7 +1353,7 @@ print(response['output']['message']['content'][0]['text'])
 > 아니다.** SSO나 IAM 자격증명이 설정돼 있으면 boto3가 SigV4로 서명하므로 그 줄은 지워도 된다.
 > 이번 검증은 SSO 자격증명으로 진행했다.
 
-### 🔴 노트북의 모델 ID는 이미 퇴역했다
+### 노트북의 모델 ID는 이미 퇴역했다
 
 하드코딩된 `us.anthropic.claude-3-5-sonnet-20240620-v1:0`은 더 이상 호출되지 않는다.
 
@@ -1585,7 +1585,7 @@ an Availability Zone in your request or choosing us-east-1a, us-east-1b, us-east
 us-east-1d.
 ```
 
-### 🔴 `pip install vllm==0.9.0.1` 만 하면 깨진다
+### `pip install vllm==0.9.0.1` 만 하면 깨진다
 
 저장소 requirements 없이 vLLM만 설치하면 **transformers 5.15.0**이 함께 올라오고, 서버가 기동
 중 죽는다.
@@ -1870,7 +1870,7 @@ except ValueError:
 Bedrock Mantle + Titan 임베딩(§11)으로 다시 돌려도 결과는 같다(`1 failed, 10 passed in 95.60s`).
 임베딩 모델이나 LLM 공급자와 무관한 코드·테스트 불일치라는 뜻이다.
 
-### 🔴 Python 3.13+ 에서는 `test_rag_system.py`가 아예 실행되지 않는다
+### Python 3.13+ 에서는 `test_rag_system.py`가 아예 실행되지 않는다
 
 파일 하단의 실행부가 `unittest.makeSuite`를 쓰는데, 이 API는 **Python 3.13에서 제거됐다**
 (3.12에서는 deprecated).
@@ -2000,7 +2000,7 @@ aws iam remove-role-from-instance-profile \
 aws iam delete-instance-profile --instance-profile-name llmso-lab-ssm-profile
 ```
 
-### 🔴 `delete-role`은 그냥은 실패한다
+### `delete-role`은 그냥은 실패한다
 
 SSM이 인스턴스 수명 동안 역할에 정책을 **자동으로 추가**하기 때문이다. 실측한 오류:
 
