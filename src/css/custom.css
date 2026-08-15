@@ -53,3 +53,36 @@ html[data-theme='dark'] .header-github-link:before {
 .figure-caption {
   font-size: small;
 }
+
+/* 블로그 레이아웃 조정 — 데스크톱만 */
+@media (min-width: 997px) {
+  /* Recent Posts 사이드바 폭 축소 */
+  aside.col--3 {
+    --ifm-col-width: 18%;
+    max-width: 18%;
+    flex: 0 0 18%;
+  }
+
+  /* 본문 영역 확장 */
+  main.col--7 {
+    --ifm-col-width: 60%;
+    max-width: 60%;
+    flex: 0 0 60%;
+  }
+}
+
+/* TOC 줄간격 축소 */
+.table-of-contents li {
+  margin: 2px 0;
+  line-height: 1.3;
+}
+
+.table-of-contents__link {
+  padding: 2px 0;
+  font-size: 0.82rem;
+}
+
+/* 본문 단락 간격 약간 넓히기 */
+article .markdown p {
+  margin-bottom: 1.2em;
+}
