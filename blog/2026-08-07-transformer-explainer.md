@@ -950,7 +950,7 @@ graph TD
 | 맥락 길이 | 1024 | **128K+** |
 | [KV Cache](#term-kv-cache) 최적화 | 없음 | **[GQA](#term-grouped-query-attention)로 KV 크기 축소** |
 
-[GQA](#term-gqa) (Grouped Query Attention) 도식:
+[GQA](#term-grouped-query-attention) (Grouped Query Attention) 도식:
 
 ```mermaid
 graph TD
@@ -1106,7 +1106,7 @@ for out in outputs:
 
 ---
 
-*이후 §13~§22 ([Batch](#term-batch)ing, [Quantization](#term-quantization), [FlashAttention](#term-flashattention), [PagedAttention](#term-pagedattention) 등)은 기존 내용 유지*
+*이후 §13~§22 ([Batch](#term-batch)ing, [Quantization](#term-quantization-양자화), [FlashAttention](#term-flashattention), [PagedAttention](#term-pagedattention) 등)은 기존 내용 유지*
 
 ---
 ## 13. [Batch](#term-batch)ing — 요청을 묶어서 처리하기
