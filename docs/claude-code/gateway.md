@@ -1,16 +1,8 @@
 ---
-layout: single
-title: "실제 Claude Code를 게이트웨이에 붙이면 — 관문 세 개와 신원이 찍힌 텔레메트리"
-comments: true
-classes: wide
-description: "Claude apps gateway에 실제 CLI를 로그인시켜 IdP 연동, 텔레메트리 수집, 정책 전달까지 검증한 실습 기록"
-authors: jinwoong
-toc: true
-toc_label: Table of Contents
-slug: claude-code/gateway-observability
-date: 2026-08-16
-categories:
-  - Claude Code
+id: gateway
+title: Claude Code Gateway — 관문 세 개와 신원이 찍힌 텔레메트리
+sidebar_position: 4
+sidebar_label: Gateway 실습
 tags:
   - Claude Code
   - Gateway
@@ -22,7 +14,7 @@ tags:
 
 > 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
-# 실제 Claude Code를 게이트웨이에 붙이면 — 관문 세 개와 신원이 찍힌 텔레메트리
+## 들어가며
 
 > 대상: Claude Code Deep Dive Workshop Chapter 3 §3 "Claude apps gateway"
 >
@@ -46,7 +38,6 @@ Claude apps gateway는 조직이 Claude Code를 자체 IdP로 인증시키고, �
 셋째, 관문을 통과하면 게이트웨이의 실질적 가치가 나타난다. **개발자가 지울 수 없는 신원이
 모든 텔레메트리에 찍혀 나온다.**
 
-<!--truncate-->
 
 ---
 
