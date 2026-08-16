@@ -916,7 +916,7 @@ carol@example.com  groups=[eng-contractors]               identity=gateway-oidc
 
 개발자 넷이 각자 세션을 돌린 뒤의 대시보드다.
 
-![Claude Code 게이트웨이 세션 대시보드 — 세션 9건, 개발자 4명, 토큰 253K, 추정 비용 $0.7378](images/grafana-dashboard.png)
+![Claude Code 게이트웨이 세션 대시보드 — 세션 9건, 개발자 4명, 토큰 253K, 추정 비용 $0.7378](/img/cgw-dashboard.png)
 
 읽을 지점이 셋이다.
 
