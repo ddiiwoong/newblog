@@ -15,7 +15,9 @@ tags:
 
 ## 들어가며
 
-이 글에서는 Claude Code의 서브에이전트(Sub-agent) 개념, 정의 방법, 디스패치 전략부터 5가지 실전 패턴까지 — Claude Code Deep Dive Workshop Chapter 2 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.
+이 글에서는 Claude Code의 서브에이전트(Sub-agent) 개념, 정의 방법, 디스패치 전략부터 5가지 실전 패턴까지 정리합니다. 본문의 기본 골격은 AWS Korea가 공개한 [Claude Code Deep Dive Workshop](https://github.com/whchoi98/claude-code-workshop)의 Chapter 2이고, 여기에 Anthropic 공식 교육 과정(「Introduction to Sub-agents」, 「Claude Code in Action」)과 AWS Skill Builder의 「Claude Code on Amazon Bedrock」 프로그램에서 배운 내용을 덧붙였습니다.
+
+10장의 "보충"은 워크샵 본문 밖에서 가져온 내용입니다. 어느 과정에서 온 것인지 절 머리에 적어 두었고, 링크를 포함한 전체 목록은 맨 아래 [References](#references)에 있습니다.
 
 ---
 
@@ -30,7 +32,7 @@ tags:
 7. [Pattern 4: Docs Writer](#7-pattern-4-docs-writer)
 8. [Pattern 5: Migration Bot](#8-pattern-5-migration-bot)
 9. [실전 데모: FinOps Agent](#9-실전-데모-finops-agent--sub-agent-병렬-분석)
-10. [Anthropic Skilljar 보충: Sub-agent 설계 핵심 원칙](#10--anthropic-skilljar-보충-sub-agent-설계-핵심-원칙)
+10. [보충: Sub-agent 설계 핵심 원칙](#10--보충-sub-agent-설계-핵심-원칙)
 11. [선택 가이드 & 안티패턴](#11-선택-가이드--안티패턴)
 12. [References](#references)
 
@@ -139,7 +141,7 @@ memory: project
 
 ### 스코프 5계층 (같은 이름 충돌 시 위가 이김)
 
-왜 5계층으로 나눠져 있을까요? 조직에는 "모든 개발자에게 강제할 정책"(Managed), "내 취향"(User), "이 팀의 표준"(Project)이 공존합니다. 계층 구조 덕분에 관리자가 보안 에이전트를 강제 배포하면서도, 개인은 자기만의 편의 에이전트를 자유롭게 추가할 수 있습니다. 동명 충돌 시 상위가 이기므로, 조직 정책이 개인 설정을 항상 재정의합니다.
+왜 5계층으로 나눠져 있을까요? 조직에는 "모든 개발자에게 강제할 정책"(Managed), "내 개인 에이전트"(User), "이 팀의 표준"(Project)이 공존합니다. 계층 구조 덕분에 관리자가 보안 에이전트를 강제 배포하면서도, 개인은 자기만의 편의 에이전트를 자유롭게 추가할 수 있습니다. 동명 충돌 시 상위가 이기므로, 조직 정책이 개인 설정을 항상 재정의합니다.
 
 | 순위 | 스코프 | 위치 | 설명 |
 |------|--------|------|------|
@@ -962,9 +964,9 @@ claude
 
 ---
 
-## 10. 💡 Anthropic Skilljar 보충: Sub-agent 설계 핵심 원칙
+## 10. 💡 보충: Sub-agent 설계 핵심 원칙
 
-> 📕 출처: *Introduction to Sub-agents* (Anthropic Skilljar, 4 lessons)
+> 📕 출처: Anthropic 공식 교육 과정 「Introduction to Sub-agents」 (4개 레슨, Skilljar 플랫폼) — References [2]
 
 ### 핵심 판단 기준 — 단 하나의 질문
 
@@ -1024,7 +1026,7 @@ working around them silently:
 - Missing context about business logic
 ```
 
-### ❌ Skilljar가 정의한 3대 안티패턴
+### ❌ 이 과정이 정의한 3대 안티패턴
 
 | 안티패턴 | 왜 해로운가 | 대신 이렇게 |
 |----------|------------|------------|
@@ -1034,7 +1036,7 @@ working around them silently:
 
 ### ❌ 추가 안티패턴: Test Runner (Anthropic 실험 결과)
 
-> ⚠️ Anthropic Skilljar 실험에서 **Test Runner 패턴은 모든 구성 중 가장 낮은 성능**을 보였습니다.
+> ⚠️ 이 교육 과정에서 소개된 Anthropic 내부 실험에서 **Test Runner 패턴은 모든 구성 중 가장 낮은 성능**을 보였습니다.
 
 **문제**: 테스트가 실패하면 **전체 출력**(스택트레이스, 에러 메시지, 실패 라인)이 필요합니다. Sub-agent가 "tests failed"만 요약 반환하면, 디버깅을 위해 추가 스크립트를 만들어야 한다 — 직접 실행했으면 바로 보였을 정보입니다.
 
@@ -1105,9 +1107,9 @@ working around them silently:
 | # | 출처 | 상세 |
 |---|------|------|
 | [1] | **Claude Code Deep Dive Workshop — Chapter 2: Agents (Subagents)** | AWS Korea, 2026.07. [github.com/whchoi98/claude-code-workshop](https://github.com/whchoi98/claude-code-workshop) |
-| [2] | **Introduction to Sub-agents** | Anthropic Skilljar. 4 lessons. [anthropic.skilljar.com](https://anthropic.skilljar.com/claude-code-in-action) |
-| [3] | **Claude Code in Action** | Anthropic Skilljar. Lesson NEW-03, NEW-05. [anthropic.skilljar.com](https://anthropic.skilljar.com/claude-code-in-action) |
-| [4] | **Claude Code on Amazon Bedrock 온라인 프로그램** | AWS Skill Builder. Module 05 (Architecture), Module 07 (MCP와 Sub-agents), Module 08 (Design Patterns). [skillbuilder.aws](https://skillbuilder.aws/learning-plan/Y3XKP5ET3T/claude-code-on-amazon-bedrockccb-----10--ai----/39WWTYBUM2) |
+| [2] | **Introduction to Sub-agents** | Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼). 4개 레슨. [anthropic.skilljar.com](https://anthropic.skilljar.com/claude-code-in-action) |
+| [3] | **Claude Code in Action** | Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼). 본문에서 인용한 차시: NEW-03, NEW-05. [anthropic.skilljar.com](https://anthropic.skilljar.com/claude-code-in-action) |
+| [4] | **Claude Code on Amazon Bedrock** | AWS Skill Builder 온라인 학습 프로그램. 본문에서 인용한 모듈: Module 5 (Architecture), Module 7 (MCP와 Sub-agents), Module 8 (Design Patterns). [skillbuilder.aws](https://skillbuilder.aws/learning-plan/Y3XKP5ET3T/claude-code-on-amazon-bedrockccb-----10--ai----/39WWTYBUM2) |
 
 ### 공식문서 (교차 검증)
 

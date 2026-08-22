@@ -16,7 +16,7 @@ tags:
 
 ## 들어가며
 
-> 대상: Claude Code Deep Dive Workshop Chapter 3 §3 "Claude apps gateway"
+> 대상: AWS Korea가 공개한 [Claude Code Deep Dive Workshop](https://github.com/whchoi98/claude-code-workshop) Chapter 3의 §3 "Claude apps gateway"
 >
 > 공식 문서: [Claude apps gateway](https://code.claude.com/docs/en/claude-apps-gateway) ·
 > [설정 레퍼런스](https://code.claude.com/docs/en/claude-apps-gateway-config) ·

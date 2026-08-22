@@ -16,7 +16,15 @@ tags:
 
 ## 들어가며
 
-이 글에서는 Claude Code의 설정 스코프, 권한 규칙, 훅 자동화, MCP 서버 통합, 커스텀 커맨드까지 — Claude Code Deep Dive Workshop Chapter 4 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.
+이 글에서는 Claude Code의 설정 스코프, 권한 규칙, 훅 자동화, MCP 서버 통합, 커스텀 커맨드까지 정리합니다. 본문의 기본 골격은 AWS Korea가 공개한 [Claude Code Deep Dive Workshop](https://github.com/whchoi98/claude-code-workshop)의 Chapter 4이고, 거기에 두 개의 교육 과정에서 배운 내용을 덧붙였습니다.
+
+| 인용한 자료 | 무엇인가 | 본문 표기 |
+| --- | --- | --- |
+| **Claude Code Deep Dive Workshop** | AWS Korea가 GitHub에 공개한 실습 워크샵 | Chapter 4 |
+| **Claude Code in Action** | Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼) | Lesson NEW-02 등 |
+| **Claude Code on Amazon Bedrock** | AWS Skill Builder의 온라인 학습 프로그램 | Module 0, Module 6 등 |
+
+중간에 "보충"으로 표시한 절은 워크샵 본문 밖에서 가져온 내용입니다. 어느 과정의 어느 차시에서 온 것인지 절 머리에 적어 두었고, 링크를 포함한 전체 목록은 맨 아래 [References](#references)에 있습니다.
 
 ---
 
@@ -37,7 +45,7 @@ tags:
 
 ## 1. Settings 체계
 
-> **해결하는 문제**: "어디에 설정을 두면 누구에게 적용되는가? 같은 키가 충돌하면 누가 이기는가?"
+> **해결하는 문제**: "어디에 설정을 두면 누구에게 적용되는가? 여러 파일에 같은 설정 키(`settings.json`의 항목 이름 — `model`, `env`, `permissionMode` 등)가 다른 값으로 들어 있으면 어느 값이 실제로 적용되는가?"
 
 ### 스코프 4계층
 
@@ -48,9 +56,9 @@ tags:
 | **Project** | `.claude/settings.json` | 저장소 협업자 전원, 커밋 공유 |
 | **Local** | `.claude/settings.local.json` | 이 저장소의 나만, gitignore |
 
-> 💡 **판단 기준**: 취향은 User, 팀 표준은 Project, 실험은 Local에 둡니다. Managed는 Ch.3에서 다룬 조직 강제 계층입니다.
+> 💡 **판단 기준**: "누가 쓰나 × 어디까지 걸치나 × 공유하나" 세 축으로 갈라집니다. 모든 프로젝트에 걸치는 **개인 설정**은 User, 저장소 협업자 전원이 따라야 하는 **팀 표준**은 Project, 같은 개인 설정이라도 이 저장소에만 두려는 값(머신별 경로, 검증 중인 규칙)은 Local에 둡니다. User와 Local은 둘 다 공유되지 않는 개인용이고, 갈림길은 적용 범위입니다. Managed는 Ch.3에서 다룬 조직 강제 계층입니다.
 
-### 우선순위 5단 (같은 키가 충돌할 때)
+### 우선순위 5단 (같은 설정 키가 여러 스코프에 있을 때)
 
 ```
 1. Managed       ← 무엇으로도 재정의 불가 (조직의 강제 계층)
@@ -60,6 +68,30 @@ tags:
 5. User          ← 아무도 지정하지 않았을 때의 내 기본값
 
 ```
+
+여기서 **키**는 `settings.json` 안의 설정 항목 이름입니다 (아래 [키 카탈로그](#키-카탈로그-3분류) 참조). 예를 들어 `model` 키가 두 곳에 다른 값으로 있으면:
+
+```json
+// ~/.claude/settings.json  (User 스코프)
+{ "model": "sonnet" }
+
+// .claude/settings.json  (Project 스코프)
+{ "model": "opus" }
+```
+
+Project가 User보다 우선순위가 높으므로 이 저장소에서 실제 적용값은 `opus`입니다. 여기서 `--model sonnet` CLI 인자를 붙이면 그 세션만 다시 `sonnet`이 되고, 조직이 Managed로 `model`을 못박아 두었다면 위 어느 것도 그것을 이기지 못합니다.
+
+#### 키 종류에 따라 병합 방식이 다릅니다
+
+위 5단 순서는 **값을 하나만 갖는 스칼라 키**에 적용되는 규칙입니다. 배열·객체를 담는 키는 덮어쓰기가 아니라 병합됩니다.
+
+| 키 유형 | 예시 키 | 충돌 시 동작 |
+| --- | --- | --- |
+| **스칼라** (단일 값) | `model`, `permissionMode`, `autoUpdatesChannel`, `alwaysThinkingEnabled` | 우선순위 높은 스코프의 값이 **덮어씀** (낮은 쪽 값은 버려짐) |
+| **규칙 목록** | `permissions.allow` / `ask` / `deny` | 전 스코프를 **합집합으로 병합** — 어느 스코프든 `deny`에 걸리면 그것이 최종 승자 (§2 참조) |
+| **맵** | `env`, `hooks` | 항목 단위로 병합, 같은 항목 이름끼리만 우선순위대로 덮어씀 |
+
+즉 Project의 `allow` 규칙이 User의 `allow` 규칙을 지우지 않습니다. 둘 다 살아 있고, 조직의 `deny` 하나가 개인 `allow` 전부를 무력화합니다.
 
 ### settings.json 기본 구조
 
@@ -82,7 +114,7 @@ tags:
 - `env` 블록 → 셸 프로파일 대신 설정 파일로 환경변수를 스코프별 배포 (비밀은 금지, 볼트 헬퍼로)
 - `companyAnnouncements` → 세션 시작 배너
 
-### 기능별 파일 지도
+### 기능별 파일 위치
 
 | 기능 | 저장 위치 |
 | --- | --- |
@@ -106,9 +138,11 @@ tags:
 
 ---
 
-### Skilljar 보충: CLAUDE.md가 "따라지는" 이유 (Lesson NEW-02)
+### 보충: CLAUDE.md가 "따라지는" 이유
 
-> CLAUDE.md는 **강제 설정이 아닌 안내(guidance)**입니다. 모든 줄이 Claude의 주의를 두고 다른 줄과 경쟁합니다.
+> 📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-02 (CLAUDE.md) — References [2]
+
+> CLAUDE.md는 **강제 설정이 아닌 안내**(guidance)입니다. 모든 줄이 Claude의 주의를 놓고 다른 줄과 경쟁합니다.
 
 | 원칙 | 설명 |
 | --- | --- |
@@ -123,7 +157,9 @@ tags:
 
 ---
 
-### M0 보충: .claude/ 폴더 전체 구조와 settings.json 핵심 키
+### 보충: .claude/ 폴더 전체 구조와 settings.json 핵심 키
+
+> 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 0 (Fundamentals) — References [4]
 
 > Claude Code의 모든 설정은 `.claude/` 폴더 안에 살고 있습니다. 전체 지도를 먼저 잡으면 각 파트의 위치가 명확해집니다.
 
@@ -229,7 +265,7 @@ graph TD
 | **dontAsk** | 사전 승인된 도구만 | 나머지 = 자동 거부 (프롬프트 없음) | 무인 CI, 훅 게이트 |
 | **bypassPermissions** | 모든 검사 건너뜀 | 없음 ⚠️ | 격리된 컨테이너/VM에서만! |
 
-> ⚠️ **Auto Mode 분류기의 한계** (Skilljar 통찰): 분류기는 **의도(intent)**를 검사하지, **정확성(correctness)**을 검사하지 않습니다. Claude가 인증을 리팩토링하면서 깨진 인증을 쓰면 — 분류기가 통과시킵니다. 깨진 것은 위험한 것이 아니니까. 해결: **Auto Mode + Stop Hook** 조합 (의도 검사 + 정확성 확인).
+> ⚠️ **Auto Mode 분류기의 한계** (출처: 「Claude Code in Action」 Lesson NEW-04): 분류기는 **의도**(intent)를 검사하지, **정확성**(correctness)을 검사하지 않습니다. Claude가 인증을 리팩토링하면서 깨진 인증을 쓰면 — 분류기가 통과시킵니다. 깨진 것은 위험한 것이 아니니까. 해결: **Auto Mode + Stop Hook** 조합 (의도 검사 + 정확성 확인).
 
 ### /permissions — 대화형 관리
 
@@ -318,13 +354,15 @@ graph TD
 
 > ⚠️ **함정**: Exit code 1은 차단하지 않습니다! 멈추려면 반드시 **exit 2**.
 
-### Skilljar 보충: Hook 실전 통찰 (Lesson NEW-05)
+### 보충: Hook 실전 통찰
+
+> 📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-05 (Hooks) — References [2]
 
 **updatedInput — 차단 대신 수정(Redact)**: PreToolUse에서 호출을 차단하는 대신 **입력을 수정**할 수 있습니다. 예: bash 명령에서 시크릿(`sk_live_...`)을 발견하면 해당 부분만 마스킹하고 실행은 허용.
 
 > ⚠️ `updatedInput`은 전체 입력 객체를 **교체**합니다. 변경하지 않는 필드도 되돌려 보내야 합니다 — 안 그러면 사라집니다.
 
-**SessionStart + compact matcher 함정**: Compact 후 컨텍스트를 재주입하려면 `PostCompact`가 아닌 `SessionStart`** + `compact` matcher**를 사용해야 합니다. PostCompact는 출력을 대화에 다시 넣지 못합니다 — SessionStart만이 stdout을 컨텍스트에 추가합니다.
+**SessionStart + compact matcher 함정**: Compact 후 컨텍스트를 재주입하려면 `PostCompact`가 아닌 `SessionStart` **+ `compact` matcher**를 사용해야 합니다. PostCompact는 출력을 대화에 다시 넣지 못합니다 — SessionStart만이 stdout을 컨텍스트에 추가합니다.
 
 ```json
 {
@@ -481,7 +519,9 @@ SessionStart에서 exit 0 + stdout 텍스트 → 컨텍스트에 자동 추가�
 
 ---
 
-### M6 보충: 하네스 엔지니어링 — Settings를 "시스템"으로 만드는 철학
+### 보충: 하네스 엔지니어링 — Settings를 "시스템"으로 만드는 철학
+
+> 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 6 (Harness Engineering) — References [4]
 
 > Settings의 개별 키를 아는 것과, 그것을 **시스템으로 설계**하는 것은 다릅니다.
 
@@ -510,7 +550,7 @@ Planner → Generator → Reviewer → QA(Hook 게이트)
 
 ```
 
-**CLAUDE.md 작성 원칙 (M6 권장):**
+**CLAUDE.md 작성 원칙 (이 모듈의 권장안):**
 
 - **80~120줄** 권장 (200줄은 상한, 80줄이 최적)
 - **WHAT/WHY/HOW** 구조: 무엇을 → 왜 → 어떻게
@@ -641,7 +681,9 @@ MCP 서버가 많을 때 모든 도구를 컨텍스트에 로드하면 낭비입
 
 ---
 
-### M7 보충: MCP 고급 기능 — 컨텍스트 절약과 실시간 연동
+### 보충: MCP 고급 기능 — 컨텍스트 절약과 실시간 연동
+
+> 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 7 (MCP) — References [4]
 
 > MCP를 효과적으로 운영하면 비용과 성능이 크게 개선됩니다.
 
@@ -711,7 +753,9 @@ Skills는 Commands보다 한 단계 위 — **자동 트리거 + 참조 자료 +
 
 ---
 
-### Skilljar 보충: Verification Skill (Lesson NEW-03)
+### 보충: Verification Skill
+
+> 📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-03 (Verification Skills) — References [2]
 
 > **"동일한 다단계 지시를 두 번 타이핑했다면, 그것은 Skill입니다."**
 
@@ -795,7 +839,9 @@ CLAUDE.md                  ← 프로젝트 지침
 
 ---
 
-### M9 보충: 엔터프라이즈 CCB 운영 — 설정이 뚫리는 3가지 지점
+### 보충: 엔터프라이즈 운영 — 설정이 뚫리는 3가지 지점
+
+> 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 9 (Enterprise) — References [4]
 
 > 설정(Settings)이 아무리 정교해도 클라이언트 사이드에서는 세 가지 실패 지점이 존재합니다.
 
@@ -1087,7 +1133,7 @@ Step 5-1: ⚠️ 함정 — Permissions deny ≠ 모든 경로 차단
 | `"deny": ["Read(./.env*)"]` | **Read 도구**만 차단 | ❌ Bash라서 무관 |
 | Hook (`block-secrets.sh`) | grep 패턴에 일치하는 것만 | ✅ 패턴 있으면 차단 |
 
-Permissions의 `deny`는 **도구 단위(Tool-level)**로 작동합니다. `Read(./.env*)`는 Claude의 `Read` 도구 호출만 막을 뿐, `Bash(cat .env)`나 `Bash(head .env)` 같은 셸 명령은 별개 경로입니다.
+Permissions의 `deny`는 **도구 단위**(Tool-level)로 작동합니다. `Read(./.env*)`는 Claude의 `Read` 도구 호출만 막을 뿐, `Bash(cat .env)`나 `Bash(head .env)` 같은 셸 명령은 별개 경로입니다.
 
 **해결: Hook에 파일 접근 패턴 추가 (이중 방어)**
 
@@ -1454,20 +1500,19 @@ Step 8: 실제 `/check-health` 실행 결과 예시
 | # | 출처 | 상세 |
 | --- | --- | --- |
 | [1] | **Claude Code Deep Dive Workshop — Chapter 4: Settings** | AWS Korea, 2026.07. [github.com/whchoi98/claude-code-workshop](https://github.com/whchoi98/claude-code-workshop) |
-| [2] | **Claude Code in Action** | Anthropic Skilljar. NEW-02 (CLAUDE.md), NEW-03 (Verification Skills), NEW-04 (Permission Modes), NEW-05 (Hooks). [anthropic.skilljar.com](https://anthropic.skilljar.com) |
-| [3] | **Introduction to MCP** | Anthropic Skilljar. [anthropic.skilljar.com](https://anthropic.skilljar.com) |
+| [2] | **Claude Code in Action** | Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼). 본문에서 인용한 차시: NEW-02 (CLAUDE.md), NEW-03 (Verification Skills), NEW-04 (Permission Modes), NEW-05 (Hooks). [anthropic.skilljar.com](https://anthropic.skilljar.com) |
+| [3] | **Introduction to MCP** | Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼). [anthropic.skilljar.com](https://anthropic.skilljar.com) |
+| [4] | **Claude Code on Amazon Bedrock** | AWS Skill Builder 온라인 학습 프로그램. 본문에서 인용한 모듈: Module 0 (Fundamentals), Module 6 (Harness Engineering), Module 7 (MCP), Module 9 (Enterprise). [skillbuilder.aws](https://skillbuilder.aws/learning-plan/Y3XKP5ET3T/claude-code-on-amazon-bedrockccb-----10--ai----/39WWTYBUM2) |
 
 ### 공식문서 (교차 검증)
 
 | # | 문서 | URL |
 | --- | --- | --- |
-| [4] | Settings | [docs.anthropic.com/en/docs/claude-code/settings](https://docs.anthropic.com/en/docs/claude-code/settings) |
-| [5] | Permissions | [docs.anthropic.com/en/docs/claude-code/permissions](https://docs.anthropic.com/en/docs/claude-code/permissions) |
-| [6] | Hooks | [docs.anthropic.com/en/docs/claude-code/hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) |
-| [7] | MCP | [docs.anthropic.com/en/docs/claude-code/mcp](https://docs.anthropic.com/en/docs/claude-code/mcp) |
-| [8] | Security | [docs.anthropic.com/en/docs/claude-code/security](https://docs.anthropic.com/en/docs/claude-code/security) |
-
-| [9] | **Claude Code on Bedrock Online Program** | AWS Skill Builder. M0(Fundamentals), M6(Harness Engineering), M7(MCP), M9(Enterprise). [skillbuilder.aws](https://skillbuilder.aws) |
+| [5] | Settings | [docs.anthropic.com/en/docs/claude-code/settings](https://docs.anthropic.com/en/docs/claude-code/settings) |
+| [6] | Permissions | [docs.anthropic.com/en/docs/claude-code/permissions](https://docs.anthropic.com/en/docs/claude-code/permissions) |
+| [7] | Hooks | [docs.anthropic.com/en/docs/claude-code/hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) |
+| [8] | MCP | [docs.anthropic.com/en/docs/claude-code/mcp](https://docs.anthropic.com/en/docs/claude-code/mcp) |
+| [9] | Security | [docs.anthropic.com/en/docs/claude-code/security](https://docs.anthropic.com/en/docs/claude-code/security) |
 
 ---
 

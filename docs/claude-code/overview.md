@@ -16,7 +16,7 @@ tags:
 
 ## 들어가며
 
-이 글에서는 Claude Code의 정체성, 아키텍처, 설치, 인증부터 핵심 워크플로까지 Claude Code Deep Dive Workshop — Chapter 1 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.
+이 글에서는 Claude Code의 정체성, 아키텍처, 설치, 인증부터 핵심 워크플로까지 정리합니다. 본문의 기본 골격은 AWS Korea가 공개한 [Claude Code Deep Dive Workshop](https://github.com/whchoi98/claude-code-workshop)의 Chapter 1이고, 여기에 Anthropic 공식 교육 과정 「Claude Code in Action」과 AWS Skill Builder의 「Claude Code on Amazon Bedrock」 프로그램에서 배운 내용을 덧붙였습니다. 링크를 포함한 전체 출처 목록은 맨 아래 [References](#references)에 있습니다.
 
 ---
 
@@ -99,7 +99,7 @@ Claude Code가 활용하는 최신 모델 라인업:
 
 ## 4. 아키텍처: Agentic Harness 4계층
 
-Claude Code는 **모델을 감싼 하네스(Harness)**입니다. 4개 계층이 언어 모델을 유능한 코딩 에이전트로 변환합니다:
+Claude Code는 **모델을 감싼 하네스**(Harness)입니다. 4개 계층이 언어 모델을 유능한 코딩 에이전트로 변환합니다:
 
 ```mermaid
 graph TD
@@ -890,8 +890,8 @@ Claude Code는 단순한 코딩 어시스턴트가 아닙니다. **저장소 전
 | # | 출처 | 상세 |
 |---|------|------|
 | [1] | **Claude Code Deep Dive Workshop — Chapter 1: Overview** | Choi WooHyung (Prin. Solutions Architect, AWS Korea). [github.com/whchoi98/claude-code-workshop](https://github.com/whchoi98/claude-code-workshop) |
-| [2] | **Claude Code in Action** | Anthropic Skilljar 공식 교육 코스. 2026 리뉴얼 커리큘럼 (10 레슨) + 기존 커리큘럼 (21 레슨). [anthropic.skilljar.com/claude-code-in-action](https://anthropic.skilljar.com/claude-code-in-action) |
-| [3] | **Claude Code를 다룬다는 것** | AWS Training & Certification 자기 주도 학습. 약 1시간. Agentic AI의 개념, 아키텍처, 디자인 패턴, 엔지니어링 원칙 전반. [skillbuilder.aws/learn/KNBAUVDS3Z/m0--claude-code---amazon-bedrock------/KK153UQNHS](https://skillbuilder.aws/learn/KNBAUVDS3Z/m0--claude-code---amazon-bedrock------/KK153UQNHS) |
+| [2] | **Claude Code in Action** | Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼). 2026 리뉴얼 커리큘럼 (10 레슨) + 기존 커리큘럼 (21 레슨). [anthropic.skilljar.com/claude-code-in-action](https://anthropic.skilljar.com/claude-code-in-action) |
+| [3] | **Claude Code on Amazon Bedrock** | AWS Skill Builder 온라인 학습 프로그램. 본문에서 인용한 모듈: Module 0 「Claude Code를 다룬다는 것」 (자기 주도 학습, 약 1시간. Agentic AI의 개념, 아키텍처, 디자인 패턴, 엔지니어링 원칙 전반). [skillbuilder.aws](https://skillbuilder.aws/learn/KNBAUVDS3Z/m0--claude-code---amazon-bedrock------/KK153UQNHS) |
 
 ### 공식문서 (교차 검증)
 

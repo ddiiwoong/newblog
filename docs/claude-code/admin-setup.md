@@ -16,7 +16,9 @@ tags:
 
 ## 들어가며
 
-이 글에서는 Claude Code의 조직 배포, 인증 체계, 거버넌스, 모니터링까지 — Claude Code Deep Dive Workshop Chapter 3 내용을 기본으로 하여 다른 학습 내용들과 같이 정리합니다.
+이 글에서는 Claude Code의 조직 배포, 인증 체계, 거버넌스, 모니터링까지 정리합니다. 본문의 기본 골격은 AWS Korea가 공개한 [Claude Code Deep Dive Workshop](https://github.com/whchoi98/claude-code-workshop)의 Chapter 3이고, 여기에 Anthropic 공식 교육 과정 「Claude Code in Action」과 AWS Skill Builder의 「Claude Code on Amazon Bedrock」 프로그램에서 배운 내용을 덧붙였습니다.
+
+중간에 "보충"으로 표시한 절은 워크샵 본문 밖에서 가져온 내용입니다. 어느 과정의 어느 차시에서 온 것인지 절 머리에 적어 두었고, 링크를 포함한 전체 목록은 맨 아래 [References](#references)에 있습니다.
 
 ---
 
@@ -505,7 +507,7 @@ export HTTPS_PROXY=http://localhost:3128
 
 ```
 
-> 가능하면 인증 프록시 자체를 **ZTNA(Zero Trust Network Access)**로 대체하는 것이 구조적 해법입니다.
+> 가능하면 인증 프록시 자체를 **ZTNA**(Zero Trust Network Access)로 대체하는 것이 구조적 해법입니다.
 
 ### VPN / ZTNA 환경 점검 사항
 
@@ -563,8 +565,8 @@ exit 0
 1. **managed settings** — 파일/레지스트리/서버를 통해 배포되며, 사용자 설정보다 항상 우선합니다. settings.json에서 `deny`에 추가된 규칙은 개발자가 제거할 수 없습니다.
 2. **Permission Modes** — 6가지 모드(Manual, Accept Edits, Plan, Auto, Don't Ask, Bypass)로 Claude의 자율성 범위를 결정합니다. `disableBypassPermissionsMode: "disable"` 설정으로 조직 차원에서 위험한 모드를 영구 차단할 수 있습니다.
 
-> 💡 **Anthropic Skilljar 핵심 통찰 (Permission Modes Lesson)**:
-> - Auto Mode의 분류기는 **의도(intent)**를 검사하지, **정확성(correctness)**을 검사하지 않습니다
+> 💡 **「Claude Code in Action」 Lesson NEW-04 (Permission Modes) 핵심 통찰**:
+> - Auto Mode의 분류기는 **의도**(intent)를 검사하지, **정확성**(correctness)을 검사하지 않습니다
 > - 깨진 코드를 쓰는 것은 "위험한 것"이 아니므로 분류기가 통과시킵니다
 > - 따라서 Auto Mode + **Stop Hook** (테스트 실행)을 조합해야 무인 실행이 안전합니다
 
@@ -616,7 +618,9 @@ exit 0
 | `strict/blockedMarketplaces` | 플러그인 마켓 소스 통제 |
 | `minimumVersion` | 구버전 강제 상향 |
 
-### 💡 Skilljar 보충: 팀 전체 배포를 위한 Plugin 시스템
+### 💡 보충: 팀 전체 배포를 위한 Plugin 시스템
+
+> 📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-09 (Plugins) — References [2]
 
 managed settings가 "무엇을 금지하는가"를 결정한다면, **Plugin**은 "무엇을 표준으로 제공하는가"를 결정합니다.
 
@@ -636,13 +640,15 @@ managed settings가 "무엇을 금지하는가"를 결정한다면, **Plugin**�
 
 ```
 
-> ⚠️ **보안 주의** (Skilljar Lesson 09): Plugin은 사용자 권한으로 코드를 실행합니다. Hook이 매칭되는 모든 도구 호출에서 발동하므로, 설치 전 hooks/agents/MCP 구성을 반드시 확인해야 합니다.
+> ⚠️ **보안 주의**: Plugin은 사용자 권한으로 코드를 실행합니다. Hook이 매칭되는 모든 도구 호출에서 발동하므로, 설치 전 hooks/agents/MCP 구성을 반드시 확인해야 합니다.
 
-### 💡 Skilljar 보충: 무인 실행 검증 원칙
+### 💡 보충: 무인 실행 검증 원칙
+
+> 📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-08 (Verifying Runs) — References [2]
 
 managed settings로 Auto Mode를 허용한 뒤, 무인 실행 결과를 어떻게 검증하는가가 관리자의 핵심 과제입니다.
 
-> **"감시하지 않을수록, 더 많이 검증한다."** — Anthropic Skilljar, Lesson 08
+> **"감시하지 않을수록, 더 많이 검증한다."** — 「Claude Code in Action」 Lesson NEW-08
 
 | 검증 단계 | 방법 |
 | --- | --- |
@@ -1140,8 +1146,8 @@ curl -v https://api.anthropic.com/
 | # | 출처 | 상세 |
 | --- | --- | --- |
 | [1] | **Claude Code Deep Dive Workshop — Chapter 3: Admin Setup** | AWS Korea, 2026.07. [github.com/whchoi98/claude-code-workshop](https://github.com/whchoi98/claude-code-workshop) |
-| [2] | **Claude Code in Action** | Anthropic Skilljar. Lesson NEW-04 (Permission Modes), NEW-05 (Hooks), NEW-08 (Verifying Runs), NEW-09 (Plugins). [anthropic.skilljar.com](https://anthropic.skilljar.com) |
-| [3] | **Claude Code on Amazon Bedrock 온라인 프로그램** | AWS Skill Builder. Module 07 (MCP와 Sub-agents). [skillbuilder.aws](https://skillbuilder.aws) |
+| [2] | **Claude Code in Action** | Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼). 본문에서 인용한 차시: NEW-04 (Permission Modes), NEW-05 (Hooks), NEW-08 (Verifying Runs), NEW-09 (Plugins). [anthropic.skilljar.com](https://anthropic.skilljar.com) |
+| [3] | **Claude Code on Amazon Bedrock** | AWS Skill Builder 온라인 학습 프로그램. 본문에서 인용한 모듈: Module 7 (MCP와 Sub-agents). [skillbuilder.aws](https://skillbuilder.aws/learning-plan/Y3XKP5ET3T/claude-code-on-amazon-bedrockccb-----10--ai----/39WWTYBUM2) |
 
 ### 공식문서 (교차 검증)
 
