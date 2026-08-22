@@ -419,7 +419,7 @@ Softmax: 각 행을 확률(합=1)로 변환
     → "the"의 새 벡터 = 문맥("cat sat on")이 섞인 표현
 ```
 
-**핵심 직관**: 마지막 "the"는 "cat"에 가장 많이 주목함. 왜? "The cat sat on the ___"에서 빈칸에 올 단어를 예측하려면 **뭐가 앉아있었는지(cat)**가 가장 중요한 단서니까.
+**핵심 직관**: 마지막 "the"는 "cat"에 가장 많이 주목함. 왜? "The cat sat on the ___"에서 빈칸에 올 단어를 예측하려면 **뭐가 앉아있었는지**(cat)가 가장 중요한 단서니까.
 
 **④ 합치기**
 
@@ -472,7 +472,7 @@ Attention 출력에서 마지막 "the"의 벡터: 768d
 
 ### MLP에 "지식"이 저장됨:
 
-- 전체 파라미터의 **46%**가 MLP에 있음 (Attention은 23%)
+- 전체 파라미터의 **46%가** MLP에 있음 (Attention은 23%)
 - "에펠탑은 파리에 있다", "cat은 floor 위에 앉는다" 같은 팩트가 MLP 가중치에 인코딩
 - 연구에서 MLP의 특정 뉴런을 끄면 특정 사실을 잊어버린다는 걸 확인함
 
@@ -1220,7 +1220,7 @@ graph LR
 | INT8 | 7 GB | 1.5-2x↑ | 거의 없음 |
 | INT4 | 3.5 GB | 2-3x↑ | 약간 |
 
-실무에서는 **INT4 (W4A16)**가 가성비 최고. GPTQ, AWQ, GGUF 등 방식 있다.
+실무에서는 **INT4 (W4A16)** 조합이 가성비 최고. GPTQ, AWQ, GGUF 등 방식 있다.
 
 ### 14-2. [FlashAttention](#term-flashattention)
 
@@ -1269,7 +1269,7 @@ graph LR
     end
 ```
 
-효과: [KV Cache](#term-kv-cache) 메모리 낭비를 **거의 0%**로 줄임.
+효과: [KV Cache](#term-kv-cache) 메모리 낭비를 **거의 0%로** 줄임.
 
 ### 14-4. [Speculative Decoding](#term-speculative-decoding)
 

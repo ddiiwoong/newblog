@@ -1339,7 +1339,7 @@ success: True   sections: 2   wall 19.6s   LLM calls: 3
 
 `ch04/bedrock/` 노트북 내용은 매우 단순하다. `bedrock-runtime` 클라이언트를 만들고
 `converse()`를 한 번 호출하는 게 전부다. 별도 인프라를 띄우지 않으므로 **비용은 토큰
-요금뿐(수 원 이하)**이다.
+요금뿐**(수 원 이하)이다.
 
 ```python
 import boto3

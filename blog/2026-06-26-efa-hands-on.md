@@ -449,7 +449,7 @@ aws ec2 delete-placement-group --group-name efa-cluster
 - **fi_info**: libfabric provider(여기선 EFA)가 시스템에 제대로 인식됐는지 확인하는 명령. EFA 설치 검증의 첫 단계.
 - **fi_pingpong**: 두 노드 간 latency·대역폭을 재는 libfabric 기본 벤치마크. NCCL을 돌리기 전 네트워크 자체를 확인할 때 쓴다.
 - **nccl-tests / all_reduce_perf**: NCCL 성능·정확성을 측정하는 공식 테스트 모음과 그중 all-reduce 측정 도구. [GitHub](https://github.com/NVIDIA/nccl-tests)
-- **FI_PROVIDER / FI_EFA_* / NCCL_* 환경변수**: libfabric·NCCL의 동작을 제어하는 환경변수들. 본문에서 `FI_PROVIDER=efa`(EFA 선택), `NCCL_DEBUG=INFO`(통신 경로 로그), `NCCL_NET_PLUGIN=none`(EFA 끄고 TCP로) 등을 사용했다.
+- **`FI_PROVIDER` / `FI_EFA_*` / `NCCL_*` 환경변수**: libfabric·NCCL의 동작을 제어하는 환경변수들. 본문에서 `FI_PROVIDER=efa`(EFA 선택), `NCCL_DEBUG=INFO`(통신 경로 로그), `NCCL_NET_PLUGIN=none`(EFA 끄고 TCP로) 등을 사용했다.
 
 ## 참고 문서
 

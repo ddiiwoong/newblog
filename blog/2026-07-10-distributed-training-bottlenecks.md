@@ -136,7 +136,7 @@ PyTorch에서 이 역할을 하는 것이 **DDP**(DistributedDataParallel)다. D
 
 #### 직접 재현 - 데이터 병목일 때만 worker가 약이다 {#data-bottleneck-workers}
 
-단일 GPU 노드(`g4dn.xlarge`, T4 1장, vCPU 4개)에서 resnet18 학습 루프를 돌리며 `num_workers`를 바꿔 GPU 활용률과 스텝 처리량을 측정했다. 합성 이미지라 절대치보다 \*\*변화 방향(Pattern)\*\*이 핵심이다. 그런데 결과가 전처리 무게에 따라 정반대로 나타났다.
+단일 GPU 노드(`g4dn.xlarge`, T4 1장, vCPU 4개)에서 resnet18 학습 루프를 돌리며 `num_workers`를 바꿔 GPU 활용률과 스텝 처리량을 측정했다. 합성 이미지라 절대치보다 **변화 방향**(Pattern)이 핵심이다. 그런데 결과가 전처리 무게에 따라 정반대로 나타났다.
 
 **케이스 A - 가벼운 전처리(Resize만).** GPU가 이미 계산으로 인한 사용율이 높은 상태이다.
 
