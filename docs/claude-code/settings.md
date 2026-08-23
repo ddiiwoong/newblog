@@ -16,7 +16,7 @@ tags:
 
 ## 들어가며
 
-이 글에서는 Claude Code의 설정 스코프, 권한 규칙, 훅 자동화, MCP 서버 통합, 커스텀 커맨드까지 정리합니다. 본문의 기본 골격은 AWS Korea가 공개한 [Claude Code Deep Dive Workshop](https://github.com/whchoi98/claude-code-workshop)의 Chapter 4이고, 거기에 두 개의 교육 과정에서 배운 내용을 덧붙였습니다.
+이 글에서는 Claude Code의 설정 스코프, 권한 규칙, 훅 자동화, MCP 서버 통합, 커스텀 커맨드까지 정리합니다. 본문의 기본 골격은 AWS Korea가 공개한 [Claude Code Deep Dive Workshop](https://github.com/whchoi98/claude-code-workshop)의 Chapter 4이고, 거기에 두 개의 교육 과정에서 학습한 내용을 덧붙였습니다.
 
 | 인용한 자료 | 무엇인가 | 본문 표기 |
 | --- | --- | --- |
@@ -45,7 +45,7 @@ tags:
 
 ## 1. Settings 체계
 
-> **해결하는 문제**: "어디에 설정을 두면 누구에게 적용되는가? 여러 파일에 같은 설정 키(`settings.json`의 항목 이름 — `model`, `env`, `permissionMode` 등)가 다른 값으로 들어 있으면 어느 값이 실제로 적용되는가?"
+> **해결하는 문제**: "`settings.json` 파일에 어떤 설정을 하면 누구에게 적용되는가? 여러 파일에 같은 설정 키(`settings.json`의 항목 이름 — `model`, `env`, `permissionMode` 등)가 다른 값으로 들어 있으면 어느 값이 실제로 적용되는가?"
 
 ### 스코프 4계층
 
@@ -56,9 +56,9 @@ tags:
 | **Project** | `.claude/settings.json` | 저장소 협업자 전원, 커밋 공유 |
 | **Local** | `.claude/settings.local.json` | 이 저장소의 나만, gitignore |
 
-> 💡 **판단 기준**: "누가 쓰나 × 어디까지 걸치나 × 공유하나" 세 축으로 갈라집니다. 모든 프로젝트에 걸치는 **개인 설정**은 User, 저장소 협업자 전원이 따라야 하는 **팀 표준**은 Project, 같은 개인 설정이라도 이 저장소에만 두려는 값(머신별 경로, 검증 중인 규칙)은 Local에 둡니다. User와 Local은 둘 다 공유되지 않는 개인용이고, 갈림길은 적용 범위입니다. Managed는 Ch.3에서 다룬 조직 강제 계층입니다.
+> 💡 **판단 기준**: "누가 쓰나 × 적용 범위 × 공유되는지" 세 축으로 갈라집니다. 모든 프로젝트에 걸치는 **개인 설정**은 User, 저장소 협업자 전원이 따라야 하는 **팀 표준**은 Project, 같은 개인 설정이라도 해당 저장소에만 두려는 값(머신별 경로, 검증 중인 규칙)은 Local에 둡니다. User와 Local은 둘 다 공유되지 않는 개인용이고, 둘을 구분하는 기준은 적용 범위입니다. Managed는 Ch.3에서 다룬 조직 강제 계층입니다.
 
-### 우선순위 5단 (같은 설정 키가 여러 스코프에 있을 때)
+### 우선순위 (같은 설정 키가 여러 스코프에 있을 때)
 
 ```
 1. Managed       ← 무엇으로도 재정의 불가 (조직의 강제 계층)
@@ -79,11 +79,11 @@ tags:
 { "model": "opus" }
 ```
 
-Project가 User보다 우선순위가 높으므로 이 저장소에서 실제 적용값은 `opus`입니다. 여기서 `--model sonnet` CLI 인자를 붙이면 그 세션만 다시 `sonnet`이 되고, 조직이 Managed로 `model`을 못박아 두었다면 위 어느 것도 그것을 이기지 못합니다.
+Project가 User보다 우선순위가 높으므로 이 저장소에서 실제 적용값은 `opus`입니다. 여기서 `--model sonnet` CLI 인자를 붙이면 그 세션만 다시 `sonnet`이 되고, 조직이 Managed로 `model`을 못박아 두었다면 위 어느 것도 그것을 우선할 수 없습니다.
 
 #### 키 종류에 따라 병합 방식이 다릅니다
 
-위 5단 순서는 **값을 하나만 갖는 스칼라 키**에 적용되는 규칙입니다. 배열·객체를 담는 키는 덮어쓰기가 아니라 병합됩니다.
+위 5단 순서는 **값을 하나만 갖는 스칼라 키**에 적용되는 규칙입니다. 배열·객체를 담는 키는 덮어쓰기가 되지않고 병합됩니다.
 
 | 키 유형 | 예시 키 | 충돌 시 동작 |
 | --- | --- | --- |
@@ -138,7 +138,7 @@ Project가 User보다 우선순위가 높으므로 이 저장소에서 실제 �
 
 ---
 
-### 보충: CLAUDE.md가 "따라지는" 이유
+### 보충: CLAUDE.md가 "지침을 따르는" 이유
 
 > 📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-02 (CLAUDE.md) — References [2]
 
@@ -149,11 +149,11 @@ Project가 User보다 우선순위가 높으므로 이 저장소에서 실제 �
 | **간결할수록 준수율 ↑** | 파일이 길어지면 자기 자신과 경쟁 → 개별 규칙 준수율 하락 |
 | **하드 규칙은 Hook으로** | "never push to main"은 CLAUDE.md로 부족 → PreToolUse Hook이 막음 |
 | **구체적 + 검증 가능** | "Follow best practices" ❌ → "Put routes in `src/api/handlers`, one per file" ✅ |
-| **강조는 예산** | "IMPORTANT", "MUST"는 2~3개에만. 전부 소리치면 아무것도 안 들림 |
-| **대체를 지명** | "Don't use default exports" ❌ → "Use named exports, not default exports" ✅ |
-| **Import = 정리 (절약 아님)** | `@.claude/conventions/code-style.md`는 실행 시 인라인 확장됨 — 양은 안 줄음 |
+| **강조는 한정 자원** | `IMPORTANT`/`MUST`는 정말 양보 불가능한 규칙 2~3개에만. 강조는 주변과 대비될 때만 작동하므로, 모든 줄을 강조하면 어느 줄도 강조되지 않음 |
+| **금지 규칙에는 대안 규칙을 함께 기재** | 금지만 적으면 대신 무엇을 쓸지 Claude가 추측함. "Don't use default exports" ❌ → "Use named exports, not default exports" ✅ |
+| **Import = 정리 (절약 아님)** | `@.claude/conventions/code-style.md`는 실행 시 인라인 확장됨 — 양은 줄지 않음 |
 
-> 💡 **경험 법칙**: Claude가 틀릴 때마다 CLAUDE.md를 수정하세요. "버그 리포트"로 취급하면 파일이 점점 나아집니다.
+> 💡 **Tip**: Claude가 틀릴 때마다 CLAUDE.md를 수정하세요. "버그 리포트"로 취급하면 파일이 점점 나아집니다.
 
 ---
 
@@ -161,7 +161,7 @@ Project가 User보다 우선순위가 높으므로 이 저장소에서 실제 �
 
 > 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 0 (Fundamentals) — References [4]
 
-> Claude Code의 모든 설정은 `.claude/` 폴더 안에 살고 있습니다. 전체 지도를 먼저 잡으면 각 파트의 위치가 명확해집니다.
+> Claude Code의 모든 설정은 `.claude/` 폴더 안에 있습니다. 전체 구조를 먼저 잡으면 각 파트의 위치가 명확해집니다.
 
 ```
 .claude/
@@ -193,9 +193,9 @@ Project가 User보다 우선순위가 높으므로 이 저장소에서 실제 �
 
 ## 2. Permissions
 
-> **해결하는 문제**: "Claude가 무엇을 물어보지 않고 할 수 있고, 무엇은 절대 못 하게 할 것인가?"
+> **해결하는 문제**: "Claude가 무엇을 물어보지 않고도 할 수 있고, 무엇은 절대 못 하게 할 것인가?"
 
-### 3동사와 평가 순서
+### 평가 순서
 
 ```mermaid
 graph TD
@@ -214,7 +214,7 @@ graph TD
 
 ```
 
-**핵심 원칙**: deny가 항상 이깁니다. 전 스코프의 규칙은 합집합으로 병합됩니다.
+**핵심 원칙**: deny가 항상 우선입니다. 전 스코프의 규칙은 합집합으로 병합됩니다.
 
 ### 규칙 문법: `Tool(specifier)`
 
@@ -265,7 +265,7 @@ graph TD
 | **dontAsk** | 사전 승인된 도구만 | 나머지 = 자동 거부 (프롬프트 없음) | 무인 CI, 훅 게이트 |
 | **bypassPermissions** | 모든 검사 건너뜀 | 없음 ⚠️ | 격리된 컨테이너/VM에서만! |
 
-> ⚠️ **Auto Mode 분류기의 한계** (출처: 「Claude Code in Action」 Lesson NEW-04): 분류기는 **의도**(intent)를 검사하지, **정확성**(correctness)을 검사하지 않습니다. Claude가 인증을 리팩토링하면서 깨진 인증을 쓰면 — 분류기가 통과시킵니다. 깨진 것은 위험한 것이 아니니까. 해결: **Auto Mode + Stop Hook** 조합 (의도 검사 + 정확성 확인).
+> ⚠️ **Auto Mode 분류기의 한계** (출처: 「Claude Code in Action」 Lesson NEW-04): 분류기는 **의도**(intent)를 검사하지, **정확성**(correctness)을 검사하지 않습니다. Claude가 인증을 리팩토링하면서 깨진 인증을 쓰면 — 분류기가 통과시킵니다. 깨진 것은 위험한 것이 아니기 때문입니다. 해결: **Auto Mode + Stop Hook** 조합 (의도 검사 + 정확성 확인).
 
 ### /permissions — 대화형 관리
 
@@ -284,7 +284,7 @@ graph TD
 
 ## 3. Hooks 아키텍처
 
-> **해결하는 문제**: "CLAUDE.md는 요청이다 — Claude가 보통 따르지만, 건너뛸 수 있다. 절대 건너뛸 수 없는 규칙은 어떻게 만드는가?"
+> **해결하는 문제**: "CLAUDE.md는 요청사항 — Claude가 보통은 따르려고 하지만, 간혹 건너뛸 수 있다. 절대 건너뛸 수 없는 규칙은 어떻게 만드는가?"
 
 ### 핵심 원리
 
@@ -535,18 +535,33 @@ SessionStart에서 exit 0 + stdout 텍스트 → 컨텍스트에 자동 추가�
 
 **하네스 5구성요소 (파이프라인 순서):**
 
-```
-제약(Constraints) → 도구(Tools) → 실행(Execution) → 상태(State) → 게이트(Gate)
-   permissions        MCP+내장       Bash/Agent       memory/git      Hook 검증
+```mermaid
+graph LR
+    C["🚧 제약<br/>Constraints<br/>permissions"] --> T["🔧 도구<br/>Tools<br/>MCP + 내장"]
+    T --> E["⚡ 실행<br/>Execution<br/>Bash / Agent"]
+    E --> S["💾 상태<br/>State<br/>memory / git"]
+    S --> G["✅ 게이트<br/>Gate<br/>Hook 검증"]
+
+    style C fill:#E74C3C,color:#fff
+    style T fill:#3498DB,color:#fff
+    style E fill:#F39C12,color:#fff
+    style S fill:#8E44AD,color:#fff
+    style G fill:#27AE60,color:#fff
 
 ```
 
 **개발 파이프라인에서의 Hook 활용:**
 
-```
-Planner → Generator → Reviewer → QA(Hook 게이트)
-  Plan 모드    코드 생성     리뷰 sub-agent    PostToolUse/Stop Hook으로
-                                               테스트 통과 여부 강제
+```mermaid
+graph LR
+    P["📋 Planner<br/>Plan 모드"] --> G["⚡ Generator<br/>코드 생성"]
+    G --> R["🔍 Reviewer<br/>리뷰 sub-agent"]
+    R --> Q["✅ QA (Hook 게이트)<br/>PostToolUse / Stop Hook으로<br/>테스트 통과 여부 강제"]
+
+    style P fill:#3498DB,color:#fff
+    style G fill:#F39C12,color:#fff
+    style R fill:#8E44AD,color:#fff
+    style Q fill:#27AE60,color:#fff
 
 ```
 
