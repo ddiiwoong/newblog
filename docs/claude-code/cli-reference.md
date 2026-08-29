@@ -136,7 +136,7 @@ $ claude --tools "Bash,Edit,Read"          # 내장 도구만 한정
 | 플래그 | 용도 | 비고 |
 | --- | --- | --- |
 | `--remote-control`, `--rc` | 세션에 Remote Control을 활성화하여 Claude.ai/모바일에서도 제어 | 서버 모드는 `claude remote-control` 서브커맨드 |
-| `--autocompact <auto | tokens>` | 세션 자동 compact 윈도우 설정 (설정 파일 변경 없이 세션 단위) |
+| `--autocompact <auto \| tokens>` | 세션 자동 compact 윈도우 설정 | 설정 파일 변경 없이 세션 단위 |
 | `--teammate-mode` | 팀메이트(sub-agent) 표시 방식: `in-process`(기본), `auto`, `tmux`, `iterm2` | 병렬 에이전트 모니터링 |
 | `--input-format` | `-p` 입력 형식 지정: `text`(기본) 또는 `stream-json` | 프로그래밍적 입력 처리 |
 | `--strict-mcp-config` | `--mcp-config`로 지정한 MCP 서버만 사용, 나머지 전부 무시 | CI에서 MCP 환경 격리 |
@@ -1169,16 +1169,6 @@ bash scripts/daily-summary.sh
 □ jq -s로 배열 집계 + 정렬 동작
 □ --bare로 기동 시간 단축 체감
 □ daily-report.md 생성 완료
-
-```
-
-### 실무 로드맵
-
-```
-Week 1: -p + --json-schema로 단일 스크립트 완성
-Week 2: cron 또는 Routines로 반복 실행
-Week 3: CI에 PR 리뷰 잡 추가
-Week 4: 배치 패턴으로 기술 부채 청산 시작
 
 ```
 
