@@ -23,6 +23,7 @@ module.exports = {
         'claude-code/admin-setup',
         'claude-code/gateway',
         'claude-code/settings',
+        'claude-code/cli-reference',
       ],
     },
   ],
