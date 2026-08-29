@@ -1,0 +1,1323 @@
+<!doctype html><html lang=en dir=ltr class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-claude-code/cli-reference" data-has-hydrated=false><head><meta charset=UTF-8><meta name=generator content="Docusaurus v3.10.1"><title data-rh=true>Claude Code Deep Dive — CLI Reference, Headless, 세션제어, 자동화 파이프라인 | Cloud Catalyst</title><meta data-rh=true name=viewport content="width=device-width, initial-scale=1.0"/><meta data-rh=true name=twitter:card content=summary_large_image /><meta data-rh=true property=og:url content=https://ddii.dev/docs/claude-code/cli-reference/ /><meta data-rh=true property=og:locale content=en /><meta data-rh=true name=docusaurus_locale content=en /><meta data-rh=true name=docsearch:language content=en /><meta data-rh=true name=naver-site-verification content=cbcc03783e5594725d3951f4e7f16ede80e69881 /><meta data-rh=true name=docusaurus_version content=current /><meta data-rh=true name=docusaurus_tag content=docs-default-current /><meta data-rh=true name=docsearch:version content=current /><meta data-rh=true name=docsearch:docusaurus_tag content=docs-default-current /><meta data-rh=true property=og:title content="Claude Code Deep Dive — CLI Reference, Headless, 세션제어, 자동화 파이프라인 | Cloud Catalyst"/><meta data-rh=true name=description content="해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다."/><meta data-rh=true property=og:description content="해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다."/><link data-rh=true rel=icon href=/img/favicon.ico /><link data-rh=true rel=canonical href=https://ddii.dev/docs/claude-code/cli-reference/ /><link data-rh=true rel=alternate href=https://ddii.dev/docs/claude-code/cli-reference/ hreflang=en /><link data-rh=true rel=alternate href=https://ddii.dev/docs/claude-code/cli-reference/ hreflang=x-default /><link data-rh=true rel=preconnect href=https://UTLA0DRN66-dsn.algolia.net crossorigin=anonymous /><script data-rh=true type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","item":"https://ddii.dev/docs/claude-code/overview","name":"Claude Code","position":1},{"@type":"ListItem","item":"https://ddii.dev/docs/claude-code/cli-reference","name":"CLI & Automation","position":2}]}</script><link rel=alternate type=application/rss+xml href=/rss.xml title="Act as a catalyst RSS Feed"><link rel=alternate type=application/atom+xml href=/atom.xml title="Act as a catalyst Atom Feed"><link rel=alternate type=application/json href=/feed.json title="Act as a catalyst JSON Feed"><link rel=preconnect href=https://www.google-analytics.com><link rel=preconnect href=https://www.googletagmanager.com><script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZT898XDT2"></script><script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-4ZT898XDT2",{anonymize_ip:!0})</script><link rel=search type=application/opensearchdescription+xml title="Cloud Catalyst" href=/opensearch.xml><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4362752107119680" crossorigin=anonymous></script><link rel=stylesheet href=/assets/css/styles.33061ed3.css /><script src=/assets/js/runtime~main.5dbdfb7d.js defer></script><script src=/assets/js/main.6ebf3cb8.js defer></script></head><body><svg style="display: none;"><defs>
+<symbol id=theme-svg-external-link viewBox="0 0 24 24"><path fill=currentColor d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme-fac")}catch(t){}}();document.documentElement.setAttribute("data-theme",t||"light"),document.documentElement.setAttribute("data-theme-choice",t||"light")}(),function(){try{for(var[t,e]of new URLSearchParams(window.location.search).entries())if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id=__docusaurus><div role=region aria-label="Skip to main content"><a class=skipToContent_fXgn href=#__docusaurus_skipToContent_fallback>Skip to main content</a></div><nav aria-label=Main class="theme-layout-navbar navbar navbar--fixed-top navbarHideable_m1mJ"><div class=navbar__inner><div class="theme-layout-navbar-left navbar__items"><button aria-label="Toggle navigation bar" aria-expanded=false class="navbar__toggle clean-btn" type=button><svg width=30 height=30 viewBox="0 0 30 30" aria-hidden=true><path stroke=currentColor stroke-linecap=round stroke-miterlimit=10 stroke-width=2 d="M4 7h22M4 15h22M4 23h22"/></svg></button><a class=navbar__brand href=/><div class=navbar__logo><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--light_NVdE"/><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--dark_xIcU"/></div><b class="navbar__title text--truncate">Cloud Catalyst</b></a><a aria-current=page class="navbar__item navbar__link navbar__link--active" href=/>Posts</a><div class="navbar__item dropdown dropdown--hoverable"><a class=navbar__link aria-haspopup=true aria-expanded=false role=button docid=claude-code/overview href=/docs/claude-code/overview/>Docs</a><ul class=dropdown__menu><li><a class=dropdown__link href=/docs/claude-code/overview/>Claude Code</a></ul></div></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a class="navbar__item navbar__link" href=/tags/>Tags</a><a class="navbar__item navbar__link" href=/archive/>Archive</a><a class="navbar__item navbar__link" href=/about/>About</a><a href=https://github.com/ddiiwoong/newblog target=_blank rel="noopener noreferrer" class="navbar__item navbar__link header-github-link" aria-label="GitHub repository"></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type=button disabled title="system mode" aria-label="Switch between dark and light mode (currently system mode)"><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill=currentColor d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill=currentColor d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"/></svg><svg viewBox="0 0 24 24" width=24 height=24 aria-hidden=true class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill=currentColor d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"/></svg></button></div><div class=navbarSearchContainer_Bca1><button type=button class="DocSearch DocSearch-Button" aria-label="Search (Meta+k)" aria-keyshortcuts=Meta+k><span class=DocSearch-Button-Container><svg width=20 height=20 class=DocSearch-Search-Icon viewBox="0 0 24 24" aria-hidden=true><circle cx=11 cy=11 r=8 stroke=currentColor fill=none stroke-width=1.4 /><path d="m21 21-4.3-4.3" stroke=currentColor fill=none stroke-linecap=round stroke-linejoin=round /></svg><span class=DocSearch-Button-Placeholder>Search</span></span><span class=DocSearch-Button-Keys></span></button></div></div></div><div role=presentation class=navbar-sidebar__backdrop></div></nav><div id=__docusaurus_skipToContent_fallback class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class=docsWrapper_hBAB><button aria-label="Scroll back to top" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type=button></button><div class=docRoot_UBD9><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class=sidebarViewport_aRkj><div class="sidebar_njMd sidebarWithHideableNavbar_wUlq"><a tabindex=-1 class=sidebarLogo_isFc href=/><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--light_NVdE"/><img src=/img/logo-catalyst.svg alt="Cloud Catalyst" class="themedComponent_mlkZ themedComponent--dark_xIcU"/><b>Cloud Catalyst</b></a><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class=menu__list-item-collapsible><a class="categoryLink_byQd menu__link menu__link--sublist menu__link--active" href=/docs/claude-code/overview/><span title="Claude Code" class=categoryLinkLabel_W154>Claude Code</span></a><button aria-label="Collapse sidebar category 'Claude Code'" aria-expanded=true type=button class="clean-btn menu__caret"></button></div><ul class=menu__list><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/docs/claude-code/overview/><span title=Overview class=linkLabel_WmDU>Overview</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/docs/claude-code/subagents/><span title=Subagents class=linkLabel_WmDU>Subagents</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/docs/claude-code/admin-setup/><span title="Admin Setup" class=linkLabel_WmDU>Admin Setup</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/docs/claude-code/gateway/><span title="Gateway 실습" class=linkLabel_WmDU>Gateway 실습</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class=menu__link tabindex=0 href=/docs/claude-code/settings/><span title="Settings & Hooks" class=linkLabel_WmDU>Settings & Hooks</span></a><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current=page tabindex=0 href=/docs/claude-code/cli-reference/><span title="CLI & Automation" class=linkLabel_WmDU>CLI & Automation</span></a></ul></ul></nav></div></div></aside><main class=docMainContainer_TBSr><div class="container padding-top--md padding-bottom--lg"><div class=row><div class="col docItemCol_VOVn"><div class=docItemContainer_Djhp><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label=Breadcrumbs><ul class=breadcrumbs><li class=breadcrumbs__item><a aria-label="Home page" class=breadcrumbs__link href=/><svg viewBox="0 0 24 24" class=breadcrumbHomeIcon_YNFT><path d="M10 19v-5h4v5c0 .55.45 1 1 1h3c.55 0 1-.45 1-1v-7h1.7c.46 0 .68-.57.33-.87L12.67 3.6c-.38-.34-.96-.34-1.34 0l-8.36 7.53c-.34.3-.13.87.33.87H5v7c0 .55.45 1 1 1h3c.55 0 1-.45 1-1z" fill=currentColor /></svg></a><li class=breadcrumbs__item><a class=breadcrumbs__link href=/docs/claude-code/overview/><span>Claude Code</span></a><li class="breadcrumbs__item breadcrumbs__item--active"><span class=breadcrumbs__link>CLI & Automation</span></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type=button class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><div class="theme-doc-markdown markdown"><header><h1>Claude Code Deep Dive — CLI Reference, Headless, 세션제어, 자동화 파이프라인</h1></header><blockquote>
+<p>해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.</p>
+</blockquote>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=들어가며>들어가며<a href=#들어가며 class=hash-link aria-label="Direct link to 들어가며" title="Direct link to 들어가�며" translate=no>​</a></h2>
+<p>이 글에서는 Claude Code의 100여 가지 플래그, 헤드리스 파이프라인, 세션 관리, 스케줄 자동화, CI/CD 통합, 자동화 패턴, 환경변수, 디버깅까지 정리합니다. 본문의 기본 골격은 AWS Korea가 공개한 Claude Code Deep Dive Workshop의 Chapter 5이고, 거기에 두 개의 교육 과정에서 학습한 내용을 덧붙였습니다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>인용한 자료<th>무엇인가<th>본문 표기<tbody><tr><td>Claude Code Deep Dive Workshop<td>AWS Korea가 GitHub에 공개한 실습 워크샵<td>Chapter 5<tr><td>Claude Code in Action<td>Anthropic 공식 온라인 교육 과정 (Skilljar 플랫폼)<td>Lesson NEW-06 등<tr><td>Claude Code on Amazon Bedrock<td>AWS Skill Builder의 온라인 학습 프로그램<td>Module 8 등</table>
+<p>중간에 "보충"으로 표시한 절은 워크샵 본문 밖에서 가져온 내용입니다. 어느 과정의 어느 차시에서 온 것인지 절 머리에 적어 두었고, 링크를 포함한 전체 목록은 맨 아래 <a href=#references class="">References</a>에 있습니다.</p>
+<p>Ch.1~4가 "대화형의 세계"였다면, Ch.5는 **"CLI 자동화의 세계"**입니다. <code>-p</code> 한 글자가 대화형과 무인 파이프라인 사이의 스위치이며, Ch.4에서 만든 설정 자산(Permissions, Hooks, MCP)이 무인 환경에서도 그대로 동작합니다.</p>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=목차>목차<a href=#목차 class=hash-link aria-label="Direct link to 목차" title="Direct link to 목차" translate=no>​</a></h2>
+<ol>
+<li class=""><a href=#1-claude-%EB%AA%85%EB%A0%B9%EA%B3%BC-%ED%94%8C%EB%9E%98%EA%B7%B8 class="">claude 명령과 플래그</a></li>
+<li class=""><a href=#2-headless-%EC%8B%AC%ED%99%94 class="">Headless 심화</a></li>
+<li class=""><a href=#3-%EC%84%B8%EC%85%98-%EC%A0%9C%EC%96%B4 class="">세션 제어</a></li>
+<li class=""><a href=#4-%EC%8A%A4%EC%BC%80%EC%A4%84%EA%B3%BC-%EC%9E%90%EB%8F%99%EC%8B%A4%ED%96%89 class="">스케줄과 자동실행</a></li>
+<li class=""><a href=#5-cicd-%ED%86%B5%ED%95%A9 class="">CI/CD 통합</a></li>
+<li class=""><a href=#6-%EC%9E%90%EB%8F%99%ED%99%94-%ED%8C%A8%ED%84%B4 class="">자동화 패턴</a></li>
+<li class=""><a href=#7-%ED%99%98%EA%B2%BD%EB%B3%80%EC%88%98 class="">환경변수</a></li>
+<li class=""><a href=#8-%EB%94%94%EB%B2%84%EA%B9%85 class="">디버깅</a></li>
+<li class=""><a href=#9-recap--labs class="">Recap & Labs</a></li>
+<li class=""><a href=#references class="">References</a></li>
+</ol>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=1-claude-명령과-플래그>1. claude 명령과 플래그<a href=#1-claude-명령과-플래그 class=hash-link aria-label="Direct link to 1. claude 명령과 플래그" title="Direct link to 1. claude 명령과 플래그" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "100개 넘는 플래그를 어떻게 분류하고, 어떤 조합을 쓰면 되는가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=명령-구조>명령 구조<a href=#명령-구조 class=hash-link aria-label="Direct link to 명령 구조" title="Direct link to 명령 구조" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">$ claude                                     # 대화형 세션</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude "explain this project"              # 초기 프롬프트로 시작</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude -p "query"                          # 실행 후 종료 (headless)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ cat logs.txt | claude -p "explain"         # 파이프 입력</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude -c                                  # 이 디렉토리 최근 대화 계속</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude -r "auth-refactor" "Finish this PR" # 이름으로 세션 재개</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=서브커맨드-지도>서브커맨드 지도<a href=#서브커맨드-지도 class=hash-link aria-label="Direct link to 서브커맨드 지도" title="Direct link to 서브커맨드 지도" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>분류<th>서브커맨드<th>용도<tbody><tr><td><strong>계정/설치</strong><td><code>auth login/logout/status</code>, <code>setup-token</code>, <code>update</code>, <code>doctor</code>, <code>project purge</code><td>인증, 설치, 진단, 정리<tr><td><strong>운영</strong><td><code>agents</code>, <code>attach</code>, <code>logs</code>, <code>stop</code>, <code>respawn</code>, <code>rm</code>, <code>daemon</code>, <code>remote-control</code><td>백그라운드/원격 세션 관리<tr><td><strong>확장</strong><td><code>mcp login/logout</code>, <code>gateway --config</code>, <code>ultrareview</code>, <code>plugin</code>, <code>import</code><td>MCP 인증, 게이트웨이, 심층리뷰, 플러그인, 타 에이전트 설정 가져오기<tr><td><strong>인프라</strong><td><code>self-hosted-runner setup/doctor/orchestrator</code>, <code>auto-mode defaults/reset</code><td>자체 호스팅 러너, auto mode 설정</table>
+<blockquote>
+<p>💡 오타를 쳐도 근접 서브커맨드를 제안합니다: <code>claude udpate</code> → "Did you mean claude update?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=플래그-6분류-체계>플래그 6분류 체계<a href=#플래그-6분류-체계 class=hash-link aria-label="Direct link to 플래그 6분류 체계" title="Direct link to 플래그 6분류 체계" translate=no>​</a></h3>
+<!-- -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>분류<th>대표 플래그<th>해결하는 문제<tbody><tr><td><strong>동작 모드</strong><td><code>-p</code>, <code>--bg</code>, <code>--remote</code>, <code>--worktree</code>, <code>--bare</code>, <code>--safe-mode</code>, <code>--remote-control</code><td>세션이 어디서 어떻게 뜨는가<tr><td><strong>세션</strong><td><code>-c</code>, <code>-r</code>, <code>--from-pr</code>, <code>--fork-session</code>, <code>-n</code>, <code>--autocompact</code><td>맥락을 이어가거나 분기, 자동 compact<tr><td><strong>모델과 사고</strong><td><code>--model</code>, <code>--effort</code>, <code>--fallback-model</code>, <code>--advisor</code>, <code>--teammate-mode</code><td>지능과 비용의 조절, 팀메이트 표시<tr><td><strong>권한과 도구</strong><td><code>--permission-mode</code>, <code>--tools</code>, <code>--allowed/disallowedTools</code>, <code>--disable-slash-commands</code><td>무인 실행의 능력 범위<tr><td><strong>구성과 확장</strong><td><code>--settings</code>, <code>--agents</code>, <code>--mcp-config</code>, <code>--plugin-dir</code>, <code>--strict-mcp-config</code><td>세션별 설정 오버레이<tr><td><strong>출력과 진단</strong><td><code>--output-format</code>, <code>--json-schema</code>, <code>--input-format</code>, <code>--verbose</code>, <code>--debug</code><td>결과 형식과 관측</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=모델-플래그-상세>모델 플래그 상세<a href=#모델-플래그-상세 class=hash-link aria-label="Direct link to 모델 플래그 상세" title="Direct link to 모델 플래그 상세" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">$ claude --model opus                      # 별칭 사용</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --effort high                     # low..max (모델별 상이)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --fallback-model sonnet,haiku     # 과부하 시 순차 시도</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --advisor opus                    # 어드바이저 도구 활성</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 우선순위: 플래그 > ANTHROPIC_MODEL > settings</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=권한과-도구-플래그>권한과 도구 플래그<a href=#권한과-도구-플래그 class=hash-link aria-label="Direct link to 권한과 도구 플래그" title="Direct link to 권한과 도구 플래그" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">$ claude --permission-mode plan            # 6모드 중 선택 (Ch.4)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude -p --allowed-tools "Bash(git log *)" "Read"  # 무확인 허용</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --disallowedTools "Edit"          # 도구 자체 제거</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --disallowedTools "mcp__*"        # 전 MCP 도구 제거</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --tools "Bash,Edit,Read"          # 내장 도구만 한정</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>**왜 **<code>--disallowedTools</code><strong>가 두 가지 역할인가?</strong> 베어이름(<code>"Edit"</code>)은 도구를 컨텍스트에서 완전 제거하고, 스코프 규칙(<code>"Bash(rm *)"</code>)은 도구는 유지하되 해당 호출만 거부합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--bare-vs---safe-mode>--bare vs --safe-mode<a href=#--bare-vs---safe-mode class=hash-link aria-label="Direct link to --bare vs --safe-mode" title="Direct link to --bare vs --safe-mode" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>속성<th><code>--bare</code><th><code>--safe-mode</code><tbody><tr><td><strong>목적</strong><td>속도 (스크립트 가속)<td>진단 (고장 원인 이분)<tr><td><strong>비활성화</strong><td>훅, 스킬, 플러그인, MCP, CLAUDE.md<td>전 커스터마이즈<tr><td><strong>유지</strong><td>Bash, 읽기, 편집 도구<td>managed 정책, 인증, 권한<tr><td><strong>사용 장면</strong><td><code>-p</code> 반복 호출의 기동 시간 절약<td>커스텀이 원인인지 이분 판정</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=보충-v21-이후-추가된-주요-플래그>보충: v2.1 이후 추가된 주요 플래그<a href=#보충-v21-이후-추가된-주요-플래그 class=hash-link aria-label="Direct link to 보충: v2.1 이후 추가된 주요 플래그" title="Direct link to 보충: v2.1 이후 추가된 주요 플래그" translate=no>​</a></h3>
+<blockquote>
+<p>📕 출처: Anthropic 공식 문서 CLI Reference — References [6]</p>
+</blockquote>
+<p>워크샵 이후 추가되거나 변경된 플래그 중 실무에서 유용한 것들입니다:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>플래그<th>용도<th>비고<tbody><tr><td><code>--remote-control</code>, <code>--rc</code><td>세션에 Remote Control을 활성화하여 Claude.ai/모바일에서도 제어<td>서버 모드는 <code>claude remote-control</code> 서브커맨드<tr><td>`--autocompact &lt;auto<td>tokens>`<td>세션 자동 compact 윈도우 설정 (설정 파일 변경 없이 세션 단위)<tr><td><code>--teammate-mode</code><td>팀메이트(sub-agent) 표시 방식: <code>in-process</code>(기본), <code>auto</code>, <code>tmux</code>, <code>iterm2</code><td>병렬 에이전트 모니터링<tr><td><code>--input-format</code><td><code>-p</code> 입력 형식 지정: <code>text</code>(기본) 또는 <code>stream-json</code><td>프로그래밍적 입력 처리<tr><td><code>--strict-mcp-config</code><td><code>--mcp-config</code>로 지정한 MCP 서버만 사용, 나머지 전부 무시<td>CI에서 MCP 환경 격리<tr><td><code>--disable-slash-commands</code><td>모든 스킬과 슬래시 명령 비활성<td>무인 실행의 공격 면적 축소<tr><td><code>--forward-subagent-text</code><td>서브에이전트의 텍스트/thinking을 출력 스트림에 포함<td>디버깅, 관측<tr><td><code>--append-subagent-system-prompt</code><td>모든 서브에이전트 시스템 프롬프트에 텍스트 추가<td>서브에이전트 규칙 일괄 적용<tr><td><code>--prompt-suggestions</code><td>각 턴 후 다음 프롬프트 예측 메시지 방출<td>IDE 통합<tr><td><code>--cwd &lt;path></code><td><code>claude agents</code>에서 특정 디렉터리의 세션만 표시<td>멀티 프로젝트 관리</table>
+<blockquote>
+<p>⚠️ <code>--enable-auto-mode</code>는 v2.1.111에서 제거되었습니다. Auto mode는 이제 Shift+Tab 순환에 기본 포함되며, <code>--permission-mode</code>로 제어합니다.</p>
+</blockquote>
+<blockquote>
+<p>📌 Permission mode는 현재 6개: <code>plan</code>, <code>default</code>, <code>acceptEdits</code>, <code>auto</code>, <code>dontAsk</code>, <code>bypassPermissions</code>. 워크샵의 <code>autoEdit</code>/<code>fullAuto</code>는 각각 <code>acceptEdits</code>/<code>auto</code>로 이름이 변경되었습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=조합-관용구-5선>조합 관용구 5선<a href=#조합-관용구-5선 class=hash-link aria-label="Direct link to 조합 관용구 5선" title="Direct link to 조합 관용구 5선" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 1. CI 리뷰: 예산과 도구를 잠근 헤드리스</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p --max-budget-usd 2 --allowed-tools "Read" "Grep" ...</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 2. 빠른 배치: 최소 기동 + 저비용 모델</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude --bare -p --model haiku "..."</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 3. 격리 실험: PR 분기 워크트리</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -w '#123' --permission-mode plan</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 4. 세션 재현: 소스 고정 + 오버레이</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude --setting-sources project --settings ./ci.json -p "..."</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 5. 무인 야간: dontAsk + 폴백 체인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p --permission-mode dontAsk --fallback-model sonnet,haiku "..."</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=2-headless-심화>2. Headless 심화<a href=#2-headless-심화 class=hash-link aria-label="Direct link to 2. Headless 심화" title="Direct link to 2. Headless 심화" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "<code>-p</code>로 어떻게 파이프라인을 만들고, 결과를 구조화하며, 비용을 제어하는가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=-p의-본질>-p의 본질<a href=#-p의-본질 class=hash-link aria-label="Direct link to -p의 본질" title="Direct link to -p의 본질" translate=no>​</a></h3>
+<p><code>-p</code>는 단순 출력 모드가 아닙니다. <strong>Agent SDK 경로를 타는 단발 에이전트 실행</strong>입니다. 도구, 훅, 설정이 모두 살아있는 채로 결과만 표준출력에 남깁니다.</p>
+<!-- -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>계약<th>채널<th>용도<tbody><tr><td>결과<td>stdout<td>본문 또는 JSON 봉투<tr><td>진단<td>stderr<td>에러, 경고, 훅 메시지<tr><td>판정<td>exit code<td>0=성공, 비0=실패/상한도달</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=입력-6경로>입력 6경로<a href=#입력-6경로 class=hash-link aria-label="Direct link to 입력 6경로" title="Direct link to 입력 6경로" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "직접 인자"                        # 1. 인자</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">cat error.log | claude -p "원인 분석"        # 2. 파이프</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p "$(cat prompt.txt)"               # 3. 명령 치환</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p "요약해" &lt; notes.md               # 4. 리다이렉트</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p &lt;&lt;'EOF'                            # 5. 히어독</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">여러 줄 지시문 ...</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">EOF</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -c -p "이어서 리팩토링"               # 6. 세션 이어받기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>💡 파이프(stdin) = 데이터, 인자 = 지시. 이 분리를 이해하면 스크립트 설계가 깔끔해집니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=exit-code-계약>Exit Code 계약<a href=#exit-code-계약 class=hash-link aria-label="Direct link to Exit Code 계약" title="Direct link to Exit Code 계약" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "테스트 실패 원인을 찾아 수정" --max-turns 15</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">case $? in</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  0) echo "OK" ;;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  *) echo "FAIL (code $?)" ; exit 1 ;;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">esac</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>exit code<th>의미<th>활용<tbody><tr><td>0<td>정상 완료<td>파이프라인 다음 단계 진행<tr><td>비0<td>오류, 상한 도달 등<td>게이트 차단, 알람 발송<tr><td><code>auth status</code>: 0/1<td>로그인/미로그인<td>CI 전제조건 확인<tr><td><code>ultrareview</code>: 0/1<td>통과/발견<td>PR 머지 게이트</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--output-format-json>--output-format json<a href=#--output-format-json class=hash-link aria-label="Direct link to --output-format json" title="Direct link to --output-format json" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">$ claude -p "고위험 파일 3개" --output-format json</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "type": "result",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "subtype": "success",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "result": "1. src/auth/... (본문)",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "session_id": "...",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "total_cost_usd": 0.0284,</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "num_turns": 4,</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "duration_ms": 21033,</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "usage": { "input_tokens": ..., "output_tokens": ... }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>필드<th>용도<tbody><tr><td><code>.result</code><td>본문 텍스트<tr><td><code>.total_cost_usd</code><td>비용 관측<tr><td><code>.session_id</code><td>세션 재개 열쇠<tr><td><code>.is_error</code><td>오류 봉투 분기</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=stream-json-이벤트-순서>stream-json 이벤트 순서<a href=#stream-json-이벤트-순서 class=hash-link aria-label="Direct link to stream-json 이벤트 순서" title="Direct link to stream-json 이벤트 순서" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>순서<th>type<th>내용<tbody><tr><td>1<td><code>system</code><td>세션 시작, 모델/도구 목록<tr><td>2~N<td><code>assistant</code><td>모델 응답 메시지 단위<tr><td>2~N<td><code>user</code> (tool_result)<td>도구 실행 결과 회신<tr><td>마지막<td><code>result</code><td>최종 봉투 (json과 동일)</table>
+<p>추가 옵션: <code>--include-partial-messages</code> (토큰 단위), <code>--include-hook-events</code> (훅 수명주기)</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--json-schema-구조화-출력>--json-schema 구조화 출력<a href=#--json-schema-구조화-출력 class=hash-link aria-label="Direct link to --json-schema 구조화 출력" title="Direct link to --json-schema 구조화 출력" translate=no>​</a></h3>
+<p>"파싱에서 계약으로" — 자유 텍스트를 jq로 파싱하는 대신, 스키마로 출력 형식을 강제합니다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "이 diff의 위험도를 평가해" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --json-schema '{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "type": "object",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "properties": {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "risk": {"type": "string", "enum": ["low","medium","high"]},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "reason": {"type": "string"},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "block": {"type": "boolean"}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    },</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "required": ["risk","reason","block"]</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  }'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>SDK에서는 Zod(TypeScript), Pydantic(Python)으로 동일한 스키마를 정의합니다 (Ch.6).</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=예산과-턴-상한>예산과 턴 상한<a href=#예산과-턴-상한 class=hash-link aria-label="Direct link to 예산과 턴 상한" title="Direct link to 예산과 턴 상한" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "의존성 취약점 정리해 패치 PR 초안까지" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --max-turns 20 \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --max-budget-usd 3.00</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>상한<th>기본값<th>설계 요령<tbody><tr><td><code>--max-turns</code><td>무제한<td>파일럿 실측 p95의 1.5배로 시작<tr><td><code>--max-budget-usd</code><td>무제한<td>초과 종료는 실패가 아니라 신호</table>
+<blockquote>
+<p>⚠️ <strong>무인 실행에서 상한 미지정은 금지입니다.</strong> 상한 없으면 비용이 발산할 수 있습니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=캐시-최적화>캐시 최적화<a href=#캐시-최적화 class=hash-link aria-label="Direct link to 캐시 최적화" title="Direct link to 캐시 최적화" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p --exclude-dynamic-system-prompt-sections \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  "이 모듈의 순환 의존을 정리해"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>시스템 프롬프트의 기기별 섹션(작업 경로, 환경 정보)이 캐시를 깨뜨립니다. 이 플래그는 동적 섹션을 첫 사용자 메시지로 이동시켜, 여러 사용자/기계가 같은 작업을 돌릴 때 프롬프트 캐시 적중률을 높입니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=에러-처리와-재시도-골격>에러 처리와 재시도 골격<a href=#에러-처리와-재시도-골격 class=hash-link aria-label="Direct link to 에러 처리와 재시도 골격" title="Direct link to 에러 처리와 재시도 골격" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">run_claude() {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  local attempt=1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  while [ $attempt -le 3 ]; do</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    OUT=$(claude -p "$1" --output-format json \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      --max-turns 15 2>err.log) && { echo "$OUT"; return 0; }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    grep -qiE 'rate|overloaded|529' err.log || break</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    sleep $(( attempt * 20 )); attempt=$((attempt+1))</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  done</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  return 1  # 진짜 실패: 재시도 무의미</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p><code>--fallback-model</code>이 모델 과부하의 1차 방어이고, 재시도 함수는 일시 오류 한정 2차 방어입니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=3-세션-제어>3. 세션 제어<a href=#3-세션-제어 class=hash-link aria-label="Direct link to 3. 세션 제어" title="Direct link to 3. 세션 제어" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "대화를 어디에 저장하고, 어떻게 이어가며, 분기하고, 웹으로 넘기는가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=세션-저장-구조>세션 저장 구조<a href=#세션-저장-구조 class=hash-link aria-label="Direct link to 세션 저장 구조" title="Direct link to 세션 저장 구조" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>항목<th>상세<tbody><tr><td>저장 위치<td><code>~/.claude/projects/</code> 아래 프로젝트별 JSONL<tr><td>기본 수명<td>30일 자동 정리 (<code>cleanupPeriodDays</code>, Ch.4)<tr><td>저장 끄기<td><code>-p</code>는 <code>--no-session-persistence</code>, 전 모드는 env 변수<tr><td>일괄 정리<td><code>claude project purge</code> (<code>--dry-run</code>으로 예행)</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=continue-vs-resume>continue vs resume<a href=#continue-vs-resume class=hash-link aria-label="Direct link to continue vs resume" title="Direct link to continue vs resume" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th><th><code>-c</code> / <code>--continue</code><th><code>-r</code> / <code>--resume</code><tbody><tr><td>동작<td>현재 디렉토리 최근 대화 직행<td>ID 또는 이름으로 특정 재개<tr><td>범위<td>add-dir로 얹은 세션 포함<td>현 프로젝트 + 워크트리 한정 검색<tr><td>헤드리스<td><code>-c -p</code>로 이어받기 가능<td>인자 없이는 대화형 픽커<tr><td>용도<td>일상 복귀의 기본기<td>명명된 세션, bg 세션 재개</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--from-pr>--from-pr<a href=#--from-pr class=hash-link aria-label="Direct link to --from-pr" title="Direct link to --from-pr" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">$ claude --from-pr 123</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --from-pr https://github.com/org/repo/pull/123</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Claude가 만든 PR은 세션과 자동 링크됩니다. 리뷰어 코멘트 대응 흐름: 코멘트 확인 → <code>claude --from-pr 123</code> → 그 PR을 만든 맥락 그대로 후속 수정.</p>
+<blockquote>
+<p>GitHub, GitHub Enterprise, GitLab MR, Bitbucket PR URL 모두 수용합니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=fork와-session-id>fork와 session-id<a href=#fork와-session-id class=hash-link aria-label="Direct link to fork와 session-id" title="Direct link to fork와 session-id" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 원본 보존 분기: 재개하되 새 세션 ID로</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --resume auth-refactor --fork-session</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 고정 좌표: 스크립트가 세션 ID를 소유</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ SID=$(uuidgen)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude -p --session-id "$SID" "1단계: 스캔"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude -p --resume "$SID" "2단계: 스캔 결과로 수정"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>대화형의 <code>/fork</code>와 동일한 개념이 CLI에서는 <code>--fork-session</code>으로 구현됩니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=체크포인트와-rewind>체크포인트와 Rewind<a href=#체크포인트와-rewind class=hash-link aria-label="Direct link to 체크포인트와 Rewind" title="Direct link to 체크포인트와 Rewind" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>방법<th>용도<tbody><tr><td><code>/undo</code><td>마지막 턴 되돌리기<tr><td><code>/rewind N</code><td>N턴 전으로 이동<tr><td>Git checkpoint<td>파일 변경 시점별 자동 스냅샷<tr><td><code>--fork-session</code><td>분기점 보존 후 실험</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=웹-왕복-remote--teleport>웹 왕복 (Remote / Teleport)<a href=#웹-왕복-remote--teleport class=hash-link aria-label="Direct link to 웹 왕복 (Remote / Teleport)" title="Direct link to 웹 왕복 (Remote / Teleport)" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 로컬에서 웹 세션 생성</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --remote</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → URL 반환, 브라우저에서 이어서 작업</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 웹에서 만든 세션을 로컬로 회수</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --teleport &lt;session-id></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=remote-control>Remote Control<a href=#remote-control class=hash-link aria-label="Direct link to Remote Control" title="Direct link to Remote Control" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>역할<th>동작<tbody><tr><td>로컬 → 웹<td><code>--remote</code>로 URL 발급<tr><td>웹 → 로컬<td><code>--teleport</code>로 회수<tr><td>용도<td>모바일에서 확인, 팀원에게 세션 공유</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=4-스케줄과-자동실행>4. 스케줄과 자동실행<a href=#4-스케줄과-자동실행 class=hash-link aria-label="Direct link to 4. 스케줄과 자동실행" title="Direct link to 4. 스케줄과 자동실행" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "반복 작업을 어떤 표면에서 실행할지, Routines와 cron의 차이는 무엇인가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=자동화-표면-5종-지도>자동화 표면 5종 지도<a href=#자동화-표면-5종-지도 class=hash-link aria-label="Direct link to 자동화 표면 5종 지도" title="Direct link to 자동화 표면 5종 지도" translate=no>​</a></h3>
+<!-- -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>표면<th>트리거<th>인프라<th>제어 수준<tbody><tr><td><code>/loop</code><td>세션 안 반복 지시<td>로컬<td>대화형<tr><td><code>/goal</code><td>조건 도달 판정<td>로컬<td>대화형<tr><td>Routines<td>Cron / HTTP POST / GitHub 이벤트<td>Anthropic 클라우드<td>최소 구축<tr><td>cron + <code>-p</code><td>crontab<td>내 서버<td>완전 통제<tr><td>CI/CD<td>PR, push, schedule<td>GitHub/GitLab Runner<td>이벤트 기반</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=보충-routines-상세>보충: Routines 상세<a href=#보충-routines-상세 class=hash-link aria-label="Direct link to 보충: Routines 상세" title="Direct link to 보충: Routines 상세" translate=no>​</a></h3>
+<blockquote>
+<p>📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-06 (Routines & Headless) — References [2]</p>
+</blockquote>
+<p>핵심: <strong>Routines = 저장된 프롬프트 + 레포 + 커넥터 + 트리거 → 클라우드에서 실행</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>구성 요소<th>설명<tbody><tr><td>Prompt<td>Claude에게 할 일을 지시<tr><td>Repository<td>작업할 레포<tr><td>Connectors<td>필요한 외부 연결<tr><td>Trigger<td>언제 실행할지</table>
+<p>만드는 방법 2가지:</p>
+<ul>
+<li class=""><strong>Web</strong>: <code>claude.ai/code/routines</code> — 이름, 지시, 레포, 트리거 선택</li>
+<li class=""><strong>터미널</strong>: <code>/schedule daily dependency audit at 9am</code></li>
+</ul>
+<p><strong>⚠️ 3가지 제한 사항:</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>제한<th>설명<tbody><tr><td>Research Preview<td>동작과 제한이 계속 변할 수 있음<tr><td>최소 1시간 간격<td>더 자주 필요하면 cron 사용<tr><td>기본 브랜치 클론 + <code>claude/</code> 접두사 브랜치만 push<td>main을 덮어쓰지 못하도록 하는 가드레일</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=deep-links>Deep Links<a href=#deep-links class=hash-link aria-label="Direct link to Deep Links" title="Direct link to Deep Links" translate=no>​</a></h3>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude://open?prompt=이+프로젝트를+설명해줘&cwd=/path/to/project</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>런북, Notion, 위키에 임베드하면 클릭 한 번으로 Claude Code 세션 진입.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--bg와---exec>--bg와 --exec<a href=#--bg와---exec class=hash-link aria-label="Direct link to --bg와 --exec" title="Direct link to --bg와 --exec" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 백그라운드로 Claude 세션 기동</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --bg "flaky 테스트 원인 조사"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 세션 ID 반환, 터미널 즉시 복귀</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude logs 7c5dcf5d     # 진행 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude attach 7c5dcf5d   # 터미널로 회수</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 셸 명령을 PTY 잡으로</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">$ claude --bg --exec 'pytest -x'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>⚠️ <code>--bg</code>와 <code>-p</code>는 병용 불가합니다 (v2.1.198 규칙).</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=cron--headless-레시피>cron + headless 레시피<a href=#cron--headless-레시피 class=hash-link aria-label="Direct link to cron + headless 레시피" title="Direct link to cron + headless 레시피" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># crontab -e</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">SHELL=/bin/bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">PATH=/usr/local/bin:/usr/bin:/bin:/home/dev/.local/bin</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 매일 07:00 의존성 감사</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">0 7 * * 1-5  cd /home/dev/payments && \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  ./scripts/nightly-deps-audit.sh >> ~/logs/deps.log 2>&1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p><strong>cron 3대 함정:</strong></p>
+<ol>
+<li class="">PATH가 빈약 → 반드시 명시</li>
+<li class="">인증 만료 → Bedrock SSO 헬퍼/역할 설정 (Ch.3)</li>
+<li class="">실패 알람 없음 → 스크립트 내 exit 게이트 + notify</li>
+</ol>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=5-cicd-통합>5. CI/CD 통합<a href=#5-cicd-통합 class=hash-link aria-label="Direct link to 5. CI/CD 통합" title="Direct link to 5. CI/CD 통합" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "이벤트 기반으로 Claude를 부르되, 묻지 않고 / 넘치지 않고 / 흔적을 남기려면?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=비대화-3원칙>비대화 3원칙<a href=#비대화-3원칙 class=hash-link aria-label="Direct link to 비대화 3원칙" title="Direct link to 비대화 3원칙" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>원칙<th>구현<th>왜?<tbody><tr><td><strong>P1: 묻지 않는다</strong><td><code>-p</code> + <code>--allowed-tools</code> 명시, 확인 프롬프트 원천 제거<td>무인 환경에 프롬프트 대기 불가<tr><td><strong>P2: 넘치지 않는다</strong><td><code>--max-turns</code>, <code>--max-budget-usd</code>, 모델 하향 기본<td>비용 발산 방지<tr><td><strong>P3: 흔적을 남긴다</strong><td><code>--output-format json</code> 저장, 아티팩트 업로드<td>감사, 디버깅 재료</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=ci-인증-전략>CI 인증 전략<a href=#ci-인증-전략 class=hash-link aria-label="Direct link to CI 인증 전략" title="Direct link to CI 인증 전략" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>방식<th>설명<th>장기 시크릿<tbody><tr><td><strong>AWS OIDC (권장)</strong><td>역할 인수 + Bedrock<td>0개<tr><td>구독 조직<td><code>claude setup-token</code>으로 장기 토큰<td>1개 (시크릿 저장소)<tr><td>API 조직<td><code>ANTHROPIC_API_KEY</code> 시크릿<td>1개<tr><td>게이트웨이 조직<td><code>BASE_URL</code> + 서비스 자격<td>1개</table>
+<blockquote>
+<p>🔑 공통 원칙: 잡 권한 최소화, 키는 마스킹 로그, 포크 PR 실행 주의.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=github-actions-기본-골격>GitHub Actions 기본 골격<a href=#github-actions-기본-골격 class=hash-link aria-label="Direct link to GitHub Actions 기본 골격" title="Direct link to GitHub Actions 기본 골격" translate=no>​</a></h3>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token comment" style=color:#999988;font-style:italic># .github/workflows/audit.yml</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token key atrule" style=color:#00a4db>jobs</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>deps-audit</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>runs-on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> ubuntu</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">latest</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>permissions</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>id-token</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> write</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>contents</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> read </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token key atrule" style=color:#00a4db>steps</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>uses</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> actions/checkout@v4</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>uses</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> aws</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">actions/configure</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">aws</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">credentials@v4</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        </span><span class="token key atrule" style=color:#00a4db>with</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">          </span><span class="token key atrule" style=color:#00a4db>role-to-assume</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> $</span><span class="token punctuation" style=color:#393A34>{</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> vars.CLAUDE_ROLE </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">          </span><span class="token key atrule" style=color:#00a4db>aws-region</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> ap</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">northeast</span><span class="token punctuation" style=color:#393A34>-</span><span class="token number" style=color:#36acaa>2</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> curl </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">fsSL https</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain">//claude.ai/install.sh </span><span class="token punctuation" style=color:#393A34>|</span><span class="token plain"> bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>|</span><span class="token scalar string" style=color:#e3116c></span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>          CLAUDE_CODE_USE_BEDROCK=1 \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>          ./scripts/nightly-deps-audit.sh</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=pr-리뷰-잡>PR 리뷰 잡<a href=#pr-리뷰-잡 class=hash-link aria-label="Direct link to PR 리뷰 잡" title="Direct link to PR 리뷰 잡" translate=no>​</a></h3>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token key atrule" style=color:#00a4db>on</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>pull_request</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>types</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain">opened</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> synchronize</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token comment" style=color:#999988;font-style:italic># ... checkout(fetch-depth: 0), 인증, 설치 생략 ...</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>name</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> Review</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>run</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>|</span><span class="token scalar string" style=color:#e3116c></span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>    git diff origin/${{ github.base_ref }}...HEAD > pr.diff</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>    claude -p "pr.diff를 리뷰해 심각 도별로 정리" \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>      --allowed-tools "Read" "Grep" "Bash(git diff *)" \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>      --max-turns 12 --max-budget-usd 1.50 \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>      --json-schema "$(cat .ci/review-schema.json)" \</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>      > review.json</span><br/></div><div class=token-line style=color:#393A34><span class="token scalar string" style=color:#e3116c>    jq -e '.block == false' review.json  # 게이트</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=보충-관리형-대안--managed-code-review>보충: 관리형 대안 — Managed Code Review<a href=#보충-관리형-대안--managed-code-review class=hash-link aria-label="Direct link to 보충: 관리형 대안 — Managed Code Review" title="Direct link to 보충: 관리형 대안 — Managed Code Review" translate=no>​</a></h3>
+<blockquote>
+<p>📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-07 (GitHub Actions and Code Review) — References [3]</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>항목<th>관리형 Code Review<th>DIY GitHub Action<tbody><tr><td>설정<td>켜기만 하면 됨<td>워크플로우 직접 구성<tr><td>범위<td>PR 리뷰 (코멘트만)<td>리뷰 이상의 모든 것 (구현, 보고, 스케줄)<tr><td>특징<td>전체 코드베이스 맥락, 인라인 코멘트, 중복 제거<td>완전 제어<tr><td>제한<td>승인/차단 불가, autofix 없음<td>—</table>
+<blockquote>
+<p>💡 <strong>관리형 서비스부터 시작하세요.</strong> Claude가 CI에서 실제로 "무언가를 해야 하는" 순간 Action으로 이동.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=gitlab-ci>GitLab CI<a href=#gitlab-ci class=hash-link aria-label="Direct link to GitLab CI" title="Direct link to GitLab CI" translate=no>​</a></h3>
+<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token key atrule" style=color:#00a4db>claude-review</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>stage</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> test</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>image</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> ubuntu</span><span class="token punctuation" style=color:#393A34>:</span><span class="token number" style=color:#36acaa>24.04</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>rules</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>if</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> $CI_PIPELINE_SOURCE == "merge_request_event"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>before_script</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> apt</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">get update </span><span class="token important">&&</span><span class="token plain"> apt</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">get install </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">y curl git jq</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> curl </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">fsSL https</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain">//claude.ai/install.sh </span><span class="token punctuation" style=color:#393A34>|</span><span class="token plain"> bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> export PATH="$HOME/.local/bin</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain">$PATH"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>script</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain"> ./scripts/mr</span><span class="token punctuation" style=color:#393A34>-</span><span class="token plain">review.sh  </span><span class="token comment" style=color:#999988;font-style:italic># -p + 상한 + 스키마 동일</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token key atrule" style=color:#00a4db>artifacts</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>paths</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain">review.json</span><span class="token punctuation" style=color:#393A34>]</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"> </span><span class="token key atrule" style=color:#00a4db>when</span><span class="token punctuation" style=color:#393A34>:</span><span class="token plain"> always </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>같은 원칙, 다른 문법. 스크립트를 재사용하면 CI 플랫폼은 부차 변수입니다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--init-준비-훅>--init 준비 훅<a href=#--init-준비-훅 class=hash-link aria-label="Direct link to --init 준비 훅" title="Direct link to --init 준비 훅" translate=no>​</a></h3>
+<div class="language-json codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-json codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token property" style=color:#36acaa>"hooks"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token property" style=color:#36acaa>"Setup"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token property" style=color:#36acaa>"matcher"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"init"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    </span><span class="token property" style=color:#36acaa>"hooks"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>[</span><span class="token punctuation" style=color:#393A34>{</span><span class="token plain"> </span><span class="token property" style=color:#36acaa>"type"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"command"</span><span class="token punctuation" style=color:#393A34>,</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      </span><span class="token property" style=color:#36acaa>"command"</span><span class="token operator" style=color:#393A34>:</span><span class="token plain"> </span><span class="token string" style=color:#e3116c>"npm ci && cp .env.ci .env"</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"></span><span class="token punctuation" style=color:#393A34>]</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"> </span><span class="token punctuation" style=color:#393A34>}</span><span class="token plain"></span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># CI 스텝에서:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">- run: claude -p --init "테스트 실패를 조사해 수정"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → -p 실행 전에 init 매처 Setup 훅이 선행</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=비용-통제-다이얼>비용 통제 다이얼<a href=#비용-통제-다이얼 class=hash-link aria-label="Direct link to 비용 통제 다이얼" title="Direct link to 비용 통제 다이얼" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>수단<th>설명<tbody><tr><td><code>--max-budget-usd</code><td>호출 단위 달러 상한<tr><td><code>--max-turns</code><td>턴 수 제한<tr><td>모델 하향<td>리뷰/분류는 sonnet/haiku 기본<tr><td>paths 필터<td>발동 조건 축소 (docs 변경은 스킵)<tr><td><code>--exclude-dynamic...</code><td>캐시 적중률 향상<tr><td>Gateway 한도<td>조직 수준 안전망 (Ch.3)</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=6-자동화-패턴>6. 자동화 패턴<a href=#6-자동화-패턴 class=hash-link aria-label="Direct link to 6. 자동화 패턴" title="Direct link to 6. 자동화 패턴" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "현장에서 검증된 자동화 스크립트 패턴은 무엇인가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=pattern-1-이슈-트리아지>Pattern 1: 이슈 트리아지<a href=#pattern-1-이슈-트리아지 class=hash-link aria-label="Direct link to Pattern 1: 이슈 트리아지" title="Direct link to Pattern 1: 이슈 트리아지" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">#!/usr/bin/env bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">set -uo pipefail</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">N=$1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">gh issue view "$N" --json title,body > issue.json</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">OUT=$(claude --bare -p "issue.json을 분류해" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --model haiku --max-turns 6 \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --json-schema "$(cat .ci/triage-schema.json)") || exit 1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">LABEL=$(echo "$OUT" | jq -r '.category')</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">gh issue edit "$N" --add-label "$LABEL"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "$OUT" | jq -r '.summary' | gh issue comment "$N" -F -</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>안전선: 닫기 금지, 제안까지만. 확정은 사람.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=pattern-2-로그-분석-map-reduce>Pattern 2: 로그 분석 (map-reduce)<a href=#pattern-2-로그-분석-map-reduce class=hash-link aria-label="Direct link to Pattern 2: 로그 분석 (map-reduce)" title="Direct link to Pattern 2: 로그 분석 (map-reduce)" translate=no>​</a></h3>
+<!-- -->
+<p><strong>왜 map-reduce인가?</strong> 대량 로그를 통째로 넣으면 토큰 비용이 폭발합니다. 셸이 압축/분할을, Claude가 해석/상관을 맡는 분업이 비용과 품질을 동시에 지킵니다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=pattern-3-일일-보고서>Pattern 3: 일일 보고서<a href=#pattern-3-일일-보고서 class=hash-link aria-label="Direct link to Pattern 3: 일일 보고서" title="Direct link to Pattern 3: 일일 보고서" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">#!/usr/bin/env bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">SINCE=$(date -d yesterday +%F)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">{ git log --since="$SINCE" --oneline;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  gh pr list --state all --search "updated:>=$SINCE" --json number,title,state;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  gh issue list --search "created:>=$SINCE" --json number,title;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">} > digest.txt</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p "digest.txt로 팀 브리핑: 요약, 리스크, 오늘 볼 것 3" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --max-turns 8 --max-budget-usd 0.50 > report.md</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">curl -s -X POST "$SLACK_WEBHOOK" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  -d "$(jq -n --rawfile t report.md '{text:$t}')"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=pattern-4-문서-파이프라인>Pattern 4: 문서 파이프라인<a href=#pattern-4-문서-파이프라인 class=hash-link aria-label="Direct link to Pattern 4: 문서 파이프라인" title="Direct link to Pattern 4: 문서 파이프라인" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 변경된 모듈만 문서 재생성</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">for m in $(git diff --name-only HEAD~1 | grep '^src/' | cut -d/ -f2 | sort -u); do</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  claude -p "src/$m 모듈의 API 문서를 docs/$m.md로 갱신" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    --allowed-tools "Read" "Grep" "Write(./docs/**)" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    --max-turns 10</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">done</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 한영 병행: 갱신분만 번역</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">for f in $(git diff --name-only -- docs/*.md); do</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  claude --bare -p "기술 용어를 보존해 영어로 번역" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    &lt; "$f" > "docs/en/$(basename $f)"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">done</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=pattern-5-배치-마이그레이션>Pattern 5: 배치 마이그레이션<a href=#pattern-5-배치-마이그레이션 class=hash-link aria-label="Direct link to Pattern 5: 배치 마이그레이션" title="Direct link to Pattern 5: 배치 마이그레이션" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">for f in $(cat targets.txt); do</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  grep -qx "$f" done.txt 2>/dev/null && continue</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  claude -p "$f를 신규 ORM API로 마이그레이션" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    --allowed-tools "Read" "Edit" "Bash(npm run test *)" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    --max-turns 12 || { echo "$f" >> failed.txt; git checkout -- "$f"; continue; }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  npm run test -- --related "$f" || { echo "$f" >> failed.txt; git checkout -- "$f"; continue; }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  git add "$f" && git commit -m "migrate: $f"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  echo "$f" >> done.txt</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">done</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>핵심 설계: 파일 1개 = 변환 + 테스트 + 커밋 <strong>원자 단위</strong>. 실패 시 <code>git checkout</code>으로 원복하고 <code>failed.txt</code>에 기록 → 배치가 멈추지 않고 사람이 나중에 개입.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=보충-검증-3단계>보충: 검증 3단계<a href=#보충-검증-3단계 class=hash-link aria-label="Direct link to 보충: 검증 3단계" title="Direct link to 보충: 검증 3단계" translate=no>​</a></h3>
+<blockquote>
+<p>📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-08 (Verifying Unsupervised Runs) — References [4]</p>
+</blockquote>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>단계<th>방법<th>원칙<tbody><tr><td>1. Diff 우선<td><code>/code-review</code> + <code>git diff</code><td>요약이 아닌 변경 자체를 읽기<tr><td>2. 테스트 게이트<td>PostToolUse Hook → exit 2<td>신뢰가 아닌 와이어링으로 강제<tr><td>3. Cold Second Opinion<td>새 세션/sub-agent로 맥락 없이 리뷰<td>확증 편향 차단</table>
+<blockquote>
+<p>감시하지 않을수록 더 많이 검증합니다.</p>
+</blockquote>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=7-환경변수>7. 환경변수<a href=#7-환경변수 class=hash-link aria-label="Direct link to 7. 환경변수" title="Direct link to 7. 환경변수" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "어떤 환경변수가 있고, 어떻게 점검하며, 보안 원칙은 무엇인가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=7칸-분류-지도>7칸 분류 지도<a href=#7칸-분류-지도 class=hash-link aria-label="Direct link to 7칸 분류 지도" title="Direct link to 7칸 분류 지도" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>분류<th>대표 변수<th>용도<tbody><tr><td><strong>인증</strong><td><code>ANTHROPIC_API_KEY</code>, <code>CLAUDE_CODE_USE_BEDROCK</code>, <code>AWS_PROFILE</code><td>공급자 선택과 자격<tr><td><strong>네트워크</strong><td><code>HTTPS_PROXY</code>, <code>HTTP_PROXY</code>, <code>NO_PROXY</code><td>프록시, 방화벽 우회<tr><td><strong>모델/사고</strong><td><code>ANTHROPIC_MODEL</code>, <code>CLAUDE_CODE_MAX_MODEL</code><td>기본 모델, 상한 모델<tr><td><strong>기능 스위치</strong><td><code>CLAUDE_CODE_SIMPLE</code>, <code>CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC</code><td>bare 모드, 텔레메트리<tr><td><strong>관측</strong><td><code>CLAUDE_CODE_ENABLE_TELEMETRY</code>, <code>OTEL_EXPORTER_OTLP_ENDPOINT</code><td>OTel, 비용 추적<tr><td><strong>디렉토리/기록</strong><td><code>CLAUDE_CONFIG_DIR</code>, <code>CLAUDE_TRANSCRIPT_DIR</code><td>설정/기록 위치 재정의<tr><td><strong>기록</strong><td><code>CLAUDE_CODE_SESSION_PERSISTENCE</code><td>세션 저장 제어</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=점검-원라이너>점검 원라이너<a href=#점검-원라이너 class=hash-link aria-label="Direct link to 점검 원라이너" title="Direct link to 점검 원라이너" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 인증 상태 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude auth status --text && echo "OK" || echo "NOT LOGGED IN"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># Bedrock 연결 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">CLAUDE_CODE_USE_BEDROCK=1 claude -p "hello" --max-turns 1 2>&1 | head -1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 프록시 적용 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">env | grep -i proxy</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=보안-원칙>보안 원칙<a href=#보안-원칙 class=hash-link aria-label="Direct link to 보안 원칙" title="Direct link to 보안 원칙" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>원칙<th>설명<tbody><tr><td>시크릿은 env에만<td>settings.json에 API 키를 넣지 말 것<tr><td>CI에서는 Secrets 저장소<td>GitHub Secrets, AWS Secrets Manager 등<tr><td>로그 마스킹<td><code>--output-format json</code>의 result에 키가 새지 않도록<tr><td>최소 권한<td>필요한 변수만 export, 나머지는 unset</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=8-디버깅>8. 디버깅<a href=#8-디버깅 class=hash-link aria-label="Direct link to 8. 디버깅" title="Direct link to 8. 디버깅" translate=no>​</a></h2>
+<blockquote>
+<p><strong>해결하는 문제</strong>: "Claude Code가 이상하게 동작할 때, 어떤 순서로 진단하는가?"</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=진단-흐름-6단>진단 흐름 6단<a href=#진단-흐름-6단 class=hash-link aria-label="Direct link to 진단 흐름 6단" title="Direct link to 진단 흐름 6단" translate=no>​</a></h3>
+<!-- -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>단계<th>명령<th>목적<tbody><tr><td>1. 재현<td>동일 프롬프트 재실행<td>일시 오류 배제<tr><td>2. verbose<td><code>--verbose</code><td>턴 단위 전체 출력 확인<tr><td>3. debug<td><code>--debug tool,permission,hook</code><td>카테고리별 필터 진단<tr><td>4. doctor<td><code>claude doctor</code><td>환경 자동 진단 + 수정 제안<tr><td>5. safe-mode<td><code>--safe-mode</code><td>전 커스터마이즈 비활성 → 이분 판정<tr><td>6. bare/격리<td><code>--bare</code> 또는 새 디렉토리<td>최소 환경에서 재현 여부</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=--debug-카테고리>--debug 카테고리<a href=#--debug-카테고리 class=hash-link aria-label="Direct link to --debug 카테고리" title="Direct link to --debug 카테고리" translate=no>​</a></h3>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude --debug tool,permission,hook,mcp -p "test"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 쉼표로 여러 카테고리 동시 활성</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># --debug-file ./debug.log 로 파일 출력도 가능</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>카테고리<th>출력 내용<tbody><tr><td><code>tool</code><td>도구 호출/결과 상세<tr><td><code>permission</code><td>허용/차단 판정 경로<tr><td><code>hook</code><td>훅 매칭, 실행, exit code<tr><td><code>mcp</code><td>MCP 서버 통신<tr><td><code>model</code><td>모델 선택, 폴백<tr><td><code>session</code><td>세션 로드/저장</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=헤드리스-전용-이슈>헤드리스 전용 이슈<a href=#헤드리스-전용-이슈 class=hash-link aria-label="Direct link to 헤드리스 전용 이슈" title="Direct link to 헤드리스 전용 이슈" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>증상<th>원인<th>해결<tbody><tr><td>무한 대기<td>확인 프롬프트 발생<td><code>--allowed-tools</code> 또는 <code>--permission-mode dontAsk</code><tr><td>예상 외 종료<td><code>--max-turns</code> 도달<td>상한 상향 또는 작업 분할<tr><td>빈 출력<td>exit 비0 + stderr에 에러<td><code>2>err.log</code> 후 확인<tr><td>비용 폭발<td>상한 미설정 + 루프<td><code>--max-budget-usd</code> 필수 지정</table>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=9-recap--labs>9. Recap & Labs<a href=#9-recap--labs class=hash-link aria-label="Direct link to 9. Recap & Labs" title="Direct link to 9. Recap & Labs" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=핵심-요약-표>핵심 요약 표<a href=#핵심-요약-표 class=hash-link aria-label="Direct link to 핵심 요약 표" title="Direct link to 핵심 요약 표" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Part<th>한 줄 핵심<tbody><tr><td>1. 명령과 플래그<td>서브커맨드 2지도 + 플래그 6서랍이면 전집 정리<tr><td>2. Headless<td><code>-p</code>는 SDK 경유 단발 에이전트, 구조화 출력으로 계약<tr><td>3. 세션 제어<td>어디서든 이어가고(-c/-r), 분기하고(fork), 웹으로 넘기기(remote)<tr><td>4. 스케줄<td>5종 표면 지도: /loop, /goal, Routines, cron, CI<tr><td>5. CI/CD<td>3원칙: 묻지 않고, 넘치지 않고, 남긴다<tr><td>6. 자동화 패턴<td>트리아지, 로그분석, 보고서, 문서, 배치 — 5패턴<tr><td>7. 환경변수<td>7칸 분류, 점검 원라이너, 시크릿은 env에만<tr><td>8. 디버깅<td>6단 진단: 재현→verbose→debug→doctor→safe-mode→bare</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=faq-6가지>FAQ 6가지<a href=#faq-6가지 class=hash-link aria-label="Direct link to FAQ 6가지" title="Direct link to FAQ 6가지" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Q<th>A<tbody><tr><td><code>-p</code>에서 CLAUDE.md 적용되나?<td><code>--bare</code> 없으면 적용됨. <code>--bare</code>는 건너뜀<tr><td><code>--max-turns</code> 초과하면?<td>오류 exit code로 종료, 결과 없음<tr><td>Routines와 cron 차이?<td>Routines=Anthropic 인프라(서버 불필요), cron=내 서버(완전 통제)<tr><td><code>--from-pr</code>과 <code>-w</code> 차이?<td><code>--from-pr</code>=맥락 복원, <code>-w</code>=코드 격리(워크트리)<tr><td>CI에서 비용 상한 없으면?<td>무한 루프 가능 → 반드시 <code>--max-budget-usd</code> 지정<tr><td><code>stream-json</code>은 언제?<td>실시간 진행 UI가 필요할 때 (타자기 효과, 진행률 표시)</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실습-3종>실습 3종<a href=#실습-3종 class=hash-link aria-label="Direct link to 실습 3종" title="Direct link to 실습 3종" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Lab<th>주제<th>핵심 확인<th>소요<tbody><tr><td>Lab 1<td>Headless 파이프라인<td><code>-p</code>, JSON 봉투, <code>--json-schema</code>, exit code, 예산 상한<td>~10분<tr><td>Lab 2<td>세션 제어<td><code>-c</code>, <code>-r</code>, <code>session-id</code>, <code>fork-session</code>, 저장 구조<td>~10분<tr><td>Lab 3<td>자동화 스크립트<td>배치 분석, 재시도 골격, 일일 보고서<td>~15분</table>
+<hr/>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=lab-1-headless-파이프라인>Lab 1: Headless 파이프라인<a href=#lab-1-headless-파이프라인 class=hash-link aria-label="Direct link to Lab 1: Headless 파이프라인" title="Direct link to Lab 1: Headless 파이프라인" translate=no>​</a></h3>
+<p><strong>목표</strong>: <code>-p</code>의 본질(SDK 경유 단발 에이전트)과 구조화 출력, exit code 계약을 확인합니다. <strong>소요 시간</strong>: ~10분 <strong>사전 준비</strong>: <code>claude</code> CLI, <code>jq</code></p>
+<p>Step 1: 실습 프로젝트 준비</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">mkdir -p ~/lab-ch5 && cd ~/lab-ch5 && git init</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "const x = 1;" > index.js</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 2: 기본 <code>-p</code> 실행</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "이 프로젝트에 파일이 몇 개 있는지 알려줘"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 텍스트 출력 후 즉시 종료</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 3: JSON 봉투 확인</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "index.js의 역할을 한 줄로 설명해" --output-format json</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → { "type":"result", "result":"...", "total_cost_usd":..., "num_turns":... }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 4: jq로 필드 추출</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">OUT=$(claude -p "이 프로젝트를 한 줄로 요약해" --output-format json)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "$OUT" | jq -r '.result'          # 본문만</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "$OUT" | jq '.total_cost_usd'     # 비용</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "$OUT" | jq '.num_turns'          # 턴 수</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 5: <code>--json-schema</code> 구조화 출력</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "index.js를 분석해줘" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --json-schema '{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "type": "object",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "properties": {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "language": {"type": "string"},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "lines": {"type": "integer"},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "summary": {"type": "string"}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    },</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    "required": ["language", "lines", "summary"]</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  }'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → {"language":"JavaScript","lines":1,"summary":"..."} 정확한 구조</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>🔑 <strong>핵심</strong>: <code>--json-schema</code>는 "파싱에서 계약으로" 전환합니다. 정규식으로 텍스트를 파싱할 필요가 없습니다.</p>
+</blockquote>
+<p>Step 6: exit code 계약 확인</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -p "완료" --max-turns 1; echo "Exit: $?"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → Exit: 0 (정상)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p "index.js를 리팩토링하고 테스트까지 작성해" --max-turns 1; echo "Exit: $?"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → Exit: 비0 (턴 상한 초과)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 7: 파이프 입력 + 예산 상한</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain"># 파이프 입력</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">cat index.js | claude -p "이 코드의 문제점을 찾아줘"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 예산 상한</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p "이 프로젝트를 완전히 리팩토링해" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --max-turns 5 --max-budget-usd 0.50</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "Exit: $?"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p><strong>검증</strong>:</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">□ --output-format json에서 result, total_cost_usd 필드 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ --json-schema로 정확한 JSON 구조 반환</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ --max-turns 초과 시 비0 exit code</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ 파이프 입력이 프롬프트 컨텍스트로 전달됨</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<hr/>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=lab-2-세션-제어>Lab 2: 세션 제어<a href=#lab-2-세션-제어 class=hash-link aria-label="Direct link to Lab 2: 세션 제어" title="Direct link to Lab 2: 세션 제어" translate=no>​</a></h3>
+<p><strong>목표</strong>: 대화를 이어가고(<code>-c</code>), 골라잡고(<code>-r</code>), 분기하고(<code>fork</code>), 스크립트가 좌표를 소유하는(<code>session-id</code>) 흐름을 확인합니다. <strong>소요 시간</strong>: ~10분 <strong>사전 준비</strong>: Lab 1 프로젝트 또는 아무 git 저장소</p>
+<p>Step 1: 대화형 세션 시작 → 종료</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">cd ~/lab-ch5</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 세션 안에서:</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 이 프로젝트에 README.md를 만들어줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> exit</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 2: <code>-c</code>로 최근 대화 이어받기</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -c</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 방금 만든 README.md 맥락이 남아있음</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 방금 만든 README에 설치 방법 섹션 추가해줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> exit</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 3: <code>-c -p</code>로 헤드리스 이어받기</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -c -p "README.md에 License 섹션도 추가해"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 이전 대화 맥락 유지한 채 실행 후 종료</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 4: <code>-r</code> 픽커로 세션 선택</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -r</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 대화형 픽커에서 세션 목록 표시, 선택하여 재개</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 5: <code>session-id</code> 고정 좌표</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">SID=$(uuidgen)</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p --session-id "$SID" "1단계: index.js 분석"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p --resume "$SID" "2단계: 분석 결과 기반으로 개선안 제시"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 같은 세션에서 2단계가 1단계 맥락을 이어감</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>📌 <strong>이것이 스크립트 자동화의 핵심입니다</strong>: <code>session-id</code>로 좌표를 고정하면 다단계 파이프라인에서 맥락을 유지할 수 있습니다.</p>
+</blockquote>
+<p>Step 6: <code>fork-session</code> (분기)</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">claude -c</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 이 프로젝트를 TypeScript로 전환할 계획을 세워줘</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> exit</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 동일 지점에서 분기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -c --fork-session</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 새 세션 ID로 원본 보존 분기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> 아니야, Python으로 전환하는 걸로 바꿔</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">> exit</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 7: 세션 저장 위치 확인</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">ls ~/.claude/projects/</span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># → 프로젝트별 디렉터리 존재 확인</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p><strong>검증</strong>:</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">□ -c로 이전 대화 맥락이 유지됨</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ -c -p로 헤드리스에서도 이전 세션 이어감</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ session-id로 스크립트가 세션 좌표를 소유</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ fork-session으로 원본 보존 분기</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ ~/.claude/projects/ 아래 JSONL 존재</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<hr/>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=lab-3-자동화-스크립트>Lab 3: 자동화 스크립트<a href=#lab-3-자동화-스크립트 class=hash-link aria-label="Direct link to Lab 3: 자동화 스크립트" title="Direct link to Lab 3: 자동화 스크립트" translate=no>​</a></h3>
+<p><strong>목표</strong>: 구조화 출력 + jq 집계 → 배치 분석, 에러 재시도, 일일 보고서까지 자동화 패턴을 조립합니다. <strong>소요 시간</strong>: ~15분 <strong>사전 준비</strong>: Lab 1 프로젝트, <code>jq</code></p>
+<p>Step 1: 실습 파일 준비</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">cd ~/lab-ch5</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">mkdir -p src scripts</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">cat > src/auth.js &lt;&lt; 'EOF'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">function login(user, pass) {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  if (pass === "admin") return true;</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  return fetch("/api/auth", { body: JSON.stringify({user, pass}) });</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">module.exports = { login };</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">EOF</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">cat > src/utils.js &lt;&lt; 'EOF'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">function retry(fn, n=3) { /* TODO */ }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">module.exports = { sleep, retry };</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">EOF</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 2: 배치 분석 (다중 파일 → 구조화 출력 → 집계)</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">for f in src/*.js; do</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  claude --bare -p "이 파일의 보안 위험도를 평가해" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    --max-turns 6 --max-budget-usd 0.30 \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    --json-schema '{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "type":"object",</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "properties":{</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        "file":{"type":"string"},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        "risk_score":{"type":"number"},</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">        "top_issue":{"type":"string"}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      },</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      "required":["file","risk_score","top_issue"]</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }' &lt; "$f"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">done | jq -s 'sort_by(-.risk_score)' > report.json</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "=== 보안 분석 결과 ==="</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">jq -r '.[] | "[\(.risk_score)] \(.file): \(.top_issue)"' report.json</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<blockquote>
+<p>🔑 <code>--bare</code>로 훅/MCP 탐색을 건너뛰어 기동 시간을 절약합니다. 배치에서는 파일 수만큼 기동하므로 차이가 큽니다.</p>
+</blockquote>
+<p>Step 3: 에러 처리 + 재시도 골격</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">cat > scripts/run-claude.sh &lt;&lt; 'EOF'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#!/usr/bin/env bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">set -uo pipefail</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">run_claude() {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  local prompt="$1" schema="$2" attempt=1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  while [ $attempt -le 3 ]; do</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    OUT=$(claude --bare -p "$prompt" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      --output-format json \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      --json-schema "$schema" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      --max-turns 10 --max-budget-usd 1.00 \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      2>err.log) && {</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">      echo "$OUT" | jq -r '.result'; return 0</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    }</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    grep -qiE 'rate|overloaded|529' err.log || break</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    echo "재시도 $attempt/3..." >&2</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    sleep $((attempt * 20))</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">    attempt=$((attempt + 1))</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  done</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  return 1</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">}</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">EOF</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">chmod +x scripts/run-claude.sh</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p>Step 4: 일일 보고서 (간이 버전)</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">cat > scripts/daily-summary.sh &lt;&lt; 'EOF'</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">#!/usr/bin/env bash</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">set -uo pipefail</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">cd ~/lab-ch5</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 수집: 최근 커밋</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">git log --oneline -10 > digest.txt</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 서술: Claude가 요약</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">claude -p "digest.txt를 보고 팀 브리핑을 작성해: 요약, 주요 변경, 오늘 볼 것" \</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">  --max-turns 8 --max-budget-usd 0.50 > daily-report.md</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain">echo "=== 일일 보고서 생성 완료 ==="</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">cat daily-report.md</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">EOF</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">chmod +x scripts/daily-summary.sh</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div><div class=token-line style=color:#393A34><span class="token plain"># 실행 테스트</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">git add -A && git commit -m "lab files"</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">bash scripts/daily-summary.sh</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<p><strong>검증</strong>:</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">□ report.json에 파일별 risk_score + top_issue 구조화 데이터</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ jq -s로 배열 집계 + 정렬 동작</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ --bare로 기동 시간 단축 체감</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">□ daily-report.md 생성 완료</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=실무-로드맵>실무 로드맵<a href=#실무-로드맵 class=hash-link aria-label="Direct link to 실무 로드맵" title="Direct link to 실무 로드맵" translate=no>​</a></h3>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style=--prism-color:#393A34;--prism-background-color:#f6f8fa><div class=codeBlockContent_QJqH><pre tabindex=0 class="prism-code language-text codeBlock_bY9V thin-scrollbar" style=color:#393A34;background-color:#f6f8fa><code class=codeBlockLines_e6Vv><div class=token-line style=color:#393A34><span class="token plain">Week 1: -p + --json-schema로 단일 스크립트 완성</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Week 2: cron 또는 Routines로 반복 실행</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Week 3: CI에 PR 리뷰 잡 추가</span><br/></div><div class=token-line style=color:#393A34><span class="token plain">Week 4: 배치 패턴으로 기술 부채 청산 시작</span><br/></div><div class=token-line style=color:#393A34><span class="token plain" style=display:inline-block></span><br/></div></code></pre></div></div>
+<hr/>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=references>References<a href=#references class=hash-link aria-label="Direct link to References" title="Direct link to References" translate=no>​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=1차-출처-본문-작성-기반>1차 출처 (본문 작성 기반)<a href=#1차-출처-본문-작성-기반 class=hash-link aria-label="Direct link to 1차 출처 (본문 작성 기반)" title="Direct link to 1차 출처 (본문 작성 기반)" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>#<th>출처<th>상세<tbody><tr><td>[1]<td><strong>Claude Code Deep Dive Workshop — Chapter 5: CLI Reference</strong><td>AWS Korea, 2026.07. Choi WooHyung PSA<tr><td>[2]<td><strong>Anthropic 공식 교육 — <em><strong><strong>Claude Code in Action</strong></strong></em>: Routines & Headless</strong><td>Anthropic Skilljar 과정<tr><td>[3]<td><strong>Anthropic 공식 교육 — <em><strong><strong>Claude Code in Action</strong></strong></em>: GitHub Actions and Code Review</strong><td>Anthropic Skilljar 과정<tr><td>[4]<td><strong>Anthropic 공식 교육 — <em><strong><strong>Claude Code in Action</strong></strong></em>: Verifying Unsupervised Runs</strong><td>Anthropic Skilljar 과정<tr><td>[5]<td><strong>AWS Bedrock Online Program — <em><strong><strong>Claude Code on Bedrock</strong></strong></em>: Automation and Scaling</strong><td>AWS</table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id=2차-출처-교차-검증>2차 출처 (교차 검증)<a href=#2차-출처-교차-검증 class=hash-link aria-label="Direct link to 2차 출처 (교차 검증)" title="Direct link to 2차 출처 (교차 검증)" translate=no>​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>#<th>출처<th>상세<tbody><tr><td>[6]<td><strong>Anthropic Docs — CLI Reference</strong><td><a href=https://docs.anthropic.com/en/docs/claude-code/cli-reference target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/cli-reference</a><tr><td>[7]<td><strong>Anthropic Docs — GitHub Actions</strong><td><a href=https://docs.anthropic.com/en/docs/claude-code/github-actions target=_blank rel="noopener noreferrer" class="">docs.anthropic.com/en/docs/claude-code/github-actions</a><tr><td>[8]<td><strong>GitHub — anthropics/claude-code-action</strong><td><a href=https://github.com/anthropics/claude-code-action target=_blank rel="noopener noreferrer" class="">github.com/anthropics/claude-code-action</a><tr><td>[9]<td><strong>Claude Code Deep Dive — Ch.3 Admin Setup</strong><td>Gateway, OIDC, 비용 통제 참조<tr><td>[10]<td><strong>Claude Code Deep Dive — Ch.4 Settings</strong><td>Hooks, Permissions, MCP 참조</table></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-tags-row"><div class=col><b>Tags:</b><ul class="tags_jXut padding--none margin-left--sm"><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/claude-code/>Claude Code</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/anthropic/>Anthropic</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/cli/>CLI</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/headless/>Headless</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/automation/>Automation</a><li class=tag_QGVx><a rel=tag class="tag_zVej tagRegular_sFm0" href=/docs/tags/ci-cd/>CI/CD</a></ul></div></div><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href=https://github.com/ddiiwoong/newblog/tree/main/docs/claude-code/cli-reference.md target=_blank rel="noopener noreferrer" class=theme-edit-this-page><svg fill=currentColor height=20 width=20 viewBox="0 0 40 40" class=iconEdit_Z9Sw aria-hidden=true><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"/></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href=/docs/claude-code/settings/><div class=pagination-nav__sublabel>Previous</div><div class=pagination-nav__label>Settings & Hooks</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href=#들어가며 class="table-of-contents__link toc-highlight">들어가며</a><li><a href=#목차 class="table-of-contents__link toc-highlight">목차</a><li><a href=#1-claude-명령과-플래그 class="table-of-contents__link toc-highlight">1. claude 명령과 플래그</a><ul><li><a href=#명령-구조 class="table-of-contents__link toc-highlight">명령 구조</a><li><a href=#서브커맨드-지도 class="table-of-contents__link toc-highlight">서브커맨드 지도</a><li><a href=#플래그-6분류-체계 class="table-of-contents__link toc-highlight">플래그 6분류 체계</a><li><a href=#모델-플래그-상세 class="table-of-contents__link toc-highlight">모델 플래그 상세</a><li><a href=#권한과-도구-플래그 class="table-of-contents__link toc-highlight">권한과 도구 플래그</a><li><a href=#--bare-vs---safe-mode class="table-of-contents__link toc-highlight">--bare vs --safe-mode</a><li><a href=#보충-v21-이후-추가된-주요-플래그 class="table-of-contents__link toc-highlight">보충: v2.1 이후 추가된 주요 플래그</a><li><a href=#조합-관용구-5선 class="table-of-contents__link toc-highlight">조합 관용구 5선</a></ul><li><a href=#2-headless-심화 class="table-of-contents__link toc-highlight">2. Headless 심화</a><ul><li><a href=#-p의-본질 class="table-of-contents__link toc-highlight">-p의 본질</a><li><a href=#입력-6경로 class="table-of-contents__link toc-highlight">입력 6경로</a><li><a href=#exit-code-계약 class="table-of-contents__link toc-highlight">Exit Code 계약</a><li><a href=#--output-format-json class="table-of-contents__link toc-highlight">--output-format json</a><li><a href=#stream-json-이벤트-순서 class="table-of-contents__link toc-highlight">stream-json 이벤트 순서</a><li><a href=#--json-schema-구조화-출력 class="table-of-contents__link toc-highlight">--json-schema 구조화 출력</a><li><a href=#예산과-턴-상한 class="table-of-contents__link toc-highlight">예산과 턴 상한</a><li><a href=#캐시-최적화 class="table-of-contents__link toc-highlight">캐시 최적화</a><li><a href=#에러-처리와-재시도-골격 class="table-of-contents__link toc-highlight">에러 처리와 재시도 골격</a></ul><li><a href=#3-세션-제어 class="table-of-contents__link toc-highlight">3. 세션 제어</a><ul><li><a href=#세션-저장-구조 class="table-of-contents__link toc-highlight">세션 저장 구조</a><li><a href=#continue-vs-resume class="table-of-contents__link toc-highlight">continue vs resume</a><li><a href=#--from-pr class="table-of-contents__link toc-highlight">--from-pr</a><li><a href=#fork와-session-id class="table-of-contents__link toc-highlight">fork와 session-id</a><li><a href=#체크포인트와-rewind class="table-of-contents__link toc-highlight">체크포인트와 Rewind</a><li><a href=#웹-왕복-remote--teleport class="table-of-contents__link toc-highlight">웹 왕복 (Remote / Teleport)</a><li><a href=#remote-control class="table-of-contents__link toc-highlight">Remote Control</a></ul><li><a href=#4-스케줄과-자동실행 class="table-of-contents__link toc-highlight">4. 스케줄과 자동실행</a><ul><li><a href=#자동화-표면-5종-지도 class="table-of-contents__link toc-highlight">자동화 표면 5종 지도</a><li><a href=#보충-routines-상세 class="table-of-contents__link toc-highlight">보충: Routines 상세</a><li><a href=#deep-links class="table-of-contents__link toc-highlight">Deep Links</a><li><a href=#--bg와---exec class="table-of-contents__link toc-highlight">--bg와 --exec</a><li><a href=#cron--headless-레시피 class="table-of-contents__link toc-highlight">cron + headless 레시피</a></ul><li><a href=#5-cicd-통합 class="table-of-contents__link toc-highlight">5. CI/CD 통합</a><ul><li><a href=#비대화-3원칙 class="table-of-contents__link toc-highlight">비대화 3원칙</a><li><a href=#ci-인증-전략 class="table-of-contents__link toc-highlight">CI 인증 전략</a><li><a href=#github-actions-기본-골격 class="table-of-contents__link toc-highlight">GitHub Actions 기본 골격</a><li><a href=#pr-리뷰-잡 class="table-of-contents__link toc-highlight">PR 리뷰 잡</a><li><a href=#보충-관리형-대안--managed-code-review class="table-of-contents__link toc-highlight">보충: 관리형 대안 — Managed Code Review</a><li><a href=#gitlab-ci class="table-of-contents__link toc-highlight">GitLab CI</a><li><a href=#--init-준비-훅 class="table-of-contents__link toc-highlight">--init 준비 훅</a><li><a href=#비용-통제-다이얼 class="table-of-contents__link toc-highlight">비용 통제 다이얼</a></ul><li><a href=#6-자동화-패턴 class="table-of-contents__link toc-highlight">6. 자동화 패턴</a><ul><li><a href=#pattern-1-이슈-트리아지 class="table-of-contents__link toc-highlight">Pattern 1: 이슈 트리아지</a><li><a href=#pattern-2-로그-분석-map-reduce class="table-of-contents__link toc-highlight">Pattern 2: 로그 분석 (map-reduce)</a><li><a href=#pattern-3-일일-보고서 class="table-of-contents__link toc-highlight">Pattern 3: 일일 보고서</a><li><a href=#pattern-4-문서-파이프라인 class="table-of-contents__link toc-highlight">Pattern 4: 문서 파이프라인</a><li><a href=#pattern-5-배치-마이그레이션 class="table-of-contents__link toc-highlight">Pattern 5: 배치 마이그레이션</a><li><a href=#보충-검증-3단계 class="table-of-contents__link toc-highlight">보충: 검증 3단계</a></ul><li><a href=#7-환경변수 class="table-of-contents__link toc-highlight">7. 환경변수</a><ul><li><a href=#7칸-분류-지도 class="table-of-contents__link toc-highlight">7칸 분류 지도</a><li><a href=#점검-원라이너 class="table-of-contents__link toc-highlight">점검 원라이너</a><li><a href=#보안-원칙 class="table-of-contents__link toc-highlight">보안 원칙</a></ul><li><a href=#8-디버깅 class="table-of-contents__link toc-highlight">8. 디버깅</a><ul><li><a href=#진단-흐름-6단 class="table-of-contents__link toc-highlight">진단 흐름 6단</a><li><a href=#--debug-카테고리 class="table-of-contents__link toc-highlight">--debug 카테고리</a><li><a href=#헤드리스-전용-이슈 class="table-of-contents__link toc-highlight">헤드리스 전용 이슈</a></ul><li><a href=#9-recap--labs class="table-of-contents__link toc-highlight">9. Recap & Labs</a><ul><li><a href=#핵심-요약-표 class="table-of-contents__link toc-highlight">핵심 요약 표</a><li><a href=#faq-6가지 class="table-of-contents__link toc-highlight">FAQ 6가지</a><li><a href=#실습-3종 class="table-of-contents__link toc-highlight">실습 3종</a><li><a href=#lab-1-headless-파이프라인 class="table-of-contents__link toc-highlight">Lab 1: Headless 파이프라인</a><li><a href=#lab-2-세션-제어 class="table-of-contents__link toc-highlight">Lab 2: 세션 제어</a><li><a href=#lab-3-자동화-스크립트 class="table-of-contents__link toc-highlight">Lab 3: 자동화 스크립트</a><li><a href=#실무-로드맵 class="table-of-contents__link toc-highlight">실무 로드맵</a></ul><li><a href=#references class="table-of-contents__link toc-highlight">References</a><ul><li><a href=#1차-출처-본문-작성-기반 class="table-of-contents__link toc-highlight">1차 출처 (본문 작성 기반)</a><li><a href=#2차-출처-교차-검증 class="table-of-contents__link toc-highlight">2차 출처 (교차 검증)</a></ul></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Blog</div><ul class="footer__items clean-list"><li class=footer__item><a class=footer__link-item href=/>Home</a><li class=footer__item><a class=footer__link-item href=/archive/>Archive</a><li class=footer__item><a class=footer__link-item href=/tags/>Tags</a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>Sponsors</div><ul class="footer__items clean-list"><li class=footer__item><a href=https://ko-fi.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Buy Me a Coffee<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div><div class="theme-layout-footer-column col footer__col"><div class=footer__title>More</div><ul class="footer__items clean-list"><li class=footer__item><a href=https://github.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>GitHub<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://twitter.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Twitter<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://www.facebook.com/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>Facebook<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a><li class=footer__item><a href=https://kr.linkedin.com/in/ddiiwoong target=_blank rel="noopener noreferrer" class=footer__link-item>LinkedIn<svg width=13.5 height=13.5 aria-label="(opens in new tab)" class=iconExternalLink_nPIU><use href=#theme-svg-external-link /></svg></a></ul></div></div></div></footer></div></body>
