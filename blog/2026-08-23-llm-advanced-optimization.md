@@ -26,7 +26,7 @@ tags:
 
 # 고급 LLM 최적화 — 추측 디코딩 · 병렬화 · PD 분리 · KV 캐시 계층
 
-> 원본 학습 자료: O'Reilly *Hands-On LLM Serving and Optimization* (Chi Wang, Peiheng Hu) 7장
+> 원본 학습 자료: O'Reilly *Hands-On LLM Serving and Optimization* (Chi Wang, Peiheng Hu) 7-8장
 >
 > 측정 환경: AWS EC2 g6.xlarge (NVIDIA L4 24GB, compute capability 8.9) · g5.12xlarge (A10G 24GB x4, NVLink 없음) · g6.12xlarge (L4 24GB x4, NVLink 없음, 5절 재현) · Qwen2.5-7B-Instruct 타깃 + Qwen2.5-0.5B-Instruct 드래프트
 
@@ -1434,67 +1434,6 @@ aws ec2 run-instances ... \
 이렇게 하면 로컬 자격 증명이 끊겨도 예약 시간에 인스턴스가 halt하고 종료 동작이 terminate이므로 그대로 삭제된다. 실제로 이번 실습에서 세션이 끊긴 사이 인스턴스가 살아 있었는데 이 타이머가 정리해 줬다.
 
 AWS CLI는 `--user-data`를 자동으로 base64 인코딩한다. 미리 인코딩해서 넘기면 이중 인코딩되어 스크립트가 실행되지 않는다.
-
----
-
-## 12. 실습 코드
-
-전체 스크립트는 `aws-lab-ch7/` 에 있다. 절 번호와 실습 번호가 대응한다.
-
-```
-00_preflight.sh          자격 증명 / vCPU 쿼터 / AMI / 온디맨드 가격 확인 (읽기 전용)
-01_launch.sh             AZ 순회 기동, SSM 등록 대기, 자체 종료 타이머
-02_ssm.sh                put | run | bg | tail | get
-03_teardown.sh           인스턴스·SG·IAM 정리 + 미부착 볼륨 확인
-collect.py               결과 JSON 을 표로 정리
-
-remote/setup.sh          venv, vLLM, 함정 패치, 지원 probe, 모델 다운로드
-remote/lab1_spec.sh      3절 — 추측 디코딩 스윕
-remote/lab2_parallel.sh  5절 — TP/PP 스윕 + 토폴로지
-remote/lab3_pd.sh        6절 — PD 분리
-remote/lab4_kvcache.sh   7절 — prefix caching / KV 오프로딩
-remote/lab5_frameworks.sh 8절 — vLLM vs SGLang vs llama.cpp
-remote/pd_proxy.py       PD 분리용 스트리밍 프록시
-remote/prefix_probe.py   공유 프리픽스 TTFT 측정
-```
-
-### 인스턴스
-
-```bash
-# Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04) 최신 버전을 조회해서 쓴다
-AMI=$(aws ec2 describe-images --region us-west-2 --owners amazon \
-  --filters "Name=name,Values=Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 22.04)*" \
-            "Name=state,Values=available" \
-  --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text)
-
-# g6.xlarge = L4 24GB, compute capability 8.9
-aws ec2 run-instances --region us-west-2 \
-  --image-id "$AMI" --instance-type g6.xlarge \
-  --iam-instance-profile Name=<SSM 접속용 프로파일> \
-  --block-device-mappings '[{"DeviceName":"/dev/sda1","Ebs":{"VolumeSize":250,"VolumeType":"gp3","DeleteOnTermination":true}}]' \
-  --metadata-options 'HttpTokens=required,HttpEndpoint=enabled'
-```
-
-### 환경
-
-```bash
-python3 -m venv ~/vllm-env && source ~/vllm-env/bin/activate
-pip install vllm
-pip install pandas datasets            # 벤치마크 데이터셋 로더가 요구한다
-pip install hf_transfer                # 모델 다운로드 가속
-
-# 비싼 단계 앞에서 임포트만 먼저 확인
-python -c "import vllm, pandas, datasets; from vllm.benchmarks import serve; print('OK')"
-
-wget https://huggingface.co/datasets/anon8231489123/ShareGPT_Vicuna_unfiltered/resolve/main/ShareGPT_V3_unfiltered_cleaned_split.json
-
-export HF_HUB_ENABLE_HF_TRANSFER=1
-for M in Qwen/Qwen2.5-7B-Instruct Qwen/Qwen2.5-0.5B-Instruct; do hf download "$M"; done
-```
-
-### 소요 시간
-
-단일 GPU 실습은 처음 예상이 81분이었는데 143분이 걸렸다. 차이의 대부분이 flashinfer 문제를 찾는 데 쓴 시간이다. 다중 GPU 실습은 89분이었다. 실습이 끝나면 인스턴스와 보안 그룹, IAM 역할을 지우고 미부착 볼륨이 남지 않았는지도 확인해 둔다.
 
 ---
 
