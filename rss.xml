@@ -4,10 +4,870 @@
         <title>Act as a catalyst</title>
         <link>https://ddii.dev/</link>
         <description>Act as a cloud catalyst</description>
-        <lastBuildDate>Sun, 23 Aug 2026 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 06 Sep 2026 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[LLM 최적화 실전 프로젝트 — 단일 인스턴스 처리량 최대화]]></title>
+            <link>https://ddii.dev/deep-learning/llm-optimization-capstone/</link>
+            <guid>https://ddii.dev/deep-learning/llm-optimization-capstone/</guid>
+            <pubDate>Sun, 06 Sep 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[Qwen3-14B을 L40S 한 장에 올리고 하드웨어 확인부터 트래픽 설계, 기준선, AWQ 양자화, 추가 튜닝까지 순서대로 얹어 처리량을 끌어올린 기록. GPU 두 장을 TP로 묶는 것과 replica 두 대로 나누는 것도 직접 비교]]></description>
+            <content:encoded><![CDATA[<blockquote>
+<p>해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.</p>
+</blockquote>
+<blockquote>
+<p>원본 학습 자료: O'Reilly <em>Hands-On LLM Serving and Optimization</em> (Chi Wang, Peiheng Hu) 9장 · 실습 코드 <a href="https://github.com/orca3/llm-model-inference/tree/main/ch09" target="_blank" rel="noopener noreferrer" class="">orca3/llm-model-inference/ch09</a></p>
+<p>측정 환경: AWS EC2 g6e.2xlarge (NVIDIA L40S 46GB, compute capability 8.9) · g6.12xlarge (L4 24GB x4, NVLink 없음, 도전과제) · vLLM 0.28.0 · Qwen3-14B / Qwen3-14B-AWQ</p>
+</blockquote>
+<p>8장까지는 기법을 하나씩 떼어 봤다. 이 장은 그것들을 한 모델에 순서대로 얹어 보는 자리다. 목표는 단일 인스턴스의 토큰 처리량을 최대로 끌어올리는 것이고 순서는 하드웨어 확인 → 트래픽 설계 → 지표 정의 → 기준선 측정 → 양자화 → 추가 튜닝이다.</p>
+<p>측정하면서 자료와 어긋난 지점이 두 곳 나왔다. 양자화는 자료가 예상한 것보다 ITL을 훨씬 크게 개선했고 반대로 자료가 권한 fine-tuned 설정은 성능을 떨어뜨렸다. 두 지점의 원인은 같았다.</p>
+<p>마지막에 자료가 인용만 하고 직접 재지 않은 질문 하나를 따로 측정했다. GPU 두 장이 있을 때 TP로 쪼개는 것과 독립 인스턴스 두 대로 나누는 것 중 무엇이 나은가.</p>
+<!-- -->
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="용어-사전">용어 사전<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EC%9A%A9%EC%96%B4-%EC%82%AC%EC%A0%84" class="hash-link" aria-label="Direct link to 용어 사전" title="Direct link to 용어 사전" translate="no">​</a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>용어</th><th>의미</th></tr></thead><tbody><tr><td>Total TPS</td><td>초당 처리한 총 토큰 수. 입력과 출력을 합친다</td></tr><tr><td>Output TPS</td><td>초당 생성한 출력 토큰 수. 디코딩 성능을 본다</td></tr><tr><td>TTFT</td><td>Time To First Token. 요청부터 첫 토큰까지. Prefill 효율을 반영한다</td></tr><tr><td>ITL</td><td>Inter-Token Latency. 토큰 간 생성 간격. 스트리밍 체감 속도다</td></tr><tr><td>AWQ</td><td>Activation-aware Weight Quantization. 4비트 가중치 양자화 방식</td></tr><tr><td>ShareGPT</td><td>실제 사용자 대화 데이터셋. 프롬프트 길이와 스타일이 다양하다</td></tr><tr><td>Prefix Repetition</td><td>반복 프리픽스 + 고유 접미사로 만든 합성 데이터셋. 캐시 효과를 본다</td></tr><tr><td>최대 동시성</td><td>vLLM 기동 로그의 <code>Maximum concurrency</code>. 요청당 컨텍스트 기준으로 몇 개를 동시에 담는지</td></tr><tr><td>TP / PP</td><td>Tensor / Pipeline Parallelism. 각각 행렬을 쪼개거나 레이어를 나눈다</td></tr><tr><td>replica</td><td>모델 전체를 복제한 독립 서버. 요청을 라우터가 나눈다</td></tr></tbody></table>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="1-step-1-하드웨어-확인">1. Step 1: 하드웨어 확인<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#1-step-1-%ED%95%98%EB%93%9C%EC%9B%A8%EC%96%B4-%ED%99%95%EC%9D%B8" class="hash-link" aria-label="Direct link to 1. Step 1: 하드웨어 확인" title="Direct link to 1. Step 1: 하드웨어 확인" translate="no">​</a></h2>
+<p>먼저 이 GPU가 어떤 모델을 감당할 수 있는지 확인한다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">nvidia-smi --query-gpu=name,compute_cap,memory.free,memory.used,memory.total \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    --format=csv</span><br></div></code></pre></div></div>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">index, name, compute_cap, memory.free, memory.used, memory.total, driver_version</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">0, NVIDIA L40S, 8.9, 45460 MiB, 0 MiB, 46068 MiB, 595.91.07</span><br></div></code></pre></div></div>
+<p>총 메모리는 모델과 KV 캐시를 함께 담을 수 있는지를 결정한다. FP8 같은 기능을 쓸 수 있는지는 compute capability로 정해진다. Performance State가 서빙 중에도 idle이면 병목이 GPU 밖에 있다는 뜻이다. 활용률은 서빙 중 97% 이상을 목표로 본다. NVLink 유무는 GPU가 여러 장일 때만 의미가 있는데 없으면 분산 서빙의 성격이 완전히 달라진다.</p>
+<p>L40S 46GB는 FP16 원본과 양자화판을 나란히 올려 비교하려고 골랐다. 이 비교를 포기하면 훨씬 작은 GPU로도 핵심 실습이 된다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>GPU</th><th>VRAM</th><th>가능한 범위</th></tr></thead><tbody><tr><td>RTX 4070</td><td>16GB</td><td>Qwen3-4B BF16 → AWQ 비교</td></tr><tr><td>T4 (Colab)</td><td>16GB</td><td>Qwen3-4B AWQ, 추측 디코딩</td></tr><tr><td>A10G (g5.xlarge)</td><td>24GB</td><td>Qwen3-14B AWQ 전 구간</td></tr><tr><td><strong>L40S (g6e.2xlarge)</strong></td><td><strong>46GB</strong></td><td><strong>14B FP16 원본 + AWQ 대조</strong></td></tr></tbody></table>
+<p>모델 크기를 줄여도 절차는 같다. 기준선을 잡고 양자화를 얹어 배수를 재는 흐름은 4B에서도 똑같이 성립한다. FP16 원본을 함께 올려야 할 때만 46GB가 필요하다.</p>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="2-step-2-벤치마크-트래픽-설계">2. Step 2: 벤치마크 트래픽 설계<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#2-step-2-%EB%B2%A4%EC%B9%98%EB%A7%88%ED%81%AC-%ED%8A%B8%EB%9E%98%ED%94%BD-%EC%84%A4%EA%B3%84" class="hash-link" aria-label="Direct link to 2. Step 2: 벤치마크 트래픽 설계" title="Direct link to 2. Step 2: 벤치마크 트래픽 설계" translate="no">​</a></h2>
+<p>같은 최적화라도 트래픽 패턴이 다르면 효과가 거꾸로 나기도 한다. 긴 입력이 많은 워크로드와 긴 출력이 많은 워크로드는 병목이 다른 곳에 있으니 손댈 지점도 다르다. 그래서 성격이 다른 두 데이터셋을 쓴다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>데이터셋</th><th>성격</th><th>무엇을 보는가</th></tr></thead><tbody><tr><td>ShareGPT</td><td>실제 대화. 입력·출력 길이가 균형</td><td>일반적인 서비스 성능</td></tr><tr><td>Prefix Repetition</td><td>프리픽스 10종을 돌려 쓰는 합성 데이터</td><td>프리픽스 캐시 재사용</td></tr></tbody></table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="벤치마크-전에-길이-분포를-본다">벤치마크 전에 길이 분포를 본다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EB%B2%A4%EC%B9%98%EB%A7%88%ED%81%AC-%EC%A0%84%EC%97%90-%EA%B8%B8%EC%9D%B4-%EB%B6%84%ED%8F%AC%EB%A5%BC-%EB%B3%B8%EB%8B%A4" class="hash-link" aria-label="Direct link to 벤치마크 전에 길이 분포를 본다" title="Direct link to 벤치마크 전에 길이 분포를 본다" translate="no">​</a></h3>
+<p>고른 데이터가 어떤 길이 분포를 갖는지 모르면 측정값을 해석할 수 없다. 실습 코드의 <code>inspect_dataset.py</code>가 이 일을 한다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">python3 inspect_dataset.py \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --dataset-name sharegpt \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --dataset-path ShareGPT_V3_unfiltered_cleaned_split.json \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --model Qwen/Qwen3-14B --num-prompts 100 --save-samples</span><br></div></code></pre></div></div>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">=== Prompt Length Distribution ===</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Min: 5,  Max: 817,  Mean: 232.60,  Median: 141.50</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">=== Output Length Distribution ===</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Min: 4,  Max: 771,  Mean: 220.61,  Median: 164.50</span><br></div></code></pre></div></div>
+<p>입력과 출력이 비슷하다. 대화형 워크로드의 특성이다. Prefill과 Decode가 비슷한 비중으로 섞인다. 만약 입력이 출력의 열 배였다면 Prefill 쪽 기법(프리픽스 캐싱, LMCache)을 먼저 봐야 하고 반대였다면 Decode 쪽(추측 디코딩)을 봐야 한다.</p>
+<p>Max가 817 토큰이라는 사실이 6절에서 <code>--max-model-len 1024</code>가 왜 통과했는지를 설명하고 입출력 균형이 ITL 해석의 전제가 된다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="부하를-거는-명령">부하를 거는 명령<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EB%B6%80%ED%95%98%EB%A5%BC-%EA%B1%B0%EB%8A%94-%EB%AA%85%EB%A0%B9" class="hash-link" aria-label="Direct link to 부하를 거는 명령" title="Direct link to 부하를 거는 명령" translate="no">​</a></h3>
+<p>분포를 확인했으면 실제로 트래픽을 보낸다. 두 데이터셋 모두 요청 속도를 제한해 SLA 관점에서 쟀고 결과는 JSON으로 남겼다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain"># ShareGPT — 2,000 프롬프트, 10 req/s, 최대 동시성 10</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">vllm bench serve --backend vllm --base-url http://localhost:8000 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --model Qwen/Qwen3-14B \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --dataset-name sharegpt \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --dataset-path ShareGPT_V3_unfiltered_cleaned_split.json \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --num-prompts 2000 --request-rate 10 --burstiness 1.0 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --max-concurrency 10 --seed 42 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --save-result --result-filename result.json</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"># Prefix Repetition — 1,000 프롬프트, 5 req/s</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">vllm bench serve --backend vllm --base-url http://localhost:8000 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --model Qwen/Qwen3-14B \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --dataset-name prefix_repetition \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --num-prompts 1000 --request-rate 5 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --prefix-repetition-prefix-len 256 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --prefix-repetition-suffix-len 256 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --prefix-repetition-num-prefixes 10 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --prefix-repetition-output-len 128 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --max-concurrency 10 --seed 42 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --save-result --result-filename result.json</span><br></div></code></pre></div></div>
+<blockquote>
+<p><strong>버전 확인이 먼저다</strong>: vLLM 0.28.0에서 <code>--disable-log-requests</code>가 사라졌다. 예제를 그대로 따라가면 서버가 <code>unrecognized arguments</code>로 즉시 죽는다. <code>--disable-log-stats</code>가 대체 플래그다. 쓰려는 플래그는 측정 전에 <code>vllm serve --help=all</code>로 한 번 훑어 둔다. 0.28.0은 도움말이 그룹으로 나뉘어서 <code>--help</code>만으로는 개별 플래그가 보이지 않는다.</p>
+</blockquote>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="3-step-3-지표-정의">3. Step 3: 지표 정의<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#3-step-3-%EC%A7%80%ED%91%9C-%EC%A0%95%EC%9D%98" class="hash-link" aria-label="Direct link to 3. Step 3: 지표 정의" title="Direct link to 3. Step 3: 지표 정의" translate="no">​</a></h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>축</th><th>지표</th><th>읽는 법</th></tr></thead><tbody><tr><td>처리량</td><td>Total TPS</td><td>시스템 전체 효율. 비용과 직결된다</td></tr><tr><td>처리량</td><td>Output TPS</td><td>디코딩 성능만 떼어 본다</td></tr><tr><td>지연</td><td>Mean TTFT</td><td>사용자가 느끼는 시작 속도</td></tr><tr><td>지연</td><td>Mean ITL</td><td>타이핑되는 속도</td></tr><tr><td>리소스</td><td>GPU 활용률, 메모리</td><td>낮으면 배치나 스케줄링이 비효율</td></tr></tbody></table>
+<p>처리량과 지연은 한쪽을 얻으면 다른 쪽을 내주는 관계다. 배치를 키우면 처리량은 오르고 개별 요청은 기다린다. 그래서 실무에서는 지연을 허용 범위에 묶어 둔 채 처리량을 올린다.</p>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="4-step-45-기준선-fp16">4. Step 4~5: 기준선 (FP16)<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#4-step-45-%EA%B8%B0%EC%A4%80%EC%84%A0-fp16" class="hash-link" aria-label="Direct link to 4. Step 4~5: 기준선 (FP16)" title="Direct link to 4. Step 4~5: 기준선 (FP16)" translate="no">​</a></h2>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">vllm serve Qwen/Qwen3-14B --disable-log-stats</span><br></div></code></pre></div></div>
+<p>기동 로그에서 세 줄을 본다.</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">Model loading took 27.52 GiB and 6.27 seconds</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Available KV cache memory: 11.57 GiB</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">GPU KV cache size: 75,824 tokens</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Maximum concurrency for 40,960 tokens per request: 1.85x</span><br></div></code></pre></div></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>항목</th><th>값</th><th>뜻</th></tr></thead><tbody><tr><td>모델</td><td>27.52 GiB</td><td>46GB 중 60%를 가중치가 차지한다</td></tr><tr><td>KV 캐시</td><td>11.57 GiB (75,824 토큰)</td><td>남은 25%가 KV 몫이다</td></tr><tr><td>최대 동시성</td><td>1.85x</td><td>40,960 토큰 요청 기준으로 두 개를 못 담는다</td></tr></tbody></table>
+<p>이 기준선 구성이 곧 병목이다. 가중치가 메모리를 대부분 차지해서 동시에 처리할 요청 수가 두 개도 안 된다. 벤치마크가 동시성 10으로 요청을 밀어 넣으면 나머지는 큐에서 기다린다.</p>
+<p><strong>기준선 측정 결과</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>데이터셋</th><th>Total TPS</th><th>Output TPS</th><th>TTFT</th><th>p99 TTFT</th><th>ITL</th><th>p99 ITL</th><th>소요</th></tr></thead><tbody><tr><td>ShareGPT</td><td>477.0</td><td>228.1</td><td>146.9 ms</td><td>237.6 ms</td><td>43.1 ms</td><td>72.3 ms</td><td>1,813초</td></tr><tr><td>Prefix Repetition</td><td>1,131.2</td><td>223.7</td><td>144.1 ms</td><td>186.0 ms</td><td>43.7 ms</td><td>57.1 ms</td><td>564초</td></tr></tbody></table>
+<blockquote>
+<p><strong>실제 확인</strong>: 원본 자료의 474 TPS / 228 Output TPS / ITL 43ms와 각각 0.6%, 0.05%, 0.2% 안에서 일치한다. Prefix Repetition의 1,131.2도 자료의 1,123과 맞는다. 같은 데이터셋에서 처리량만 2.37배 차이 나는 것은 프리픽스가 겹쳐 vLLM의 자동 프리픽스 캐싱이 Prefill을 건너뛰기 때문이다. TTFT·ITL이 두 데이터셋에서 거의 같다는 사실도 이 설명과 맞는다.</p>
+</blockquote>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="5-step-6-양자화-awq-int4">5. Step 6: 양자화 (AWQ INT4)<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#5-step-6-%EC%96%91%EC%9E%90%ED%99%94-awq-int4" class="hash-link" aria-label="Direct link to 5. Step 6: 양자화 (AWQ INT4)" title="Direct link to 5. Step 6: 양자화 (AWQ INT4)" translate="no">​</a></h2>
+<p>모델 이름 뒤에 <code>-AWQ</code>를 붙이는 것이 전부다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">vllm serve Qwen/Qwen3-14B-AWQ --disable-log-stats</span><br></div></code></pre></div></div>
+<p><strong>메모리가 재배치된다</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th>FP16</th><th>AWQ INT4</th><th>변화</th></tr></thead><tbody><tr><td>모델</td><td>27.52 GiB</td><td>9.44 GiB</td><td>66% 감소</td></tr><tr><td>KV 캐시</td><td>11.57 GiB (75,824 tok)</td><td>29.63 GiB (194,192 tok)</td><td>2.56배</td></tr><tr><td>최대 동시성</td><td>1.85x</td><td>4.74x</td><td>2.56배</td></tr></tbody></table>
+<p>가중치에서 덜어낸 18.08 GiB가 그대로 KV로 넘어갔다. 그만큼 더 큰 배치를 담는다.</p>
+<p><strong>벤치마크 결과</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>데이터셋</th><th>Total TPS</th><th>Output TPS</th><th>TTFT</th><th>ITL</th><th>소요</th></tr></thead><tbody><tr><td>ShareGPT</td><td>1,305.6</td><td>625.2</td><td>74.7 ms</td><td>15.6 ms</td><td>663초</td></tr><tr><td>Prefix Repetition</td><td>2,839.5</td><td>562.5</td><td>83.1 ms</td><td>17.1 ms</td><td>225초</td></tr></tbody></table>
+<p><strong>기준선 대비</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>지표</th><th>FP16</th><th>AWQ</th><th>변화</th><th>원본 자료</th></tr></thead><tbody><tr><td>Total TPS</td><td>477.0</td><td>1,305.6</td><td><strong>2.74배</strong></td><td>2.7배</td></tr><tr><td>Output TPS</td><td>228.1</td><td>625.2</td><td>2.74배</td><td>—</td></tr><tr><td>Mean TTFT</td><td>146.9 ms</td><td>74.7 ms</td><td><strong>49% 감소</strong></td><td>42% 감소</td></tr><tr><td>Mean ITL</td><td>43.1 ms</td><td>15.6 ms</td><td><strong>64% 감소</strong></td><td>약간 개선</td></tr><tr><td>Prefix Rep TPS</td><td>1,131.2</td><td>2,839.5</td><td>2.51배</td><td>약 2.5배</td></tr></tbody></table>
+<p>설정 한 줄로 처리량이 2.74배가 됐다. 자료의 2.7배와 맞는다. TTFT가 절반으로 줄어든 것도 방향이 같다. Prefill에서 읽어야 할 가중치가 3분의 1이 되니 메모리 대역폭 병목이 풀린다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="itl은-자료와-어긋났다">ITL은 자료와 어긋났다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#itl%EC%9D%80-%EC%9E%90%EB%A3%8C%EC%99%80-%EC%96%B4%EA%B8%8B%EB%82%AC%EB%8B%A4" class="hash-link" aria-label="Direct link to ITL은 자료와 어긋났다" title="Direct link to ITL은 자료와 어긋났다" translate="no">​</a></h3>
+<p>자료는 ITL 개선이 미미할 것이라고 봤고 근거도 타당하다. Decode 단계에서 병목은 연산이 아니라 KV 캐시 읽기이므로 가중치를 양자화해도 이득이 작다. 그런데 측정값은 43.1ms에서 15.6ms로 64% 줄었다.</p>
+<p>원인은 큐 대기다. FP16 기준선의 최대 동시성은 1.85x였고 벤치마크는 동시성 10으로 밀어 넣었다. 대기하는 요청의 토큰 간 간격에는 실제 생성 시간이 아니라 스케줄러에서 기다린 시간이 섞인다. AWQ에서 최대 동시성이 4.74x로 올라가자 그 대기가 사라졌다.</p>
+<p>자료의 설명은 원리로는 맞다. 다만 메모리가 빡빡해서 배치가 제한된 구성에서는 큐 대기가 섞여 원리대로 측정되지 않는다. 자료의 실험은 A100 80GB에 Qwen3-32B였고 이 실습은 L40S 46GB에 14B였다. 같은 ITL 값도 arm의 최대 동시성이 다르면 다른 뜻이다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="빨라진-것은-연산이-아니다">빨라진 것은 연산이 아니다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EB%B9%A8%EB%9D%BC%EC%A7%84-%EA%B2%83%EC%9D%80-%EC%97%B0%EC%82%B0%EC%9D%B4-%EC%95%84%EB%8B%88%EB%8B%A4" class="hash-link" aria-label="Direct link to 빨라진 것은 연산이 아니다" title="Direct link to 빨라진 것은 연산이 아니다" translate="no">​</a></h3>
+<p>양자화가 처리량을 올린 경로는 4비트로 계산하니 연산이 빨라졌다는 직관과 다르다.</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">AWQ INT4 적용</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  → 가중치 27.52 GiB → 9.44 GiB</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  → KV 캐시 11.57 → 29.63 GiB</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  → 최대 동시성 1.85x → 4.74x</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  → 배치가 촘촘해진다</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  → GPU가 다음 배치를 기다리는 시간이 준다</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  → 처리량 ↑</span><br></div></code></pre></div></div>
+<p>Nsight로 커널 단위를 보면 양자화 전후의 GEMM 커널 실행 시간은 거의 같고 줄어든 것은 <code>cudaEventSynchronize</code> 대기, 곧 GPU가 스케줄러에서 다음 일감을 받기까지 노는 시간이다.</p>
+<p>양자화가 연산을 빠르게 한다고 믿으면 GPU 메모리가 넉넉한 환경에서도 같은 2.7배를 기대하게 된다. 하지만 메모리에 이미 여유가 있어 배치가 꽉 차 있다면 얻을 것이 거의 없다. 양자화의 효과 크기는 양자화 전에 배치가 얼마나 모자랐는지에 비례한다.</p>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="6-step-7-추가-튜닝">6. Step 7: 추가 튜닝<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#6-step-7-%EC%B6%94%EA%B0%80-%ED%8A%9C%EB%8B%9D" class="hash-link" aria-label="Direct link to 6. Step 7: 추가 튜닝" title="Direct link to 6. Step 7: 추가 튜닝" translate="no">​</a></h2>
+<p>자료가 제시한 fine-tuned 설정을 그대로 적용했다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">vllm serve Qwen/Qwen3-14B-AWQ --disable-log-stats \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --gpu-memory-utilization 0.95 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --max-model-len 1024 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --block-size 16 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --enable-prefix-caching \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --max-num-seqs 8 \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --max-num-batched-tokens 8192</span><br></div></code></pre></div></div>
+<p>기동 로그의 숫자는 좋아 보인다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th>AWQ 기본</th><th>AWQ tuned</th></tr></thead><tbody><tr><td>KV 캐시</td><td>29.63 GiB (194,192 tok)</td><td>31.02 GiB (203,264 tok)</td></tr><tr><td>최대 동시성</td><td>4.74x</td><td><strong>198.50x</strong></td></tr></tbody></table>
+<p>최대 동시성이 42배로 뛰었는데 실제 측정값은 반대였다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>지표</th><th>AWQ 기본</th><th>AWQ tuned</th><th>변화</th></tr></thead><tbody><tr><td>Total TPS</td><td>1,305.6</td><td>1,114.3</td><td><strong>15% 감소</strong></td></tr><tr><td>Output TPS</td><td>625.2</td><td>532.1</td><td>15% 감소</td></tr><tr><td>Mean TTFT</td><td>74.7 ms</td><td><strong>772.1 ms</strong></td><td><strong>10.3배 악화</strong></td></tr><tr><td>p99 TTFT</td><td>180.6 ms</td><td>2,587.6 ms</td><td>14.3배 악화</td></tr><tr><td>Mean ITL</td><td>15.6 ms</td><td>14.8 ms</td><td>5% 개선</td></tr><tr><td>Prefix Rep TPS</td><td>2,839.5</td><td>2,445.8</td><td>14% 감소</td></tr></tbody></table>
+<p><code>--max-num-seqs 8</code>이 원인이었다. 벤치마크가 동시성 10으로 요청을 보내는데 서버가 한 배치에 8개만 받으니 두 개는 매번 큐에서 기다린다. TTFT가 10배 나빠진 것이 그 대기다.</p>
+<p>최대 동시성 198.50x는 착시다. 이 값은 <code>KV 토큰 수 ÷ 요청당 최대 컨텍스트</code>로 계산되는데 <code>--max-model-len 1024</code>가 분모를 40,960에서 1,024로 40배 줄였다. 담을 수 있는 요청 수가 늘어난 것은 사실이지만 실제로 한 번에 처리하는 요청 수는 <code>max-num-seqs</code>가 8로 묶는다. 기동 로그의 숫자는 실효 배치 폭과 다르다.</p>
+<p>ITL만 5% 좋아진 것은 트레이드오프의 다른 쪽이다. 배치가 작으면 토큰당 생성은 빨라지고 대기와 처리량을 잃는다.</p>
+<blockquote>
+<p><strong>자료의 경고가 그대로 재현됐다</strong>: 자료는 "특정 GPU와 워크로드에 완벽히 맞춘 설정은 다른 환경에서 오히려 성능이 떨어질 수 있다"고 적었다. <code>--max-num-seqs 8</code>은 부하가 8 이하인 환경에서 튜닝된 값으로 보이고 동시성 10 트래픽에서는 병목 그 자체가 됐다. <code>--max-model-len 1024</code>도 ShareGPT의 최대 프롬프트가 817 토큰이라 통과했을 뿐이다. 입력이 조금만 길어지면 요청이 거부된다.</p>
+</blockquote>
+<p>이 실습에서 가장 좋은 구성은 AWQ 기본 설정이었고 설정을 더 얹은 쪽이 처리량에서 손해였다.</p>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="7-도전과제-gpu-두-장을-어떻게-쓰는가">7. 도전과제: GPU 두 장을 어떻게 쓰는가<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#7-%EB%8F%84%EC%A0%84%EA%B3%BC%EC%A0%9C-gpu-%EB%91%90-%EC%9E%A5%EC%9D%84-%EC%96%B4%EB%96%BB%EA%B2%8C-%EC%93%B0%EB%8A%94%EA%B0%80" class="hash-link" aria-label="Direct link to 7. 도전과제: GPU 두 장을 어떻게 쓰는가" title="Direct link to 7. 도전과제: GPU 두 장을 어떻게 쓰는가" translate="no">​</a></h2>
+<p>자료 9.4절은 수직 확장과 수평 확장을 비교하며 "p4d에서 4-GPU TP가 3,926 TPS, 4개 독립 인스턴스가 약 9,816 TPS"라는 숫자를 인용한다. 직접 재지는 않았다. 그래서 GPU 네 장 인스턴스에서 두 장만 써서 같은 질문을 측정했다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="측정-설계">측정 설계<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EC%B8%A1%EC%A0%95-%EC%84%A4%EA%B3%84" class="hash-link" aria-label="Direct link to 측정 설계" title="Direct link to 측정 설계" translate="no">​</a></h3>
+<p>모델은 <code>Qwen3-14B-AWQ</code>를 쓴다. 9.44 GiB이므로 L4 한 장(22 GiB 가용)에 올라가는데 이것이 replica 방식이 성립하는 전제다. 한 장에 안 들어가면 독립 서버를 둘 세울 수 없다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>arm</th><th>구성</th><th>GPU</th><th>무엇을 얻는가</th></tr></thead><tbody><tr><td><code>single</code></td><td>1장</td><td>0</td><td>기준점</td></tr><tr><td><code>tp2</code></td><td><code>--tensor-parallel-size 2</code></td><td>0,1</td><td>지연</td></tr><tr><td><code>pp2</code></td><td><code>--pipeline-parallel-size 2</code></td><td>0,1</td><td>통신 절약</td></tr><tr><td><code>replica2_direct</code></td><td>독립 서버 2개, 라우터 없음</td><td>0 / 1</td><td>수평 확장 상한</td></tr><tr><td><code>replica2_rr</code></td><td>독립 서버 2개 + 라우터 round_robin</td><td>0 / 1</td><td>라우터 경유 비용</td></tr><tr><td><code>replica2_cache</code></td><td>독립 서버 2개 + 라우터 cache_aware</td><td>0 / 1</td><td>프리픽스 인식 이득</td></tr></tbody></table>
+<p>동시성 1·10·32에서 포화 부하(<code>--request-rate inf</code>)로 쟀고 Prefix Repetition은 동시성 10에서 한 번 더 봤다. Step 5·6은 SLA 관점이라 요청 속도를 제한했지만 여기서는 용량 상한이 질문이므로 제한을 걸지 않았다.</p>
+<blockquote>
+<p><strong>실제 확인</strong>: g6.12xlarge의 GPU 네 장은 전부 <code>NODE</code>로 나온다. NVLink를 뜻하는 <code>NV#</code>가 없다. <code>NODE</code>는 PCIe 호스트 브리지 사이의 인터커넥트까지 거친다는 뜻으로, All-Reduce가 PCIe를 탄다. 이 전제에서 TP는 불리해야 한다.</p>
+</blockquote>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">        GPU0  GPU1  GPU2  GPU3</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">GPU0     X    NODE  NODE  NODE</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">GPU1    NODE   X    NODE  NODE</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">GPU2    NODE  NODE   X    NODE</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">GPU3    NODE  NODE  NODE   X</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node</span><br></div></code></pre></div></div>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="결과">결과<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EA%B2%B0%EA%B3%BC" class="hash-link" aria-label="Direct link to 결과" title="Direct link to 결과" translate="no">​</a></h3>
+<p><strong>Total TPS</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>arm</th><th>cc=1</th><th>cc=10</th><th>cc=32</th><th>Prefix Rep cc=10</th></tr></thead><tbody><tr><td><code>single</code></td><td>57.0</td><td>437.5</td><td>808.6</td><td>944.2</td></tr><tr><td><code>tp2</code></td><td>99.5</td><td><strong>642.6</strong></td><td><strong>1,356.5</strong></td><td><strong>1,392.5</strong></td></tr><tr><td><code>pp2</code></td><td>58.1</td><td>413.4</td><td>1,052.4</td><td>936.2</td></tr><tr><td><code>replica2_direct</code></td><td>125.8</td><td>490.5</td><td>1,198.0</td><td>—</td></tr><tr><td><code>replica2_rr</code></td><td>57.4</td><td>487.8</td><td>1,191.9</td><td>1,137.6</td></tr><tr><td><code>replica2_cache</code></td><td>57.1</td><td>454.9</td><td>1,000.0</td><td>1,121.5</td></tr></tbody></table>
+<p><strong>Mean TTFT (ms) / Mean ITL (ms)</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>arm</th><th>cc=10</th><th>cc=32</th></tr></thead><tbody><tr><td><code>single</code></td><td>235.0 / 42.9</td><td>514.7 / 68.9</td></tr><tr><td><code>tp2</code></td><td><strong>160.8 / 29.5</strong></td><td>175.7 / <strong>41.6</strong></td></tr><tr><td><code>pp2</code></td><td>176.8 / 46.1</td><td>176.8 / 56.6</td></tr><tr><td><code>replica2_direct</code></td><td>209.7 / 37.9</td><td>270.0 / 46.0</td></tr><tr><td><code>replica2_rr</code></td><td>213.4 / 38.2</td><td><strong>228.1</strong> / 45.3</td></tr><tr><td><code>replica2_cache</code></td><td>216.7 / 41.0</td><td>441.2 / 54.2</td></tr></tbody></table>
+<p><strong>KV 배치</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>arm</th><th>KV</th><th>요청당 최대 동시성</th></tr></thead><tbody><tr><td><code>single</code></td><td>9.10 GiB (59,632 tok)</td><td>1.46x</td></tr><tr><td><code>tp2</code></td><td>14.38 GiB (188,512 tok)</td><td>4.60x</td></tr><tr><td><code>pp2</code></td><td>14.04 GiB (184,000 tok)</td><td>4.49x</td></tr><tr><td><code>replica2_*</code></td><td>10.33 GiB × 2 (67,696 tok × 2)</td><td>1.65x <strong>각각</strong></td></tr></tbody></table>
+<blockquote>
+<p><strong>cc=1 두 값은 비교 대상이 아니다</strong>: <code>replica2_direct</code>의 125.8은 두 엔드포인트에 각각 동시성 1로 부하를 걸어 합산한 값이라 실제로는 동시 요청 두 개다. 다른 arm의 cc=1은 한 개다. cc=10과 cc=32는 각 replica에 5와 16을 나눠 합계가 맞으므로 유효하다.</p>
+</blockquote>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="tp가-전-구간에서-이겼다">TP가 전 구간에서 이겼다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#tp%EA%B0%80-%EC%A0%84-%EA%B5%AC%EA%B0%84%EC%97%90%EC%84%9C-%EC%9D%B4%EA%B2%BC%EB%8B%A4" class="hash-link" aria-label="Direct link to TP가 전 구간에서 이겼다" title="Direct link to TP가 전 구간에서 이겼다" translate="no">​</a></h3>
+<p>NVLink가 없어 All-Reduce가 PCIe를 타므로 동시성이 오르면 통신이 아예 없는 replica 방식이 TP를 역전하는 지점이 있을 것으로 봤다.</p>
+<p>교차점은 없었고 cc=32에서도 <code>tp2</code>가 1,356.5로 <code>replica2_rr</code> 1,191.9보다 14% 앞선다.</p>
+<p><code>tp2</code>는 두 장의 KV를 한 풀로 합쳐 14.38 GiB, 요청당 4.60x를 만든다. replica 방식은 KV 총량이 20.66 GiB로 더 크지만 요청 하나가 쓸 수 있는 것은 replica 한 몫인 10.33 GiB, 1.65x에 묶인다. ShareGPT처럼 긴 요청이 섞인 트래픽에서는 이 차이가 PCIe 통신 비용보다 크다.</p>
+<p>Ch.7 5절에서 "저동시성 환경에서 TP의 실질적 최대 수확은 FLOPs가 아니라 KV 캐시 여유"라고 정리했는데 여기서 그 관찰이 더 분명하게 나왔다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="라우터-경유-비용은-1-미만이다">라우터 경유 비용은 1% 미만이다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EB%9D%BC%EC%9A%B0%ED%84%B0-%EA%B2%BD%EC%9C%A0-%EB%B9%84%EC%9A%A9%EC%9D%80-1-%EB%AF%B8%EB%A7%8C%EC%9D%B4%EB%8B%A4" class="hash-link" aria-label="Direct link to 라우터 경유 비용은 1% 미만이다" title="Direct link to 라우터 경유 비용은 1% 미만이다" translate="no">​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th>cc=10</th><th>cc=32</th></tr></thead><tbody><tr><td><code>replica2_direct</code></td><td>490.5</td><td>1,198.0</td></tr><tr><td><code>replica2_rr</code></td><td>487.8</td><td>1,191.9</td></tr><tr><td>차이</td><td>−0.6%</td><td>−0.5%</td></tr></tbody></table>
+<p>프록시 한 단이 붙으면 TTFT가 눈에 띄게 늘 것으로 봤는데 그렇지 않았다. ITL도 37.9에서 38.2ms로 사실상 같다.</p>
+<p>cc=32에서는 라우터를 거친 쪽이 오히려 나았다. TTFT가 270.0에서 228.1ms로 16% 낮다. replica 두 대의 KV가 균등하지 않았다. 서버 두 개를 순차로 띄우면 먼저 올라간 쪽이 메모리를 잡고 나중 쪽이 남은 것을 프로파일링해서 회차에 따라 9.10 GiB와 10.33 GiB로 나뉘는 일이 있었다. 라우터 없이 두 벤치 프로세스가 각자 고정된 replica에 절반씩 보내면 작은 쪽이 먼저 막히는데 round_robin은 요청 단위로 번갈아 보내니 부하가 자연히 섞인다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="cache_aware는-��오히려-나빴다">cache_aware는 오히려 나빴다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#cache_aware%EB%8A%94-%EC%98%A4%ED%9E%88%EB%A0%A4-%EB%82%98%EB%B9%B4%EB%8B%A4" class="hash-link" aria-label="Direct link to cache_aware는 오히려 나빴다" title="Direct link to cache_aware는 오히려 나빴다" translate="no">​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th><code>round_robin</code></th><th><code>cache_aware</code></th></tr></thead><tbody><tr><td>cc=32 TPS</td><td>1,191.9</td><td>1,000.0 (−16%)</td></tr><tr><td>cc=32 TTFT</td><td>228.1 ms</td><td>441.2 ms (+93%)</td></tr><tr><td>Prefix Rep TPS</td><td>1,137.6</td><td>1,121.5 (−1.4%)</td></tr></tbody></table>
+<p>프리픽스를 인식해 같은 프리픽스를 같은 replica로 보내면 그쪽 KV 캐시가 재사용되니 이득을 기대했지만 측정값은 나빠졌다. Prefix Repetition에서도 차이가 1.4%뿐이고 ShareGPT 고동시성에서는 크게 손해다.</p>
+<p>replica당 요청 여유가 1.65x뿐인 것이 원인으로 보인다. 프리픽스 10종을 특정 replica로 몰면 그 replica가 곧 과부하가 되는데 캐시 히트로 버는 Prefill 시간보다 부하 편중으로 잃는 대기 시간이 크다. 캐시 인식 라우팅은 replica 각자에 여유가 충분할 때 값이 있다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="pp는-예상대로였다">PP는 예상대로였다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#pp%EB%8A%94-%EC%98%88%EC%83%81%EB%8C%80%EB%A1%9C%EC%98%80%EB%8B%A4" class="hash-link" aria-label="Direct link to PP는 예상대로였다" title="Direct link to PP는 예상대로였다" translate="no">​</a></h3>
+<p><code>pp2</code>는 cc=1에서 58.1로 <code>single</code> 57.0과 같다. 파이프라인 버블 때문에 GPU 두 장이 순차로 놀 뿐이다. ITL도 전 구간에서 가장 나쁘다(46.1 / 56.6 ms). Ch.7 5절의 "TP는 지연을 줄이고 PP는 못 줄인다"가 그대로 재확인됐다.</p>
+<p>다만 cc=32에서는 1,052.4로 <code>single</code>의 1.30배가 나온다. 배치가 차면 버블이 메워지기 때문이다. PP는 한 장에 안 들어가는 모델을 올릴 때 쓴다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="선택-기준">선택 기준<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EC%84%A0%ED%83%9D-%EA%B8%B0%EC%A4%80" class="hash-link" aria-label="Direct link to 선택 기준" title="Direct link to 선택 기준" translate="no">​</a></h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>상황</th><th>선택</th></tr></thead><tbody><tr><td>모델이 한 장에 들어가고 GPU가 두 장 있다</td><td><strong>TP=2.</strong> 처리량과 지연 모두 최선</td></tr><tr><td>장애 격리나 독립 배포가 필요하다</td><td>replica + round_robin. TP 대비 14% 손해가 대가</td></tr><tr><td>라우팅 정책을 고른다</td><td>round_robin. cache_aware는 replica 여유가 클 때만</td></tr><tr><td>모델이 한 장에 안 들어간다</td><td>TP를 먼저 보고, 노드를 넘어가야 하면 PP</td></tr></tbody></table>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="자료와-정반대로-나온-이유">자료와 정반대로 나온 이유<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EC%9E%90%EB%A3%8C%EC%99%80-%EC%A0%95%EB%B0%98%EB%8C%80%EB%A1%9C-%EB%82%98%EC%98%A8-%EC%9D%B4%EC%9C%A0" class="hash-link" aria-label="Direct link to 자료와 정반대로 나온 이유" title="Direct link to 자료와 정반대로 나온 이유" translate="no">​</a></h3>
+<p>자료는 이 대목을 "분산 서빙의 역설"이라 부르며 복제가 TP보다 처리량에서 세 배 가까이 유리할 수 있다고 정리한다. 근거는 p4d에서 4-GPU TP가 3,926 TPS인데 4개 독립 인스턴스가 약 9,816 TPS라는 비교인데 이 실습의 측정 결과는 반대였다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th>자료 (p4d)</th><th>이 실습 (g6.12xlarge)</th></tr></thead><tbody><tr><td>GPU</td><td>A100 8장 중 4장</td><td>L4 4장 중 2장</td></tr><tr><td>인터커넥트</td><td>NVLink</td><td>없음 (PCIe / <code>NODE</code>)</td></tr><tr><td>모델</td><td>1장에 넉넉히</td><td>1장에 빡빡하게 (KV 10.33 GiB)</td></tr><tr><td>결론</td><td>복제 우세</td><td><strong>TP 우세</strong></td></tr></tbody></table>
+<p>인터커넥트 차이보다 모델이 GPU 한 장을 얼마나 채우는지가 결과를 좌우했다. 자료의 조건에서는 replica 하나가 이미 충분한 KV를 확보한다. 그러면 TP의 KV 통합 이득이 작고 All-Reduce 비용만 남으니 복제가 이긴다. 이 실습에서는 replica 하나의 요청당 여유가 1.65x뿐이라 KV를 합치는 것 자체가 가장 큰 소득이 됐다.</p>
+<p>먼저 replica 하나가 목표 동시성을 감당하는지 본다. 감당한다면 복제가 유리하다. 감당하지 못한다면 KV를 합쳐야 하므로 TP가 유리하다. NVLink 유무는 그다음 문제다. "수평 확장이 대체로 유리하다"는 문장을 조건 없이 옮기면 이 실습 같은 구성에서 14%를 잃는다.</p>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="8-실습-시-유의사항">8. 실습 시 유의사항<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#8-%EC%8B%A4%EC%8A%B5-%EC%8B%9C-%EC%9C%A0%EC%9D%98%EC%82%AC%ED%95%AD" class="hash-link" aria-label="Direct link to 8. 실습 시 유의사항" title="Direct link to 8. 실습 시 유의사항" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="플래그는-측정-전에-검증한다">플래그는 측정 전에 검증한다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%ED%94%8C%EB%9E%98%EA%B7%B8%EB%8A%94-%EC%B8%A1%EC%A0%95-%EC%A0%84%EC%97%90-%EA%B2%80%EC%A6%9D%ED%95%9C%EB%8B%A4" class="hash-link" aria-label="Direct link to 플래그는 측정 전에 검증한다" title="Direct link to 플래그는 측정 전에 검증한다" translate="no">​</a></h3>
+<p>vLLM 0.28.0에서 <code>--disable-log-requests</code>가 제거됐다. 이를 모르고 벤치마크를 걸면 세 arm이 전부 <code>unrecognized arguments</code>로 기동 직후 종료된다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">vllm serve --help=all &gt; /tmp/h.txt</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">for F in disable-log-stats enable-prefix-caching max-num-seqs tensor-parallel-size; do</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  printf '%-28s ' "--$F"; grep -q -- "--$F" /tmp/h.txt &amp;&amp; echo OK || echo '없음'</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">done</span><br></div></code></pre></div></div>
+<p>0.28.0은 <code>--help</code>가 그룹 목록만 보여 준다. 개별 플래그를 확인하려면 <code>--help=all</code>이 필요하다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="결과-회수-경로를-먼저-확인한다">결과 회수 경로를 먼저 확인한다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EA%B2%B0%EA%B3%BC-%ED%9A%8C%EC%88%98-%EA%B2%BD%EB%A1%9C%EB%A5%BC-%EB%A8%BC%EC%A0%80-%ED%99%95%EC%9D%B8%ED%95%9C%EB%8B%A4" class="hash-link" aria-label="Direct link to 결과 회수 경로를 먼저 확인한다" title="Direct link to 결과 회수 경로를 먼저 확인한다" translate="no">​</a></h3>
+<p>SSH 없이 SSM Session Manager만 쓰면 <code>send-command</code>의 출력이 24,000자에서 잘린다. 결과를 base64로 감싸 받으면 80KB tarball도 넘기지 못하고 잘린 자리의 문자 때문에 로컬에서 <code>Illegal character '-'</code>로 디코딩이 깨진다.</p>
+<p>인스턴스 역할에 S3 쓰기 권한을 붙여 버킷을 경유하면 이 한계가 사라진다. 이번 실습은 119KB와 98KB tarball을 문제없이 받았다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain"># 측정 전에 더미 파일로 왕복을 확인한다</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">head -c 300000 /dev/urandom | base64 &gt; /tmp/probe.txt</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">aws s3 cp /tmp/probe.txt s3://&lt;버킷&gt;/probe.txt      # 인스턴스에서</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">aws s3 cp s3://&lt;버킷&gt;/probe.txt ./probe.txt          # 로컬에서</span><br></div></code></pre></div></div>
+<p>측정을 마지막까지 성공해도 회수가 깨지면 결과는 없다. 회수를 마지막 단계에 몰지 말고 arm 하나가 끝날 때마다 증분으로 상태를 기록하는 편이 안전하다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="완료-판정에-grep--c를-쓰지-않는다">완료 판정에 grep -c를 쓰지 않는다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EC%99%84%EB%A3%8C-%ED%8C%90%EC%A0%95%EC%97%90-grep--c%EB%A5%BC-%EC%93%B0%EC%A7%80-%EC%95%8A%EB%8A%94%EB%8B%A4" class="hash-link" aria-label="Direct link to 완료 판정에 grep -c를 쓰지 않는다" title="Direct link to 완료 판정에 grep -c를 쓰지 않는다" translate="no">​</a></h3>
+<p><code>grep -c '마커' log</code> 는 0건일 때 종료 코드 1을 낸다. <code>|| echo 0</code>을 붙여 두면 grep이 찍은 <code>0</code>과 echo의 <code>0</code>이 겹쳐 출력이 <code>00</code>이 된다. <code>"00" != "0"</code>이 참이 되어 완료로 오판한다. 이 때문에 setup이 45초 만에 끝난 것으로 착각하고 아직 만들어지지 않은 venv로 벤치마크를 띄웠다.</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain"># 위험</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">DONE=$(grep -c '준비 완료' setup.log 2&gt;/dev/null || echo 0)</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"># 안전 — 카운트를 쓰지 않고 고정 토큰만 본다</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">if grep -q '준비 완료' setup.log; then ... ; fi</span><br></div></code></pre></div></div>
+<p>마커를 <code>tail -N</code>으로 찾는 것도 위험하다. 완료 마커 뒤에 여러 줄 JSON이 출력되면 마커가 밀려 영원히 발견되지 않는다. 파일 전체를 본다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="라이브러리-이름이-같아도-같은-프로젝트가-아니다">라이브러리 이름이 같아도 같은 프로젝트가 아니다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EB%9D%BC%EC%9D%B4%EB%B8%8C%EB%9F%AC%EB%A6%AC-%EC%9D%B4%EB%A6%84%EC%9D%B4-%EA%B0%99%EC%95%84%EB%8F%84-%EA%B0%99%EC%9D%80-%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8%EA%B0%80-%EC%95%84%EB%8B%88%EB%8B%A4" class="hash-link" aria-label="Direct link to 라이브러리 이름이 같아도 같은 프로젝트가 아니다" title="Direct link to 라이브러리 이름이 같아도 같은 프로젝트가 아니다" translate="no">​</a></h3>
+<p>PyPI의 <code>vllm-router</code>는 vLLM production-stack 저장소의 <code>vllm_router</code> 모듈과 다른 프로젝트다. production-stack README를 읽고 그 인자를 PyPI 패키지에 쓰면 라우터가 즉시 죽는다.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>항목</th><th>production-stack 모듈</th><th>PyPI <code>vllm-router</code> 0.1.15</th></tr></thead><tbody><tr><td>백엔드 지정</td><td><code>--static-backends a,b</code> (쉼표)</td><td><code>--worker-urls a b</code> (공백)</td></tr><tr><td>정책</td><td><code>--routing-logic roundrobin</code></td><td><code>--policy round_robin</code></td></tr><tr><td>서비스 디스커버리</td><td><code>--service-discovery static</code></td><td>값을 받지 않는 boolean</td></tr></tbody></table>
+<p>PyPI 쪽은 <code>random</code>·<code>round_robin</code>·<code>cache_aware</code>·<code>power_of_two</code>·<code>consistent_hash</code> 다섯 정책을 제공한다. 인자를 맞추면 K8s 없이 EC2 한 대에서 돌아가고 기동에 4초가 걸린다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="gpu-인스턴스-용량은-시시각각-변한다">GPU 인스턴스 용량은 시시각각 변한다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#gpu-%EC%9D%B8%EC%8A%A4%ED%84%B4%EC%8A%A4-%EC%9A%A9%EB%9F%89%EC%9D%80-%EC%8B%9C%EC%8B%9C%EA%B0%81%EA%B0%81-%EB%B3%80%ED%95%9C%EB%8B%A4" class="hash-link" aria-label="Direct link to GPU 인스턴스 용량은 시시각각 변한다" title="Direct link to GPU 인스턴스 용량은 시시각각 변한다" translate="no">​</a></h3>
+<p>같은 타입을 두 시간 간격으로 띄웠는데 첫 회차는 us-east-2a에서 떴고 두 번째는 2a와 2b가 막혀 2c로 갔다. AZ를 순회하는 기동 스크립트가 있으면 이런 상황에서 시간을 버리지 않는다.</p>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="서버를-순차로-띄우면-replica-두-대의-kv-크기가-달라진다">서버를 순차로 띄우면 replica 두 대의 KV 크기가 달라진다<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#%EC%84%9C%EB%B2%84%EB%A5%BC-%EC%88%9C%EC%B0%A8%EB%A1%9C-%EB%9D%84%EC%9A%B0%EB%A9%B4-replica-%EB%91%90-%EB%8C%80%EC%9D%98-kv-%ED%81%AC%EA%B8%B0%EA%B0%80-%EB%8B%AC%EB%9D%BC%EC%A7%84%EB%8B%A4" class="hash-link" aria-label="Direct link to 서버를 순차로 띄우면 replica 두 대의 KV 크기가 달라진다" title="Direct link to 서버를 순차로 띄우면 replica 두 대의 KV 크기가 달라진다" translate="no">​</a></h3>
+<p>회차에 따라 KV가 9.10 GiB와 10.33 GiB로 나뉘었다. 수평 확장에서 replica 용량이 다르면 균등 분배를 해도 작은 쪽이 먼저 막힌다. <code>--gpu-memory-utilization</code>을 명시해 양쪽을 맞춘다.</p>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="9-마무리">9. 마무리<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#9-%EB%A7%88%EB%AC%B4%EB%A6%AC" class="hash-link" aria-label="Direct link to 9. 마무리" title="Direct link to 9. 마무리" translate="no">​</a></h2>
+<p><strong>양자화가 가장 값싼 최적화였다.</strong> 모델 이름에 <code>-AWQ</code>를 붙이는 것만으로 처리량이 2.74배가 됐다. 가중치가 3분의 1로 줄고 그만큼이 KV로 넘어가 배치가 커진 결과다.</p>
+<p>자료가 제시한 fine-tuned 조합은 처리량을 15% 떨어뜨리고 TTFT를 10배 악화시켰다. <code>--max-num-seqs 8</code>이 동시성 10 트래픽에서 병목이 됐다. 기동 로그의 최대 동시성 198.50x는 <code>--max-model-len</code>이 분모를 줄여 만든 착시였고 실효 배치 폭은 8로 묶여 있었다.</p>
+<p>지표는 병목과 함께 읽어야 한다. ITL이 64% 개선된 것은 큐 대기가 사라진 결과다. Decode 자체는 빨라지지 않았다. 최대 동시성이 1.85x인 arm에서 동시성 10으로 부하를 주면 지연 지표에 스케줄러 대기가 섞인다. 자료의 "ITL은 미미하게 개선"이라는 서술은 배치에 여유가 있는 조건을 전제한 것이었다.</p>
+<p><strong>GPU 두 장은 TP로 묶는 쪽이 빨랐다.</strong> NVLink가 없으니 불리할 것으로 봤는데 전 구간에서 이겼다. 두 장의 KV를 한 풀로 합치는 것이 PCIe 통신 비용보다 컸다. 수평 확장은 KV 총량이 더 크지만 요청 하나가 replica 한 몫에 갇힌다. 라우터 경유 비용은 1% 미만이라 걱정할 것이 아니었고 정작 손해를 낸 것은 캐시 인식 라우팅이었다.</p>
+<p>시간의 상당 부분은 최적화가 아니라 도구 문제에 썼다. 8절에 그 목록을 적어 뒀다.</p>
+<hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="10-참고-자료">10. 참고 자료<a href="https://ddii.dev/deep-learning/llm-optimization-capstone/#10-%EC%B0%B8%EA%B3%A0-%EC%9E%90%EB%A3%8C" class="hash-link" aria-label="Direct link to 10. 참고 자료" title="Direct link to 10. 참고 자료" translate="no">​</a></h2>
+<ul>
+<li class=""><a href="https://www.oreilly.com/library/view/hands-on-llm-serving/9798341621480/" target="_blank" rel="noopener noreferrer" class="">Hands-On LLM Serving and Optimization</a> — 9장</li>
+<li class=""><a href="https://github.com/orca3/llm-model-inference/tree/main/ch09" target="_blank" rel="noopener noreferrer" class="">실습 코드 orca3/llm-model-inference/ch09</a> — <code>inspect_dataset.py</code>, 노트북</li>
+<li class=""><a href="https://docs.vllm.ai/en/latest/contributing/benchmarks/" target="_blank" rel="noopener noreferrer" class="">vLLM: Benchmark CLI</a> — <code>vllm bench serve</code> 옵션</li>
+<li class=""><a href="https://docs.vllm.ai/en/latest/features/quantization/auto_awq/" target="_blank" rel="noopener noreferrer" class="">vLLM: Quantization AWQ</a> — AWQ 지원 범위</li>
+<li class=""><a href="https://docs.vllm.ai/en/latest/serving/parallelism_scaling/" target="_blank" rel="noopener noreferrer" class="">vLLM: Parallelism and Scaling</a> — TP/PP 조합</li>
+<li class=""><a href="https://docs.vllm.ai/en/latest/features/automatic_prefix_caching/" target="_blank" rel="noopener noreferrer" class="">vLLM: Automatic Prefix Caching</a> — 프리픽스 캐시 동작</li>
+<li class=""><a href="https://github.com/vllm-project/production-stack" target="_blank" rel="noopener noreferrer" class="">vLLM production-stack</a> — K8s 네이티브 라우터·스택</li>
+<li class=""><a href="https://pypi.org/project/vllm-router/" target="_blank" rel="noopener noreferrer" class="">vllm-router (PyPI)</a> — 독립 실행 라우터, 정책 5종</li>
+<li class=""><a href="https://huggingface.co/Qwen/Qwen3-14B" target="_blank" rel="noopener noreferrer" class="">Qwen3-14B</a> · <a href="https://huggingface.co/Qwen/Qwen3-14B-AWQ" target="_blank" rel="noopener noreferrer" class="">Qwen3-14B-AWQ</a></li>
+</ul>]]></content:encoded>
+            <category>LLM</category>
+            <category>vLLM</category>
+            <category>Quantization</category>
+            <category>AWQ</category>
+            <category>Tensor Parallelism</category>
+            <category>Benchmark</category>
+            <category>AWS</category>
+            <category>GPU</category>
+        </item>
         <item>
             <title><![CDATA[고급 LLM 최적화 — 추측 디코딩 · 병렬화 · PD 분리 · KV 캐시 계층]]></title>
             <link>https://ddii.dev/deep-learning/llm-advanced-optimization/</link>
@@ -26,7 +886,7 @@
 <p>한 가지만 미리 적어둔다. 추측 디코딩은 흔히 "지연을 2~3배 줄인다"고 소개되는데 이 숫자에는 <strong>동시성이 낮을 때</strong>라는 조건이 빠져 있다. GPU가 한가할 때 남는 연산으로 미리 토큰을 찍어보는 기법이라서 GPU가 이미 배치로 꽉 차 있으면 이득이 사라지고 오히려 손해가 될 수 있다.</p>
 <!-- -->
 <hr>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="용어-사전">용어 사전<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EC%9A%A9%EF%BF%BD%EC%96%B4-%EC%82%AC%EC%A0%84" class="hash-link" aria-label="Direct link to 용어 사전" title="Direct link to 용어 사전" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="용어-사전">용어 사전<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EC%9A%A9%EC%96%B4-%EC%82%AC%EC%A0%84" class="hash-link" aria-label="Direct link to 용어 사전" title="Direct link to 용어 사전" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="추측-디코딩">추측 디코딩<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EC%B6%94%EC%B8%A1-%EB%94%94%EC%BD%94%EB%94%A9" class="hash-link" aria-label="Direct link to 추측 디코딩" title="Direct link to 추측 디코딩" translate="no">​</a></h3>
 
 
@@ -295,7 +1155,7 @@
 
 <table><thead><tr><th>단계</th><th>동작</th><th>비용</th></tr></thead><tbody><tr><td>추측</td><td>드래프트가 K개 생성</td><td>작은 모델이므로 저렴하지만 K회 순차 실행</td></tr><tr><td>검증</td><td>타깃이 K개를 forward 1회로 확인</td><td>타깃 토큰 1개 생성과 비슷한 비용</td></tr><tr><td>승인·거부</td><td>확률 비교로 각 토큰 판정</td><td>무시할 수준</td></tr><tr><td>교정</td><td>첫 거부 위치를 타깃이 채움</td><td>무시할 수준</td></tr></tbody></table>
 <p>드래프트의 K회 순차 실행은 공짜가 아니다. K를 키우면 한 회차에 확정할 수 있는 최대 토큰이 늘지만 드래프트를 돌리는 시간도 K에 비례해 늘고 뒤쪽 토큰의 승인 확률은 떨어진다. 어디가 최적인지는 재봐야 안다.</p>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="드래프트-모델을-고르는-기준">드래프트 모델을 고르는 기준<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EB%93%9C%EB%9E%98%ED%94%84%ED%8A%B8-%EB%AA%A8%EB%8D%B8%EC%9D%84-%EA%B3%A0%EB%A5%B4%EB%8A%94-%EA%B8%B0%EC%A4%80" class="hash-link" aria-label="Direct link to 드래프트 모델을 고르는 기준" title="Direct link to 드래프트 모델을 고르는 기준" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="드래프트-모델을-고르는-기준">드래프트 모델을 고르는 기준<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EB%93%9C%EB%9E%98%ED%94%84%ED%8A%B8-%EB%AA%A8%EB%8D%B8%EC%9D%84-%EA%B3%A0%EB%A5%B4%EB%8A%94-%EA%B8%B0%EC%A4%80" class="hash-link" aria-label="Direct link to 드래프트 모델을 고르는 기준" title="Direct link to 드래프트 모델을 고르��는 기준" translate="no">​</a></h3>
 
 
 
@@ -674,7 +1534,7 @@
 <p>또 하나, 드래프트 모델이 GPU를 약 1GiB 먹으므로 baseline과 드래프트 arm의 KV 캐시 크기가 달라진다. 처리량 비교에서 교란 변수가 되니 <code>--max-model-len</code>과 <code>--max-num-seqs</code>를 전 arm 고정하고 arm별 실측 KV 크기를 기록해 둔다.</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">grep -E "Model loading took|GPU KV cache size|Maximum concurrency" vllm.log</span><br></div></code></pre></div></div>
 <hr>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="4-추측-디코딩의-여러-방식">4. 추측 디코딩의 여러 방식<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#4-%EC%B6%94%EC%B8%A1-%EB%94%94%EC%BD%94%EB%94%A9%EC%9D%98-%EC%97%AC%EB%9F%AC-%EB%B0%A9%EC%8B%9D" class="hash-link" aria-label="Direct link to 4. 추측 디코�딩의 여러 방식" title="Direct link to 4. 추측 디코딩의 여러 방식" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="4-추측-디코딩의-여러-방식">4. 추측 디코딩의 여러 방식<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#4-%EC%B6%94%EC%B8%A1-%EB%94%94%EC%BD%94%EB%94%A9%EC%9D%98-%EC%97%AC%EB%9F%AC-%EB%B0%A9%EC%8B%9D" class="hash-link" aria-label="Direct link to 4. 추측 디코딩의 여러 방식" title="Direct link to 4. 추측 디코딩의 여러 방식" translate="no">​</a></h2>
 <p>드래프트 모델과 ngram 외에도 방식이 여러 가지 있다. 공통점은 "타깃보다 싼 무언가로 후보를 만들고 타깃이 검증한다"이고 후보를 만드는 주체가 다르다.</p>
 
 
@@ -728,7 +1588,7 @@
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="5-여러-gpu로-모델을-나누는-방법">5. 여러 GPU로 모델을 나누는 방법<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#5-%EC%97%AC%EB%9F%AC-gpu%EB%A1%9C-%EB%AA%A8%EB%8D%B8%EC%9D%84-%EB%82%98%EB%88%84%EB%8A%94-%EB%B0%A9%EB%B2%95" class="hash-link" aria-label="Direct link to 5. 여러 GPU로 모델을 나누는 방법" title="Direct link to 5. 여러 GPU로 모델을 나누는 방법" translate="no">​</a></h2>
 <p>GPU 네 장(A10G 24GB x 4, NVLink 없음)에서 TP와 PP를 재봤다. Expert Parallelism은 MoE 모델과 더 많은 GPU가 필요해 개념 설명까지만 다룬다.</p>
 <p>모델이 GPU 한 장에 안 들어가면 나눠야 한다. 나누는 방향에 따라 성격이 완전히 달라진다.</p>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="모델을-복제하는-방식">모델을 복제하는 방식<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EB%AA%A8%EB%8D%B8%EC%9D%84-%EB%B3%B5%EC%A0%9C%ED%95%98%EB%8A%94-%EB%B0%A9%EC%8B%9D" class="hash-link" aria-label="Direct link to 모델�을 복제하는 방식" title="Direct link to 모델을 복제하는 방식" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="모델을-복제하는-방식">모델을 복제하는 방식<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EB%AA%A8%EB%8D%B8%EC%9D%84-%EB%B3%B5%EC%A0%9C%ED%95%98%EB%8A%94-%EB%B0%A9%EC%8B%9D" class="hash-link" aria-label="Direct link to 모델을 복제하는 방식" title="Direct link to 모델을 복제하는 방식" translate="no">​</a></h3>
 <!-- -->
 <p>Data Parallelism은 모델 전체를 GPU마다 복제하고 요청을 나눠 준다. 구현이 단순하고 처리량이 GPU 수에 비례해 늘어난다. 다만 요청 하나는 여전히 GPU 하나에서만 처리되니 지연은 전혀 개선되지 않고 무엇보다 모델이 GPU 한 장에 들어가야 쓸 수 있다. 70B급 모델에는 애초에 선택지가 아니다.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="행렬을-쪼개는-방식-tp">행렬을 쪼개는 방식 (TP)<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%ED%96%89%EB%A0%AC%EC%9D%84-%EC%AA%BC%EA%B0%9C%EB%8A%94-%EB%B0%A9%EC%8B%9D-tp" class="hash-link" aria-label="Direct link to 행렬을 쪼개는 방식 (TP)" title="Direct link to 행렬을 쪼개는 방식 (TP)" translate="no">​</a></h3>
@@ -1895,7 +2755,7 @@
 <p>벤치마크 스크립트가 요구하는 패키지가 vLLM 의존성에 다 들어 있지 않다. 데이터셋 로더는 <code>pandas</code>와 <code>datasets</code>를 쓴다. 이걸 모르고 시작하면 서버가 멀쩡히 뜬 다음 벤치마크만 즉시 죽는다. 7B 모델을 콜드 리드로 올리는 데 10분이 걸릴 수 있는데 그 10분을 기다린 뒤 아무것도 못 재고 버리게 된다.</p>
 <p>비싼 단계 앞에 임포트 확인을 한 줄 넣어 두면 이런 낭비가 없다.</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">pip install pandas datasets</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">python -c "import vllm, pandas, datasets; from vllm.benchmarks import serve; print('OK')"</span><br></div></code></pre></div></div>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="드래프트-�모델이-kv-캐시를-먹는다">드래프트 모델이 KV 캐시를 먹는다<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EB%93%9C%EB%9E%98%ED%94%84%ED%8A%B8-%EB%AA%A8%EB%8D%B8%EC%9D%B4-kv-%EC%BA%90%EC%8B%9C%EB%A5%BC-%EB%A8%B9%EB%8A%94%EB%8B%A4" class="hash-link" aria-label="Direct link to 드래프트 모델이 KV 캐시를 먹는다" title="Direct link to 드래프트 모델이 KV 캐시를 먹는다" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="드래��프트-모델이-kv-캐시를-먹는다">드래프트 모델이 KV 캐시를 먹는다<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EB%93%9C%EB%9E%98%ED%94%84%ED%8A%B8-%EB%AA%A8%EB%8D%B8%EC%9D%B4-kv-%EC%BA%90%EC%8B%9C%EB%A5%BC-%EB%A8%B9%EB%8A%94%EB%8B%A4" class="hash-link" aria-label="Direct link to 드래프트 모델이 KV 캐시를 먹는다" title="Direct link to 드래프트 모델이 KV 캐시를 먹는다" translate="no">​</a></h3>
 <p>추측 디코딩을 켜면 드래프트 모델도 GPU에 올라간다. Qwen2.5-0.5B는 약 1GiB인데, 그만큼 KV 캐시로 쓸 자리가 줄어든다. baseline과 드래프트 arm의 KV 캐시 크기가 달라지므로, 처리량을 비교할 때 이것이 교란 변수가 된다.</p>
 <p><code>--max-model-len</code>과 <code>--max-num-seqs</code>를 전 arm 고정하고 arm별 실제 KV 캐시 크기를 기록해 두면 나중에 해석할 때 근거가 된다.</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">grep -E "Model loading took|GPU KV cache size|Maximum concurrency" vllm.log</span><br></div></code></pre></div></div>
@@ -1909,7 +2769,7 @@
 <p>어노테이션 평가를 미루면 양쪽이 해결된다. <code>from __future__ import annotations</code>를 넣으면 어노테이션이 문자열로 남아 실행되지 않는다.</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain"># 임포트로 파일을 찾으면 안 된다. 임포트가 깨지는 것이 바로 이 버그다</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">FDX=$(find "$VENV" -path '*/flashinfer/comm/fd_exchange.py' | head -1)</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">sed -i '1i from __future__ import annotations' "$FDX"</span><br></div></code></pre></div></div>
 <p>Python 3.12 환경에서는 이 문제가 없다. 배포 이미지의 Python 버전을 먼저 확인하는 편이 낫다.</p>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="같은-계열-모델인데-vocab-크기가-다르다">같은 계열 모델인데 vocab 크기가 다르다<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EA%B0%99%EC%9D%80-%EA%B3%84%EC%97%B4-%EB%AA%A8%EB%8D%B8%EC%9D%B8%EB%8D%B0-vocab-%ED%81%AC%EA%B8%B0%EA%B0%80-%EB%8B%A4%EB%A5%B4%EB%8B%A4" class="hash-link" aria-label="Direct link to 같은 계열 모델인데 vocab 크기가 다르다" title="Direct link to 같은 계열 모델인데 vocab 크기가 다르다" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="같은-계열-모델인데-vocab-크기가-다르다">같은 계열 모델인데 vocab 크기가 다르다<a href="https://ddii.dev/deep-learning/llm-advanced-optimization/#%EA%B0%99%EC%9D%80-%EA%B3%84%EC%97%B4-%EB%AA%A8%EB%8D%B8%EC%9D%B8%EB%8D%B0-vocab-%ED%81%AC%EA%B8%B0%EA%B0%80-%EB%8B%A4%EB%A5%B4%EB%8B%A4" class="hash-link" aria-label="Direct link to 같은 계열 모델인데 vocab 크기가 다르다" title="Direct link to 같은 계열 모델�인데 vocab 크기가 다르다" translate="no">​</a></h3>
 <p>"드래프트는 같은 계열의 작은 모델을 쓰면 된다"는 조언이 Qwen2.5에서 그대로 깨진다.</p>
 <div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">Value error, Target and draft model should have the same vocabulary size.</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Target model vocab_size=152064. Draft model vocab_size=151936.</span><br></div></code></pre></div></div>
 <p>Qwen2.5는 7B 이상이 152064이고 0.5B·1.5B·3B가 151936이다. 같은 계열, 같은 토크나이저인데 임베딩 패딩이 달라서 vLLM의 기본 검증에 막힌다. <code>use_heterogeneous_vocab</code>를 켜면 Token-Level Intersection 알고리즘으로 우회한다.</p>
@@ -1989,7 +2849,7 @@
 <!-- -->
 <hr>
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="용어-사전">용어 사전<a href="https://ddii.dev/deep-learning/quantization-3way-benchmark/#%EC%9A%A9%EC%96%B4-%EC%82%AC%EC%A0%84" class="hash-link" aria-label="Direct link to 용어 사전" title="Direct link to 용어 사전" translate="no">​</a></h2>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="양자화-표기">양자화 표기<a href="https://ddii.dev/deep-learning/quantization-3way-benchmark/#%EC%96%91%EC%9E%90%ED%99%94-%ED%91%9C%EA%B8%B0" class="hash-link" aria-label="Direct link to 양자화 표기" title="Direct link to 양자화 표기" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="양자화-표기">양자화 표기<a href="https://ddii.dev/deep-learning/quantization-3way-benchmark/#%EC%96%91%EC%9E%90%ED%99%94-%EF%BF%BD%EF%BF%BD%ED%91%9C%EA%B8%B0" class="hash-link" aria-label="Direct link to 양자화 표기" title="Direct link to 양자화 표기" translate="no">​</a></h3>
 
 
 
@@ -2952,7 +3812,7 @@ import와 <code>self.vllm_model</code> 초기화를 함께 걷어내야 한다. 
 <div class="language-python codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-python codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic"># llm/model_worker.py</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">device </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"cuda"</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">if</span><span class="token plain"> torch</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">cuda</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">is_available</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">else</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"cpu"</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">model</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">tokenizer </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> ModelManager</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">load_model</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">model_name</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic"># ↑ load_model()은 CPU 모델을 반환하고, 어디에서도 .to(device)를 하지 않는다</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">inputs </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">tokenizer</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">.</span><span class="token punctuation" style="color:#393A34">.</span><span class="token punctuation" style="color:#393A34">.</span><span class="token punctuation" style="color:#393A34">)</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">to</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">device</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain">   </span><span class="token comment" style="color:#999988;font-style:italic"># 입력만 cuda로 이동</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">outputs </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">model</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">generate</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">inputs</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">input_ids</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">.</span><span class="token punctuation" style="color:#393A34">.</span><span class="token punctuation" style="color:#393A34">.</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain">  </span><span class="token comment" style="color:#999988;font-style:italic"># 가중치는 cpu → 💥</span><br></div></code></pre></div></div>
 <p>실제 발생한 오류:</p>
 <div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">UserWarning: You are calling .generate() with the `input_ids` being on a device type</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">different than your model's device. `input_ids` is on cuda, whereas the model is on cpu.</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">RuntimeError: Expected all tensors to be on the same device, but found at least two</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">devices, cpu and cuda:0! (when checking argument for argument index in method</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">wrapper_CUDA__index_select)</span><br></div></code></pre></div></div>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="왜-에러-응답이-아니라-무한-대기인가">왜 "에러 응답"이 아니라 "무한 대기"인가:<a href="https://ddii.dev/deep-learning/llm-serving-hands-on/#%EC%99%9C-%EC%97%90%EB%9F%AC-%EC%9D%91%EB%8B%B5%EC%9D%B4-%EC%95%84%EB%8B%88%EB%9D%BC-%EB%AC%B4%ED%95%9C-%EB%8C%80%EA%B8%B0%EC%9D%B8%EA%B0%80" class="hash-link" aria-label="Direct link to 왜 &quot;에러 응답&quot;이 아니라 &quot;무한 대기&quot;인가:" title="Direct link to 왜 &quot;에러 응답&quot;이 �아니라 &quot;무한 대기&quot;인가:" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="왜-에러-응답이-아니라-무한-대기인가">왜 "에러 응답"이 아니라 "무한 대기"인가:<a href="https://ddii.dev/deep-learning/llm-serving-hands-on/#%EC%99%9C-%EC%97%90%EB%9F%AC-%EC%9D%91%EB%8B%B5%EC%9D%B4-%EC%95%84%EB%8B%88%EB%9D%BC-%EB%AC%B4%ED%95%9C-%EB%8C%80%EA%B8%B0%EC%9D%B8%EA%B0%80" class="hash-link" aria-label="Direct link to 왜 &quot;에러 응답&quot;이 아니라 &quot;무한 대기&quot;인가:" title="Direct link to 왜 &quot;에러 응��답&quot;이 아니라 &quot;무한 대기&quot;인가:" translate="no">​</a></h3>
 <p><code>ModelWorker.run()</code>의 루프에 예외 처리가 없다. 예외가 나면 워커 프로세스가 그대로 죽고,
 부모 프로세스는 <code>model_executor.py</code>에서 결과를 기다린다.</p>
 <div class="language-python codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-python codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">results </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">result_queue</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">get</span><span class="token punctuation" style="color:#393A34">(</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain">   </span><span class="token comment" style="color:#999988;font-style:italic"># 워커가 죽었으므로 영원히 반환되지 않음</span><br></div></code></pre></div></div>
@@ -3515,7 +4375,7 @@ Action들이 그 계획을 수행한다. RAG + 에이전트 패턴의 최소 구
 모르는 이름이면 예외가 난다. <code>gpt-4.1-nano</code>는 실측상 <code>o200k_base</code>로 정상 해석된다.</li>
 <li class="">OpenAI SDK는 요청 body의 <code>model</code> 값을 그대로 보내므로, 서버가 그 이름으로 서빙해야 한다.</li>
 </ol>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="필요한-코드-수정-2곳">필요한 코드 수정 2곳<a href="https://ddii.dev/deep-learning/llm-serving-hands-on/#%ED%95%84%EC%9A%94%ED%95%9C-%EC%BD%94%EB%93%9C-%EC%88%98%EC%A0%95-2%EA%B3%B3" class="hash-link" aria-label="Direct link to 필요한 코드 수정 2곳" title="Direct link to 필요한 코드 수정 2곳" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="필요한-코드-수정-2곳">필요한 코드 수정 2곳<a href="https://ddii.dev/deep-learning/llm-serving-hands-on/#%ED%95%84%EC%9A%94%ED%95%9C-%EC%BD%94%EB%93%9C-%EC%88%98%EC%A0%95-2%EA%B3%B3" class="hash-link" aria-label="Direct link to 필요한 코드 수정 2�곳" title="Direct link to 필요한 코드 수정 2곳" translate="no">​</a></h3>
 <p><strong>(1) 임베딩 엔드포인트 분리.</strong> OpenAI SDK는 환경변수 <code>OPENAI_BASE_URL</code>을 자동으로 읽지만,
 그러면 챗과 임베딩이 같은 서버(8001)로 가버린다. <code>rag_system.py</code>만 별도 URL을 쓰게 한다.</p>
 <div class="language-python codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-python codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token comment" style="color:#999988;font-style:italic"># 수정 전</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">client </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> OpenAI</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">api_key</span><span class="token operator" style="color:#393A34">=</span><span class="token plain">self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">config</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">OPENAI_API_KEY</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token comment" style="color:#999988;font-style:italic"># 수정 후</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">client </span><span class="token operator" style="color:#393A34">=</span><span class="token plain"> OpenAI</span><span class="token punctuation" style="color:#393A34">(</span><span class="token plain">api_key</span><span class="token operator" style="color:#393A34">=</span><span class="token plain">self</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">config</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">OPENAI_API_KEY</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">                     base_url</span><span class="token operator" style="color:#393A34">=</span><span class="token plain">os</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">getenv</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">"EMBEDDING_BASE_URL"</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">or</span><span class="token plain"> os</span><span class="token punctuation" style="color:#393A34">.</span><span class="token plain">getenv</span><span class="token punctuation" style="color:#393A34">(</span><span class="token string" style="color:#e3116c">"OPENAI_BASE_URL"</span><span class="token punctuation" style="color:#393A34">)</span><span class="token plain"> </span><span class="token keyword" style="color:#00009f">or</span><span class="token plain"> </span><span class="token boolean" style="color:#36acaa">None</span><span class="token punctuation" style="color:#393A34">)</span><br></div></code></pre></div></div>
@@ -3577,7 +4437,7 @@ FAISS 없이 전체 순회 코사인 유사도다. 102개 청크 규모에서는
 <p>원본 문서의 핵심 주장 "1개 질문에 LLM이 4회 호출된다"는 <strong>이 구성에서만 맞았다.</strong>
 <code>Planner 1회 + Action 3회</code> = 4회가 나왔지만, §11에서 실제 OpenAI 모델로 다시 돌리면 3회다.
 즉 4는 고정값이 아니다.</p>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="action-조합은-고정이-아니다">Action 조합은 고정이 아니다<a href="https://ddii.dev/deep-learning/llm-serving-hands-on/#action-%EC%A1%B0%ED%95%A9%EC%9D%80-%EA%B3%A0%EC%A0%95%EC%9D%B4-%EC%95%84%EB%8B%88%EB%8B%A4" class="hash-link" aria-label="Direct link to Action 조합은 고정이 아니다" title="Direct link to Action 조합은 고정이 아니다" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="action-조합은-고정이-아니다">Action 조합은 고정이 아니다<a href="https://ddii.dev/deep-learning/llm-serving-hands-on/#action-%EC%A1%B0%ED%95%A9%EC%9D%80-%EA%B3%A0%EC%A0%95%EC%9D%B4-%EC%95%84%EB%8B%88%EB%8B%A4" class="hash-link" aria-label="Direct link to Action 조합은 고정이 �아니다" title="Direct link to Action 조합은 고정이 아니다" translate="no">​</a></h3>
 <p>원본 문서는 계획이 <code>query_rag → analyze → summarize</code>로 정해져 있다고 썼지만, 계획은 <strong>LLM이
 매번 생성</strong>하므로 비결정적이다. Qwen2.5-1.5B가 뽑은 계획은 이랬다.</p>
 <div class="language-json codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-json codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token punctuation" style="color:#393A34">{</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token property" style="color:#36acaa">"plan"</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">[</span><span class="token string" style="color:#e3116c">"generate_summary"</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"query_rag_with_context"</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"generate_summary"</span><span class="token punctuation" style="color:#393A34">]</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token property" style="color:#36acaa">"reasoning"</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"First, we need to create a summary of both topics for context. Then, we'll use RAG ... Finally, we'll compare the results."</span><span class="token punctuation" style="color:#393A34">,</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token property" style="color:#36acaa">"estimated_steps"</span><span class="token operator" style="color:#393A34">:</span><span class="token plain"> </span><span class="token number" style="color:#36acaa">3</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">}</span><br></div></code></pre></div></div>
@@ -4628,7 +5488,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <hr>
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="용어-사전-glossary">용어 사전 (Glossary)<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EC%9A%A9%EC%96%B4-%EC%82%AC%EC%A0%84-glossary" class="hash-link" aria-label="Direct link to 용어 사전 (Glossary)" title="Direct link to 용어 사전 (Glossary)" translate="no">​</a></h2>
 <p>이 문서에서 나오는 머신러닝/딥러닝 용어를 먼저 정리해둠. 모르는 게 나올 때마다 여기로 돌아와서 확인하면 된다.</p>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="기본-ml-용어">기본 ML 용어<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EA%B8%B0%EB%B3%B8-ml-%EC%9A%A9%EC%96%B4" class="hash-link" aria-label="Direct link to 기본 ML 용어" title="Direct link to 기본 ML 용어" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="기본-ml-용어">기본 ML 용어<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EA%B8%B0%EB%B3%B8-ml-%EC%9A%A9%EC%96%B4" class="hash-link" aria-label="Direct link to 기본 ML 용어" title="Direct link to 기��본 ML 용어" translate="no">​</a></h3>
 
 
 
@@ -4983,7 +5843,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <p>핵심 아이디어: 문장의 모든 단어가 다른 모든 단어를 <strong>동시에</strong> 참조하면서 맥락을 이해함 (<a href="https://ddii.dev/deep-learning/transformer-explainer/#term-self-attention" class="">Self-Attention</a>).</p>
 <p>우리의 목표: <code>"The cat sat on the"</code> 다음에 <code>"floor"</code>가 올 거라고 예측하는 과정을 단계별로 따라가보자.</p>
 <hr>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="2-전체-아키텍처--문장이-거치는-전체-경로">2. 전체 아키텍처 — 문장이 거치는 전체 경로<a href="https://ddii.dev/deep-learning/transformer-explainer/#2-%EC%A0%84%EC%B2%B4-%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98--%EB%AC%B8%EC%9E%A5%EC%9D%B4-%EA%B1%B0%EC%B9%98%EB%8A%94-%EC%A0%84%EC%B2%B4-%EA%B2%BD%EB%A1%9C" class="hash-link" aria-label="Direct link to 2. 전체 아키텍처 — 문장이 거치는 전�체 경로" title="Direct link to 2. 전체 아키텍처 — 문장이 거치는 전체 경로" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="2-전체-아키텍처--문장이-거치는-전체-경로">2. 전체 아키텍처 — 문장이 거치는 전체 경로<a href="https://ddii.dev/deep-learning/transformer-explainer/#2-%EC%A0%84%EC%B2%B4-%EC%95%84%ED%82%A4%ED%85%8D%EC%B2%98--%EB%AC%B8%EC%9E%A5%EC%9D%B4-%EA%B1%B0%EC%B9%98%EB%8A%94-%EC%A0%84%EC%B2%B4-%EA%B2%BD%EB%A1%9C" class="hash-link" aria-label="Direct link to 2. 전체 아키텍처 — 문장이 거치는 전체 경로" title="Direct link to 2. 전체 아키텍처 — 문장이 거치는 전체 경로" translate="no">​</a></h2>
 <p>Transformer는 크게 세 단계로 구성된다. 입력 텍스트를 숫자로 바꾸는 <strong>Embedding</strong>, 그 숫자들을 반복적으로 정제하는 <strong>Transformer Block</strong>, 그리고 최종 벡터에서 다음 단어를 고르는 <strong>Output</strong>이다. 각 단계는 독립적으로 이해할 수 있지만, 실제로는 파이프라인처럼 순서대로 흘러간다.</p>
 <!-- -->
 <p>각 단계가 하는 일을 한 줄로 정리하면:</p>
@@ -5014,7 +5874,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <blockquote>
 <p><strong>실제 확인 (GPT-2)</strong>: "The" (ID=464)의 임베딩 벡터 처음 5개 값은 <code>[-0.069, -0.020, 0.064, -0.062, -0.114]</code>이고, 벡터 전체의 크기(norm)는 2.720이다. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-token" class="">Token</a> <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-embedding" class="">Embedding</a> 행렬은 (50,257 × 768), Position <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-embedding" class="">Embedding</a> 행렬은 (1,024 × 768) 크기이다.</p>
 </blockquote>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="5--768--직관적으로-이해하기">"5 × 768" — 직관적으로 이해하기<a href="https://ddii.dev/deep-learning/transformer-explainer/#5--768--%EC%A7%81%EA%B4%80%EC%A0%81%EC%9C%BC%EB%A1%9C-%EC%9D%B4%ED%95%B4%ED%95%98%EA%B8%B0" class="hash-link" aria-label="Direct link to &quot;5 × 768&quot; — 직관적으로 이해하기" title="Direct link to &quot;5 × 768&quot; — 직관적으로 이해하기" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="5--768--직관적으로-이해하기">"5 × 768" — 직관적으로 이해하기<a href="https://ddii.dev/deep-learning/transformer-explainer/#5--768--%EC%A7%81%EA%B4%80%EC%A0%81%EC%9C%BC%EB%A1%9C-%EC%9D%B4%EF%BF%BD%ED%95%B4%ED%95%98%EA%B8%B0" class="hash-link" aria-label="Direct link to &quot;5 × 768&quot; — 직관적으로 이해하기" title="Direct link to &quot;5 × 768&quot; — 직관적으로 이해하기" translate="no">​</a></h3>
 <p>컴퓨터는 "cat"이라는 글자를 이해하지 못한다. 그래서 각 단어를 <strong>숫자 목록으로</strong> 바꿔야 하는데, 숫자 1개로는 단어의 의미를 충분히 담을 수 없으므로 <strong>768개를 한 세트로</strong> 써서 하나의 단어를 표현하는 것이다.</p>
 <div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">"The"  → [0.12, -0.34, 0.56, 0.78, ..., 0.23]   ← 768개 숫자 한 세트</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">"cat"  → [0.45, 0.67, -0.89, 0.11, ..., -0.56]   ← 768개 숫자 한 세트</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">"sat"  → [-0.23, 0.91, 0.04, -0.67, ..., 0.34]   ← 768개 숫자 한 세트</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">"on"   → [0.78, -0.12, 0.33, 0.55, ..., 0.01]    ← 768개 숫자 한 세트</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">"the"  → [0.12, -0.34, 0.56, 0.78, ..., 0.23]    ← 768개 숫자 한 세트</span><br></div></code></pre></div></div>
 <p><strong>5개 단어 × 768개 숫자 = 3,840개 숫자</strong>가 이 문장 전체를 표현함.</p>
@@ -5059,14 +5919,14 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="없으면-어떻게-되나">없으면 어떻게 되나:<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EC%97%86%EC%9C%BC%EB%A9%B4-%EC%96%B4%EB%96%BB%EA%B2%8C-%EB%90%98%EB%82%98" class="hash-link" aria-label="Direct link to 없으면 어떻게 되나:" title="Direct link to 없으면 어떻게 되나:" translate="no">​</a></h3>
 <p><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-self-attention" class="">Self-Attention</a> 없이는 각 단어가 <strong>다른 단어를 전혀 못 본채</strong> 독립적으로 처리된다. "The cat sat on the ___"에서 "the" 혼자만의 정보로는 다음 단어를 예측할 수 없어. "sat"과 "cat"이라는 맥락을 가져와야 "floor"를 예측할 수 있다.</p>
 <hr>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="6-mlp--수집된-맥락에-지식-적용">6. MLP — "수집된 맥락에 지식 적용"<a href="https://ddii.dev/deep-learning/transformer-explainer/#6-mlp--%EC%88%98%EC%A7%91%EF%BF%BD%EF%BF%BD%EB%90%9C-%EB%A7%A5%EB%9D%BD%EC%97%90-%EC%A7%80%EC%8B%9D-%EC%A0%81%EC%9A%A9" class="hash-link" aria-label="Direct link to 6. MLP — &quot;수집된 맥락에 지식 적용&quot;" title="Direct link to 6. MLP — &quot;수집된 맥락에 지식 적용&quot;" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="6-mlp--수집된-맥락에-지식-적용">6. MLP — "수집된 맥락에 지식 적용"<a href="https://ddii.dev/deep-learning/transformer-explainer/#6-mlp--%EC%88%98%EC%A7%91%EB%90%9C-%EB%A7%A5%EB%9D%BD%EC%97%90-%EC%A7%80%EC%8B%9D-%EC%A0%81%EC%9A%A9" class="hash-link" aria-label="Direct link to 6. MLP — &quot;수집된 맥락에 지식 적용&quot;" title="Direct link to 6. MLP — &quot;수집된 맥락에 지식 적용&quot;" translate="no">​</a></h2>
 <p><strong>하는 일</strong>: <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-self-attention" class="">Self-Attention</a>이 맥락을 모아줬으면, MLP는 그 맥락을 바탕으로 각 토큰의 표현을 변환. 모델의 "지식"이 저장된 곳.</p>
 <!-- -->
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="우리-문장-추적-2">우리 문장 추적:<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EC%9A%B0%EB%A6%AC-%EB%AC%B8%EC%9E%A5-%EC%B6%94%EC%A0%81-2" class="hash-link" aria-label="Direct link to 우리 문장 추적:" title="Direct link to 우리 문장 추적:" translate="no">​</a></h3>
 <div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">Attention 출력에서 마지막 "the"의 벡터: 768d</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  (이미 "cat sat on" 맥락이 반영된 상태)</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">① Linear 1: 768d → 3072d (4배 확장)</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">   → 더 넓은 공간에서 다양한 패턴 검사</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">   → "앞에 'sat on the'가 있으면 장소 관련 단어 패턴 활성화"</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">② GELU: 유용한 패턴은 살리고, 관련 없는 건 약화</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">   → "장소 관련 뉴런: 활성화!"</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">   → "감정 관련 뉴런: 억제"</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">③ Linear 2: 3072d → 768d (압축)</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">   → 활성화된 "장소" 정보만 768d에 농축</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">결과: "the"의 벡터가 "다음에 장소 단어(floor, bed, rug...)가 올 것"이라는 정보를 갖게 된다.</span><br></div></code></pre></div></div>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="왜-4배로-확장했다-줄이나">왜 4배로 확장했다 줄이나:<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EC%99%9C-4%EB%B0%B0%EB%A1%9C-%ED%99%95%EC%9E%A5%ED%96%88%EB%8B%A4-%EC%A4%84%EC%9D%B4%EB%82%98" class="hash-link" aria-label="Direct link to 왜 4배로 확장했다 줄이나:" title="Direct link to 왜 4배로 확장했다 줄이나:" translate="no">​</a></h3>
 <p>768d 공간은 좁아. 거기선 복잡한 패턴 분리가 어려움. 3072d로 넓히면 "이건 장소", "이건 감정", "이건 시간" 같은 다양한 패턴을 명확히 분리할 수 있다. 분리한 다음에 유용한 것만 768d로 다시 압축.</p>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="mlp에-지식이-저장됨">MLP에 "지식"이 저장됨:<a href="https://ddii.dev/deep-learning/transformer-explainer/#mlp%EC%97%90-%EC%A7%80%EC%8B%9D%EF%BF%BD%EC%9D%B4-%EC%A0%80%EC%9E%A5%EB%90%A8" class="hash-link" aria-label="Direct link to MLP에 &quot;지식&quot;이 저장됨:" title="Direct link to MLP에 &quot;지식&quot;이 저장됨:" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="mlp에-지식이-저장됨">MLP에 "지식"이 저장됨:<a href="https://ddii.dev/deep-learning/transformer-explainer/#mlp%EC%97%90-%EC%A7%80%EC%8B%9D%EC%9D%B4-%EC%A0%80%EC%9E%A5%EB%90%A8" class="hash-link" aria-label="Direct link to MLP에 &quot;지식&quot;이 저장됨:" title="Direct link to MLP에 &quot;지식&quot;이 저장됨:" translate="no">​</a></h3>
 <ul>
 <li class="">전체 파라미터의 <strong>46%가</strong> MLP에 있음 (Attention은 23%)</li>
 <li class="">"에펠탑은 파리에 있다", "cat은 floor 위에 앉는다" 같은 팩트가 MLP 가중치에 인코딩</li>
@@ -5275,7 +6135,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <li class="">하나 죽어도 나머지 영향 없다.</li>
 <li class="">모델별 맞춤 하드웨어 선택 가능</li>
 </ul>
-<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="multi-model이-필요한-경��우">Multi-Model이 필요한 경우<a href="https://ddii.dev/deep-learning/transformer-explainer/#multi-model%EC%9D%B4-%ED%95%84%EC%9A%94%ED%95%9C-%EA%B2%BD%EC%9A%B0" class="hash-link" aria-label="Direct link to Multi-Model이 필요한 경우" title="Direct link to Multi-Model이 필요한 경우" translate="no">​</a></h4>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="multi-model이-필�요한-경우">Multi-Model이 필요한 경우<a href="https://ddii.dev/deep-learning/transformer-explainer/#multi-model%EC%9D%B4-%ED%95%84%EC%9A%94%ED%95%9C-%EA%B2%BD%EC%9A%B0" class="hash-link" aria-label="Direct link to Multi-Model이 필요한 경우" title="Direct link to Multi-Model이 필요한 경우" translate="no">​</a></h4>
 <ul>
 <li class="">모델이 수백~수천 개 (예: 고객별 커스텀 모델)</li>
 <li class="">대부분 비활성 → 항상 로드해두면 낭비</li>
@@ -5499,7 +6359,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <hr>
 <p><em>이후 §13~§22 (<a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing, <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-quantization-%EC%96%91%EC%9E%90%ED%99%94" class="">Quantization</a>, <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-flashattention" class="">FlashAttention</a>, <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-pagedattention" class="">PagedAttention</a> 등)은 기존 내용 유지</em></p>
 <hr>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="13-batching--요청을-묶어서-처리하기">13. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing — 요청을 묶어서 처리하기<a href="https://ddii.dev/deep-learning/transformer-explainer/#13-batching--%EC%9A%94%EC%B2%AD%EC%9D%84-%EB%AC%B6%EC%96%B4%EC%84%9C-%EC%B2%98%EB%A6%AC%ED%95%98%EA%B8%B0" class="hash-link" aria-label="Direct link to 13-batching--요청을-묶어서-처리하기" title="Direct link to 13-batching--요청을-묶어서-처리하��기" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="13-batching--요청을-묶어서-처리하기">13. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing — 요청을 묶어서 처리하기<a href="https://ddii.dev/deep-learning/transformer-explainer/#13-batching--%EC%9A%94%EC%B2%AD%EC%9D%84-%EB%AC%B6%EC%96%B4%EC%84%9C-%EC%B2%98%EB%A6%AC%ED%95%98%EA%B8%B0" class="hash-link" aria-label="Direct link to 13-batching--요청을-묶어서-처리하기" title="Direct link to 13-batching--요청을-묶어서-�처리하기" translate="no">​</a></h2>
 <p>Decode 단계에서 GPU가 놀고 있다면, 그 빈 연산 자원에 다른 요청을 끼워 넣으면 된다. 이게 Batching의 핵심 동기다. 하나의 요청만 처리하면 GPU 활용률이 10~20%에 머무는데, 여러 요청을 묶으면 같은 GPU로 더 많은 토큰을 처리할 수 있다. 문제는 LLM 요청마다 출력 길이가 다르다는 점이다.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="batching-종류"><a href="https://ddii.dev/deep-learning/transformer-explainer/#term-batch" class="">Batch</a>ing 종류<a href="https://ddii.dev/deep-learning/transformer-explainer/#batching-%EC%A2%85%EB%A5%98" class="hash-link" aria-label="Direct link to batching-종류" title="Direct link to batching-종류" translate="no">​</a></h3>
 <!-- -->
@@ -5541,7 +6401,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-핵심-최적화-기법들">14. 핵심 최적화 기법들<a href="https://ddii.dev/deep-learning/transformer-explainer/#14-%ED%95%B5%EC%8B%AC-%EC%B5%9C%EC%A0%81%ED%99%94-%EA%B8%B0%EB%B2%95%EB%93%A4" class="hash-link" aria-label="Direct link to 14. 핵심 최적화 기법들" title="Direct link to 14. 핵심 최적화 기법들" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="기법-전체-맵">기법 전체 맵<a href="https://ddii.dev/deep-learning/transformer-explainer/#%EA%B8%B0%EB%B2%95-%EC%A0%84%EC%B2%B4-%EB%A7%B5" class="hash-link" aria-label="Direct link to 기법 전체 맵" title="Direct link to 기법 전체 맵" translate="no">​</a></h3>
 <!-- -->
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-1-quantization-�양자화">14-1. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-quantization-%EC%96%91%EC%9E%90%ED%99%94" class="">Quantization</a> (양자화)<a href="https://ddii.dev/deep-learning/transformer-explainer/#14-1-quantization-%EC%96%91%EC%9E%90%ED%99%94" class="hash-link" aria-label="Direct link to 14-1-quantization-양자화" title="Direct link to 14-1-quantization-양자화" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="14-1-quantization-양자화">14-1. <a href="https://ddii.dev/deep-learning/transformer-explainer/#term-quantization-%EC%96%91%EC%9E%90%ED%99%94" class="">Quantization</a> (양자화)<a href="https://ddii.dev/deep-learning/transformer-explainer/#14-1-quantization-%EC%96%91%EC%9E%90%ED%99%94" class="hash-link" aria-label="Direct link to 14-1-quantization-양자화" title="Direct link to 14-1-quantization-양자화" translate="no">​</a></h3>
 <p>모델 가중치의 정밀도(bit)를 줄여서 크기↓, 속도↑. 원리는 간단하다. FP16(16비트)으로 저장된 가중치를 INT8(8비트)이나 INT4(4비트)로 변환하면, 같은 GPU 메모리에 더 큰 모델을 올릴 수 있고, 메모리에서 데이터를 읽는 양이 줄어 대역폭 병목(Decode 단계)이 완화된다. 대신 정밀도가 떨어지니 출력 품질이 약간 저하될 수 있다. 실무에서는 INT4로 내려도 대부분의 태스크에서 품질 차이를 체감하기 어려운 수준이다.</p>
 <!-- -->
 
@@ -6115,7 +6975,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 </ul>
 <p>즉 4편에서 "멀티노드로 확장하면 dcgm-exporter를 DaemonSet으로 띄운다"고 했던 그 방식의 실체가 GPU Operator다. EFA는 GPU Operator 범위 밖이라 <code>aws-efa-k8s-device-plugin</code>(또는 <code>eksctl efaEnabled</code>)과 함께 쓴다.</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain"># GPU Operator 설치 (요지)</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">helm repo add nvidia https://helm.ngc.nvidia.com/nvidia</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"># EKS 가속 AMI는 드라이버·툴킷·device plugin이 이미 있으므로 그 셋은 끄고,</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"># DCGM(dcgm-exporter)·NFD·GFD만 오퍼레이터에 맡긴다</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">helm install gpu-operator nvidia/gpu-operator -n gpu-operator --create-namespace \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --set driver.enabled=false --set toolkit.enabled=false \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --set devicePlugin.enabled=false --set dcgmExporter.enabled=true</span><br></div></code></pre></div></div>
-<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="직접-해본-검증--gpu-operator로-멀티노드-gpu-모니터링">직접 해본 검증 — GPU Operator로 멀티노드 GPU 모니터링<a href="https://ddii.dev/aws/distributed-training-orchestration/#%EC%A7%81%EC%A0%91-%ED%95%B4%EB%B3%B8-%EA%B2%80%EC%A6%9D--gpu-operator%EB%A1%9C-%EB%A9%80%ED%8B%B0%EB%85%B8%EB%93%9C-gpu-%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81" class="hash-link" aria-label="Direct link to 직접 해본 검증 — GPU Operator로 멀티노드 GPU 모니터링" title="Direct link to 직접 해본 검증 — GPU Operator로 멀티노드 GPU 모니터링" translate="no">​</a></h4>
+<h4 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="직접-해본-검증--gpu-operator로-멀티노드-gpu-모니터링">직접 해본 검증 — GPU Operator로 멀티노드 GPU 모니터링<a href="https://ddii.dev/aws/distributed-training-orchestration/#%EC%A7%81%EC%A0%91-%ED%95%B4%EB%B3%B8-%EA%B2%80%EC%A6%9D--gpu-operator%EB%A1%9C-%EB%A9%80%ED%8B%B0%EB%85%B8%EB%93%9C-gpu-%EB%AA%A8%EB%8B%88%ED%84%B0%EB%A7%81" class="hash-link" aria-label="Direct link to 직접 해본 검증 ��— GPU Operator로 멀티노드 GPU 모니터링" title="Direct link to 직접 해본 검증 — GPU Operator로 멀티노드 GPU 모니터링" translate="no">​</a></h4>
 <p>4편에서 단일 노드에 Docker로 띄웠던 dcgm-exporter를, 이번엔 EKS 2노드(<code>g4dn.xlarge</code>, T4 각 1개)에 GPU Operator로 올려 <strong>클러스터 전체 지표를 한 대시보드에 모으는 것</strong>까지 확인했다.</p>
 <ul>
 <li class=""><code>eksctl</code>로 GPU 노드그룹 2대를 만들면 EKS 가속 AMI라 NVIDIA 드라이버·device plugin이 이미 붙어 있다(<code>nvidia.com/gpu: 1</code>씩 광고).</li>
@@ -6462,7 +7322,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <li class=""><strong>POSIX 호환</strong>: PyTorch/TensorFlow의 데이터 로더는 기본적으로 파일시스템 경로를 기대한다.</li>
 <li class=""><strong>멀티노드 동시 접근</strong>: 모든 노드가 같은 경로를 마운트할 수 있어야 한다.</li>
 </ul>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="1-fsx-for-lustre---고성능-병렬-파일시스템">1. FSx for Lustre - 고성능 병렬 파일시스템<a href="https://ddii.dev/aws/distributed-training-storage/#1-fsx-for-lustre---%EF%BF%BD%EF%BF%BD%EA%B3%A0%EC%84%B1%EB%8A%A5-%EB%B3%91%EB%A0%AC-%ED%8C%8C%EC%9D%BC%EC%8B%9C%EC%8A%A4%ED%85%9C" class="hash-link" aria-label="Direct link to 1. FSx for Lustre - 고성능 병렬 파일시스템" title="Direct link to 1. FSx for Lustre - 고성능 병렬 파일시스템" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="1-fsx-for-lustre---고성능-병렬-파일시스템">1. FSx for Lustre - 고성능 병렬 파일시스템<a href="https://ddii.dev/aws/distributed-training-storage/#1-fsx-for-lustre---%EA%B3%A0%EC%84%B1%EB%8A%A5-%EB%B3%91%EB%A0%AC-%ED%8C%8C%EC%9D%BC%EC%8B%9C%EC%8A%A4%ED%85%9C" class="hash-link" aria-label="Direct link to 1. FSx for Lustre - 고성능 병렬 파일시스템" title="Direct link to 1. FSx for Lustre - 고성능 병렬 파일시스템" translate="no">​</a></h2>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="개요">개요<a href="https://ddii.dev/aws/distributed-training-storage/#%EA%B0%9C%EC%9A%94" class="hash-link" aria-label="Direct link to 개요" title="Direct link to 개요" translate="no">​</a></h3>
 <p><a href="https://docs.aws.amazon.com/fsx/latest/LustreGuide/what-is.html" target="_blank" rel="noopener noreferrer" class="">FSx for Lustre</a>는 오픈소스 병렬 파일시스템 Lustre를 AWS가 완전관리형으로 제공하는 서비스다. 온프레미스 HPC 클러스터에서 수십 년간 검증된 Lustre를 클라우드에서 그대로 쓸 수 있다.</p>
 <h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="특성">특성<a href="https://ddii.dev/aws/distributed-training-storage/#%ED%8A%B9%EC%84%B1" class="hash-link" aria-label="Direct link to 특성" title="Direct link to 특성" translate="no">​</a></h3>
@@ -6473,7 +7333,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <li class=""><strong>S3 통합</strong>: S3 버킷을 Data Repository로 연결하면, FSx가 S3 데이터를 자동으로 lazy-load(처음 접근 시 가져옴)하고, 결과를 S3로 export할 수 있다.</li>
 <li class=""><strong>POSIX 완전 호환</strong>: 심볼릭 링크, 하드 링크, 파일 잠금 등 모두 지원.</li>
 </ul>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="분산-학습에서의-장점">분산 학습에서의 장점<a href="https://ddii.dev/aws/distributed-training-storage/#%EB%B6%84%EC%82%B0-%ED%95%99%EC%8A%B5%EC%97%90%EC%84%9C%EC%9D%98-%EC%9E%A5%EC%A0%90" class="hash-link" aria-label="Direct link to 분산 학습에서의 장점" title="Direct link to 분산 학습에서의 장점" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="분산-학습에서의-장점">분산 학습에서의 장점<a href="https://ddii.dev/aws/distributed-training-storage/#%EB%B6%84%EC%82%B0-%EF%BF%BD%ED%95%99%EC%8A%B5%EC%97%90%EC%84%9C%EC%9D%98-%EC%9E%A5%EC%A0%90" class="hash-link" aria-label="Direct link to 분산 학습에서의 장점" title="Direct link to 분산 학습에서의 장점" translate="no">​</a></h3>
 <ul>
 <li class="">GPU가 수백 개여도 데이터 로딩이 병목이 되지 않는다. Lustre의 병렬 스트라이핑이 핵심.</li>
 <li class="">체크포인트를 빠르게 쓸 수 있다 - 대형 모델(수백 GB)도 수십 초 내에 저장 가능.</li>
@@ -7605,7 +8465,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <p>다만 예외가 있다. 2021년에 AWS가 C5n, G4, I3 등 일부 패밀리에 대해 작은 사이즈에도 EFA를 확장했다. 예를 들어 <code>c5n.9xlarge</code>(절반 사이즈)나 <code>g4dn.8xlarge</code>도 EFA를 지원한다. 단순히 "EFA가 동작하는지" 학습/검증하는 용도라면 이런 작은 사이즈가 진입 장벽이 낮아 유용하다.</p>
 <p>특정 리전에서 EFA를 지원하는 인스턴스 목록은 다음 명령으로 직접 확인할 수 있다.</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">aws ec2 describe-instance-types \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --filters Name=network-info.efa-supported,Values=true \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --query "InstanceTypes[].InstanceType" \</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  --output text</span><br></div></code></pre></div></div>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="멀티-gpu-nccl-테스트-단일-노드-vs-멀티-노드">멀티 GPU NCCL 테스트: 단일 노드 vs 멀티 노드<a href="https://ddii.dev/aws/infiniband-vs-efa/#%EB%A9%80%ED%8B%B0-gpu-nccl-%ED%85%8C%EC%8A%A4%ED%8A%B8-%EB%8B%A8%EC%9D%BC-%EB%85%B8%EB%93%9C-vs-%EB%A9%80%ED%8B%B0-%EB%85%B8%EB%93%9C" class="hash-link" aria-label="Direct link to 멀티 GPU NCCL 테스트: 단일 노드 vs 멀티 노드" title="Direct link to 멀티 GPU NCCL 테스트: 단일 노드 vs 멀티 노드" translate="no">​</a></h3>
+<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="멀티-gpu-nccl-테스트-단일-노드-vs-멀티-노드">멀티 GPU NCCL 테스트: 단일 노드 vs 멀티 노드<a href="https://ddii.dev/aws/infiniband-vs-efa/#%EB%A9%80%ED%8B%B0-gpu-nccl-%ED%85%8C%EC%8A%A4%EF%BF%BD%ED%8A%B8-%EB%8B%A8%EC%9D%BC-%EB%85%B8%EB%93%9C-vs-%EB%A9%80%ED%8B%B0-%EB%85%B8%EB%93%9C" class="hash-link" aria-label="Direct link to 멀티 GPU NCCL 테스트: 단일 노드 vs 멀티 노드" title="Direct link to 멀티 GPU NCCL 테스트: 단일 노드 vs 멀티 노드" translate="no">​</a></h3>
 <p>GPU 분산 학습 통신(NCCL)을 테스트할 때는 다음 두 시나리오를 구분해야 한다.</p>
 <ul>
 <li class=""><strong>단일 노드 내 멀티 GPU</strong>: GPU가 여러 개 달린 인스턴스 1대에서 NCCL을 돌리면, GPU 간 통신은 NVLink/PCIe로 노드 내부에서 처리된다. 이 경우 <strong>EFA를 타지 않는다.</strong> 노드가 하나뿐이라 노드 간 통신 자체가 없기 때문이다. <code>g4dn.12xlarge</code>(T4 4장)나 <code>g5.12xlarge</code>(A10G 4장)처럼 GPU가 여러 개인 인스턴스로 손쉽게 시도해볼 수 있다.</li>
@@ -8007,7 +8867,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">ratesFQDN=$(kubectl get httproute rates -o json | jq -r '.metadata.annotations."application-networking.k8s.aws/lattice-assigned-domain-name"')</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">inventoryFQDN=$(kubectl get httproute inventory -o json | jq -r '.metadata.annotations."application-networking.k8s.aws/lattice-assigned-domain-name"')</span><br></div></code></pre></div></div>
 <p>서비스와 서비스간 연결 확인을 위해 각 서비스에서 위에서 저장한 FQDN으로 curl 명령을 실행해보면 정상적으로 통신되는것을 확인해볼수 있다.</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">$ kubectl exec deploy/inventory-ver1 -- curl -s $ratesFQDN/parking $ratesFQDN/review</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Requsting to Pod(parking-7c89b6b67c-65grb): parking handler pod</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Requsting to Pod(review-5846dd8dcc-jmmx6): review handler pod</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">$ kubectl exec deploy/parking -- curl -s $inventoryFQDN</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">Requsting to Pod(inventory-ver1-55ff9bb45d-f6v7j): Inventory-ver1 handler pod</span><br></div></code></pre></div></div>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="정리">정리<a href="https://ddii.dev/kubernetes/gatewayapi/#%EC%A0%95%EB%A6%AC" class="hash-link" aria-label="Direct link to 정리" title="Direct link to 정리" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="정�리">정리<a href="https://ddii.dev/kubernetes/gatewayapi/#%EC%A0%95%EB%A6%AC" class="hash-link" aria-label="Direct link to 정리" title="Direct link to 정리" translate="no">​</a></h2>
 <p>Gateway API는 Kubernetes에서 네트워크 서비스를 제공하기 위해 설계된 여러 API를 모아놓은 것으로, 역할 지향적, 이식성, 표현력, 확장성의 특징을 가지고 있어서 다양한 조직이나 담당하는 업무에 따른 역할을 부여할 수 있는 기능을 제공한다. Gateway API는 세 가지 주요 리소스 모델인 <code>GatewayClass</code>, <code>Gateway</code>, <code>HTTPRoute</code>를 통해 클러스터 내에서 트래픽을 효과적으로 관리할 수 있도록 한다. AWS Gateway API Controller는 이러한 Gateway API를 확장하여 VPC Lattice 리소스를 생성하고 관리할 수 있는 도구로, 클러스터에 설치하면 자동으로 Gateway API 리소스를 감시하고 Amazon VPC Lattice 객체로 프로비저닝한다. 실제 서비스 연동 테스트를 위한 데모를 통해 Gateway API와 VPC Lattice의 연동도 간단하게 수행해봤다.</p>
 <p>추가적으로 네임스페이스, 클러스터를 넘어서 연결성을 확보할 수도 있고, 다른 어카운트에 Gateway 리소스를 AWS Resource Access Manager을 통해서 공유하는것도 가능하다. 자세한 내용은 <a href="https://github.com/aws/aws-application-networking-k8s" target="_blank" rel="noopener noreferrer" class="">공식 깃헙</a>과 <a href="https://www.gateway-api-controller.eks.aws.dev/latest/" target="_blank" rel="noopener noreferrer" class="">공식 가이드 문서</a>에서도 확인할 수 있다.</p>
 <blockquote>
@@ -8521,7 +9381,7 @@ Prefill/Decode를 분리해 병목이 실제로 갈라지는지 재보는 것이
 </ul>
 <div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> k6.io/v1alpha1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> K6</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> k6</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">sample</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">spec</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">arguments</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">o xk6</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">prometheus</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">rw </span><span class="token punctuation" style="color:#393A34">-</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">tag testid=test</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">parallelism</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token number" style="color:#36acaa">1</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">runner</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">env</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> K6_PROMETHEUS_RW_SERVER_URL</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">value</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> http</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">//kube</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">prometheus</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">stack</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">prometheus.monitoring</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">9090/api/v1/write</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> K6_PROMETHEUS_RW_TREND_AS_NATIVE_HISTOGRAM</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">value</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"true"</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">image</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> k6</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">prometheus</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">v1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">script</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">configMap</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">file</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> scritps.js</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> test</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">script</span><br></div></code></pre></div></div>
 <p>클러스터에서 두 개 이상의 테스트 스크립트를 사용하려면 각 스크립트에 대해 이 프로세스를 반복하여 맵에 다른 이름을 지정하면 된다. k6 리소스를 배포하게 되면 이제부터 배포 테스트 결과 메트릭 값이 프로메테우스로 바로 전달이 된다.</p>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="grafana-대�시보드-등록">Grafana 대시보드 등록<a href="https://ddii.dev/kubernetes/k6-prometheus/#grafana-%EB%8C%80%EC%8B%9C%EB%B3%B4%EB%93%9C-%EB%93%B1%EB%A1%9D" class="hash-link" aria-label="Direct link to Grafana 대시보드 등록" title="Direct link to Grafana 대시보드 등록" translate="no">​</a></h2>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="grafana-대시보드-등록">Grafana 대시보드 등록<a href="https://ddii.dev/kubernetes/k6-prometheus/#grafana-%EB%8C%80%EC%8B%9C%EB%B3%B4%EB%93%9C-%EB%93%B1%EB%A1%9D" class="hash-link" aria-label="Direct link to Grafana 대시보드 등록" title="Direct link to Grafana 대시보드 등록" translate="no">​</a></h2>
 <p><a href="https://grafana.com/grafana/dashboards/18030-test-result/" target="_blank" rel="noopener noreferrer" class=""><code>18030</code> grafana 대시보드</a>를 import 하면 다음 그림과 같은 대시보드를 통해 현재 리퀘스트 현황(성공, 실패), 지연시간, 데이터 전송량, VUs 등을 최대 프로메테우스가 수집 최대 주기 기준의 준 실시간 수준으로 확인이 가능하다.</p>
 <p><img decoding="async" loading="lazy" alt="dashboard" src="https://ddii.dev/assets/images/k6-dashboard-31d848ca448fdfe6bb2f6e37338ebce1.png" width="850" height="646" class="img_ev3q"></p>
 <h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="정리">정리<a href="https://ddii.dev/kubernetes/k6-prometheus/#%EC%A0%95%EB%A6%AC" class="hash-link" aria-label="Direct link to 정리" title="Direct link to 정리" translate="no">​</a></h2>
@@ -8602,97 +9462,6 @@ kyverno는 쿠버네티스 리소스로 관리되며 정책을 작성하는 데 
             <category>kyverno</category>
             <category>policy</category>
             <category>security</category>
-        </item>
-        <item>
-            <title><![CDATA[Advanced Argo Rollout]]></title>
-            <link>https://ddii.dev/kubernetes/argo-rollout-advanced/</link>
-            <guid>https://ddii.dev/kubernetes/argo-rollout-advanced/</guid>
-            <pubDate>Sat, 25 Mar 2023 00:00:00 GMT</pubDate>
-            <description><![CDATA[argo-rollout의 세부적인 전략을 알아보고 다양한 notification을 설정한다.]]></description>
-            <content:encoded><![CDATA[<p>kOps 환경에 구축한 ArgoCD와 Argo Rollout를 좀더 잘 쓰기 위한 몇가지 내용들을 간단하게 기록용으로 작성하였다.</p>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="gitops">GitOps<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#gitops" class="hash-link" aria-label="Direct link to GitOps" title="Direct link to GitOps" translate="no">​</a></h2>
-<p>간단하게만 정리하면, GitOps는 Git 리포지토리를 단일 정보 소스(SSOT,Single Source Of Truth)로 사용하여 인프라를 코드로 제공하는 것이다. GitOps는 인프라 구성을 위해 Git을 버전 제어 시스템으로 사용하는 코드형 인프라 (IaC) 가 진화한 것이라고 생각하면 된다. IaC는 원하는 시스템 상태를 정의하고 시스템의 실제 상태를 추적하여 인프라 관리에 대한 선언적 접근 방식을 따르는 경우가 많다. 그래서 배포에 관련된 모든 것을 선언형 기술서로 작성한다음 Config 레포지토리에서 저장을 하고, 해당 정보와 실제 배포된 환경간의 상태 차이가 발생하지 않도록 유지하는 것을 GitOps 업무 패턴이라고 할 수 있다.</p>
-<p>또한 개발자에게 익숙한 Git 기반 워크플로우를 사용하여 애플리케이션 개발에서 배포, 애플리케이션 라이프사이클 관리, 인프라 구성에 이르는 기존 프로세스를 기반으로 확장을 할 수 있다. 애플리케이션 라이프사이클 전반에 걸쳐 모든 변경 사항이 Git 리포지토리에서 추적되고, GitOps는 이러한 변경 사항을 자동으로 인프라에 적용하는 것을 말한다.</p>
-<p>이처럼 GitOps의 장점중에 가장 중요한 부분은 신뢰할 수 있는 정보가 공유되고, 인프라 구성하는 모든 변경 사항에 대한 추적과 관리가 가능해진다는 점일 것이다.</p>
-<!-- -->
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="argocd-argo-rollouts">ArgoCD, Argo Rollouts<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#argocd-argo-rollouts" class="hash-link" aria-label="Direct link to ArgoCD, Argo Rollouts" title="Direct link to ArgoCD, Argo Rollouts" translate="no">​</a></h2>
-<p>ArgoCD는 위에서 이야기한 것처럼 쿠버네티스 리소스와 Git에 저장된 선언형 기술서(manifest)를 동일하게 유지시켜 주고 CD환경을 구성할 수 있는 GitOps 구현체 오픈소스이다. 즉, GitOps 패턴을 따라 Git 저장소를 사용하여 애플리케이션 배포를 관리할 수 있는 도구이다.</p>
-<p>롤아웃은 쿠버네티스 환경에서 새로운 버전의 애플리케이션을 배포할 때 이전 버전의 애플리케이션과 새로운 버전의 애플리케이션을 조절하고 사용자에게 무중단으로 서비스를 제공할 수 있도록 하는 것을 말한다.</p>
-<p>Argo Rollouts는 쿠버네티스에서 롤아웃 관리를 위한 오픈소스 도구 중 하나이다. 쿠버네티스의 서비스 메시 및 인그레스 컨트롤러와 통합하여 트래픽을 새 버전으로 점진적으로 이동시키는 기능을 제공한다. 쿠버네티스의 커스텀 리소스 정의(CRD)를 사용하여 블루-그린 배포, 카나리 배포, 카나리 분석 등의 형태로 정의하고, 거의(?) 무중단으로 새로운 버전의 애플리케이션을 배포할 수 있게 한다. 새로운 버전의 애플리케이션이 제대로 작동하지 않을 경우, 롤백을 수행하여 이전 버전의 애플리케이션으로 빠른 시간내에 되돌릴 수 있다.</p>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="argo-rollout-specification">Argo Rollout Specification<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#argo-rollout-specification" class="hash-link" aria-label="Direct link to Argo Rollout Specification" title="Direct link to Argo Rollout Specification" translate="no">​</a></h2>
-<p>Argo Rollout Specification은 Argo Rollouts 도구에서 사용하는 롤아웃 전략을 정의하는 YAML 파일을 말한다. 각각의 애플리케이션에 맞게 작성되어야 하고 Kubernetes API를 기반으로 구성되며, 롤아웃 전략의 모든 내용을 포함하여 작성하게 된다.</p>
-<p>Argo Rollout Specification 파일은 다음과 같은 내용을 포함한다.</p>
-<ol>
-<li class="">롤아웃 전략: Canary, Blue-Green, AB Testing 등 다양한 롤아웃 전략</li>
-<li class="">배포 전략: 롤아웃 속도, 배포 시간 등의 새로운 버전의 애플리케이션을 배포하는 방법을 정의</li>
-<li class="">서비스 설정: 롤아웃 중에 사용할 서비스를 정의</li>
-<li class="">롤아웃 이력: 이전 롤아웃 이력을 추적하고 검색</li>
-</ol>
-<p>Blue-Green 전략은 두 개의 버전의 애플리케이션을 동시에 유지하면서, 사용자 트래픽을 새로운 버전으로 전환하는 전략으로 이전 버전은 Blue 환경이라고 하고, 새로운 버전은 Green 환경이라고 말한다. Blue-Green 배포 전략은 롤백이 매우 쉬우며, 사용자 트래픽의 전환도 매우 빠르게 수행된다. 따라서, 많은 기업에서 Blue-Green 배포 전략을 사용하여 새로운 버전의 애플리케이션을 롤아웃하고 있고 일반적인 방식이라 보면 된다.</p>
-<p>다음은 Argo Rollout에서 Blue-Green 배포 전략을 정의하는 YAML 파일의 예시이다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> argoproj.io/v1alpha1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> Rollout</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">spec</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">strategy</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">blueGreen</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">activeService</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">green</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">previewService</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">blue</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">autoPromotionEnabled</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token boolean important" style="color:#36acaa">true</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token comment" style="color:#999988;font-style:italic"># autoPromotionSeconds: *int32  </span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">template</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">spec</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">containers</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">        </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">          </span><span class="token key atrule" style="color:#00a4db">image</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">v2</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">selector</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">matchLabels</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">app</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><br></div></code></pre></div></div>
-<ul>
-<li class=""><code>activeService</code>: Green 환경에 배포된 애플리케이션에 대한 서비스 이름으로 Blue-Green 전략에서는 필수 필드</li>
-<li class=""><code>previewService</code>: Blue 환경에 배포된 애플리케이션에 대한 서비스 이름으로 Blue-Green 전략에서는 optional 필드</li>
-<li class=""><code>autoPromotionEnabled</code>: 롤아웃이 완료된 후, 자동으로 Green 환경으로 전환할지 여부</li>
-<li class=""><code>template</code>: 새로운 버전의 애플리케이션을 정의</li>
-<li class=""><code>selector</code>: 롤아웃 중인 애플리케이션을 선택하기 위한 레이블 셀렉터</li>
-<li class=""><code>autoPromotionSeconds</code>: Rollout 이 일시 정지 상태에 들어간 이후 해당 필드 설정 시간이 지난후 자동으로 새로운 ReplicaSet을 활성 서비스로 자동으로 promote 하는 옵션이다.AutoPromotionEnabled 필드가 True로 설정되면이 필드는 무시된다.</li>
-</ul>
-<p>anti-affinity는 다른 노드 간의 Pod 분산을 위해 사용되고, pod anti-affinity는 동일한 물리적 호스트에서 실행되는 여러 Pod 간의 분산을 위해 사용되는 방법이다.</p>
-<p>anti-affinity struct를 Blue-Green 또는 Canary 전략에 추가할 수 있다. 여러 노드에 애플리케이션을 배포할 때, 동일한 파드들이 하나의 노드에 모이지 않도록 하는 전략이다. 이를 통해 단일 노드 장애로부터 애플리케이션을 보호할 수 있다. 아래의 예시는 새 버전은 독립된 scaled 노드로 배치하는 하고 특정 zone에만 배치하는 전략이다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">spec</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">strategy</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">blueGreen</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">antiAffinity</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">        </span><span class="token key atrule" style="color:#00a4db">requiredDuringSchedulingIgnoredDuringExecution</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">          </span><span class="token key atrule" style="color:#00a4db">nodeSelectorTerms</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">          </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">matchExpressions</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">              </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">key</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> topology.kubernetes.io/zone  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">              </span><span class="token key atrule" style="color:#00a4db">operator</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> In  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">              </span><span class="token key atrule" style="color:#00a4db">values</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">              </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> ap</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">northeast</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">2a</span><br></div></code></pre></div></div>
-<p>아래 예시는 podAntiAffinity 필드를 사용하여 anti-affinity 전략을 설정하는데 <code>requiredDuringSchedulingIgnoredDuringExecution</code>를 사용하여 노드 스케줄링 중에 이전 파드와 동일한 노드에 배치하지 않도록 필요한 설정을 지정하는 전략이다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">spec</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">affinity</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">        </span><span class="token key atrule" style="color:#00a4db">podAntiAffinity</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">          </span><span class="token key atrule" style="color:#00a4db">requiredDuringSchedulingIgnoredDuringExecution</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">          </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">labelSelector</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">              </span><span class="token key atrule" style="color:#00a4db">matchExpressions</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">              </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">key</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> app</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">                </span><span class="token key atrule" style="color:#00a4db">operator</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> In</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">                </span><span class="token key atrule" style="color:#00a4db">values</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">                </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> myapp</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">            </span><span class="token key atrule" style="color:#00a4db">topologyKey</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token string" style="color:#e3116c">"kubernetes.io/hostname"</span><br></div></code></pre></div></div>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="argo-rollouts-notification">Argo Rollouts Notification<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#argo-rollouts-notification" class="hash-link" aria-label="Direct link to Argo Rollouts Notification" title="Direct link to Argo Rollouts Notification" translate="no">​</a></h2>
-<p><a href="https://argoproj.github.io/argo-rollouts/features/notifications/" target="_blank" rel="noopener noreferrer" class="">https://argoproj.github.io/argo-rollouts/features/notifications/</a></p>
-<p>Argo Rollouts Notification은 롤아웃 이벤트에 대한 알림 메시지를 Slack, Email, Webhook 등 다양한 방법으로 전송할 수 있다. 이를 통해 롤아웃 이벤트에 대한 모니터링 및 대응이 가능해진다.</p>
-<p>해당 기능은 1.1.0 이상 버전의 Rollout을 구성해야만 Notification 기능을 사용할 수 있다.&nbsp;&nbsp;</p>
-<p>구성된 환경에 추가적으로 Argo Rollouts Notification 리소스를 생성하고, 해당 리소스에서 각 통합 서비스에 대한 설정을 작성한다. 이렇게 작성된 설정을 통해 롤아웃 이벤트가 발생할 때 마다, 해당 설정에 따라 알림 메시지가 전송되는 구조이다.</p>
-<p>알림 처리를 담당하는 Argo CD Notification 컨트롤러를 설치한다.</p>
-<div class="language-sh codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sh codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml</span><br></div></code></pre></div></div>
-<p>같은 네임스페이스, 기본 구성되는 argo-rollouts 내의 ConfigMap을 참조하게 된다. 다음 명령을 실행하면&nbsp;<code>argo-rollouts</code>&nbsp;네임스페이스에&nbsp;<code>argo-rollouts-notification-configmap</code>라는 이름의 ConfigMap이 만들어지게 되고, 이 ConfigMap에는 다음과 같은 트리거와 템플릿을 담겨 있으며 필요시 Custom 트리거와 템플릿을 추가할 수 있다. argo-rollouts pod는 정의된 트리거를 감지하면 트리거와 링크되어 있는 템플릿으로 메시지를 구성하여 알림을 발송하게 된다.</p>
-<div class="language-sh codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sh codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token plain">kubectl apply -n argo-rollouts -f https://raw.githubusercontent.com/argoproj/argo-rollouts/master/manifests/notifications-install.yaml</span><br></div></code></pre></div></div>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="slack-연동">Slack 연동<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#slack-%EC%97%B0%EB%8F%99" class="hash-link" aria-label="Direct link to Slack 연동" title="Direct link to Slack 연동" translate="no">​</a></h2>
-<p>Slack에서 다음과 같은 권한으로 Oauth 설정을 하고 생성된 access token을 Secret으로 저장한다.</p>
-<p><img decoding="async" loading="lazy" alt="argo-secret" src="https://ddii.dev/assets/images/argo-secret-3d2dc8d37ade51f0203fdd05a9289cd6.png" width="653" height="397" class="img_ev3q"></p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> v1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> Secret</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> argo</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">rollouts</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">notification</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">secret</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">stringData</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">slack-token</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> &lt;Oauth</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">access</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">token</span><span class="token punctuation" style="color:#393A34">&gt;</span><br></div></code></pre></div></div>
-<p>위에서 설정한 Oauth Secret을 위에서 구성한  ConfigMap에 추가한다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> v1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> ConfigMap</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> argo</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">rollouts</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">notification</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">configmap</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">data</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">service.slack</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">|</span><span class="token scalar string" style="color:#e3116c"></span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    token: $slack-token</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">...</span><br></div></code></pre></div></div>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="templates">Templates<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#templates" class="hash-link" aria-label="Direct link to Templates" title="Direct link to Templates" translate="no">​</a></h3>
-<p>알림 템플릿은 알림 콘텐츠를 생성하는 상태 비저장 함수이다. 이 템플릿은 html/template golang 패키지를 활용한다. 템플릿은 재사용할 수 있으며 여러 트리거에서 참조할 수 있다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token punctuation" style="color:#393A34">...</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">data</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">template.rollout-completed</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">|</span><span class="token scalar string" style="color:#e3116c"></span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    message: Rollout {{.rollout.metadata.name}} has been completed.</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    email:</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">      subject: Rollout {{.rollout.metadata.name}} has been completed.</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    slack:</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">      attachments: |</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">          [{</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            "title": "{{ .rollout.metadata.name}}",</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            "color": "#18be52",</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            "fields": [</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            {</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">              "title": "Strategy",</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">              "value": "{{if .rollout.spec.strategy.blueGreen}}BlueGreen{{end}}{{if .rollout.spec.strategy.canary}}Canary{{end}}",</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">              "short": true</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            }</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            {{range $index, $c := .rollout.spec.template.spec.containers}}</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">              {{if not $index}},{{end}}</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">              {{if $index}},{{end}}</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">              {</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">                "title": "{{$c.name}}",</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">                "value": "{{$c.image}}",</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">                "short": true</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">              }</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            {{end}}</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">            ]</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">          }]</span><br></div></code></pre></div></div>
-<p>이외의 다른 여러가지 템플릿 구성은 <a href="https://github.com/argoproj/argo-rollouts/tree/master/manifests/notifications" target="_blank" rel="noopener noreferrer" class="">https://github.com/argoproj/argo-rollouts/tree/master/manifests/notifications</a> 에서 확인할 수 있다.</p>
-<h3 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="triggers">Triggers<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#triggers" class="hash-link" aria-label="Direct link to Triggers" title="Direct link to Triggers" translate="no">​</a></h3>
-<p>트리거 되는 경우에 어떤 template으로 보낼지 지정하는 구문이다. 아래 예시는 위에서 정한 template 이름인 <code>rollout-completed</code>를 보낸다는 설정이다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token punctuation" style="color:#393A34">...</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">data</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">trigger.on-rollout-completed</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">|</span><span class="token scalar string" style="color:#e3116c"></span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    - send: [rollout-completed]</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></div></code></pre></div></div>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="rollout-template에-notification-annotation-추가">Rollout template에 notification annotation 추가<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#rollout-template%EC%97%90-notification-annotation-%EC%B6%94%EA%B0%80" class="hash-link" aria-label="Direct link to Rollout template에 notification annotation 추가" title="Direct link to Rollout template에 notification annotation 추가" translate="no">​</a></h2>
-<p>신규로 생성하거나 기존의 Rollout 리소스에 notification annotation를 추가해야 관련된 rollout 이벤트가 발생하면 위에 설정한 슬랙의 <code>my_channel</code>로 alert를 보내게 된다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> argoproj.io/v1alpha1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> Rollout</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">annotations</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">notifications.argoproj.io/subscribe.on-scaling-replica-set.slack</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> my_channel</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">spec</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">strategy</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">blueGreen</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">activeService</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">green</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">previewService</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">blue</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">autoPromotionEnabled</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token boolean important" style="color:#36acaa">true</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">template</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">spec</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">containers</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">        </span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain"> </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">          </span><span class="token key atrule" style="color:#00a4db">image</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">v2</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">selector</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">matchLabels</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">      </span><span class="token key atrule" style="color:#00a4db">app</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><br></div></code></pre></div></div>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="grafana로-rollout-notification-받기">Grafana로 Rollout notification 받기<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#grafana%EB%A1%9C-rollout-notification-%EB%B0%9B%EA%B8%B0" class="hash-link" aria-label="Direct link to Grafana로 Rollout notification 받기" title="Direct link to Grafana로 Rollout notification 받기" translate="no">​</a></h2>
-<p>추가적으로 Grafana annotation api(<a href="https://grafana.com/docs/grafana/latest/http_api/annotations/" target="_blank" rel="noopener noreferrer" class="">https://grafana.com/docs/grafana/latest/http_api/annotations/</a>)를 활용하여 rollout 관련 이벤트 발생시 해당 시점의 이벤트 정보를 Grafana 시계열 차트에 자동으로 등록을 하는 방식으로 메트릭 기반으로 배포 전후 상태를 관측할 수 있도록 구성하는것이 목적이다.</p>
-<p>Slack과 동일한 방식으로 grafana에서 발급한 API Key를 Secret에 등록한다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> v1  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> Secret  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> argo</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">rollouts</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">notification</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">secret  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">stringData</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain">  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">grafana-api-key</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">{</span><span class="token punctuation" style="color:#393A34">{</span><span class="token plain">grafana</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">api</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">key</span><span class="token punctuation" style="color:#393A34">}</span><span class="token punctuation" style="color:#393A34">}</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">type</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> Opaque</span><br></div></code></pre></div></div>
-<p>기존 ConfigMap에 grafana API 엔드포인트와 위에서 설정한 apiKey를 설정한다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> v1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> ConfigMap</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> argo</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">rollouts</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">notification</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">configmap</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">data</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">service.grafana</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">|</span><span class="token scalar string" style="color:#e3116c">                                                </span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    apiUrl: http://prometheus-grafana.prometheus.svc.cluster.local/api</span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    apiKey: $grafana-api-key</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">service.slack</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> </span><span class="token punctuation" style="color:#393A34">|</span><span class="token scalar string" style="color:#e3116c"></span><br></div><div class="token-line" style="color:#393A34"><span class="token scalar string" style="color:#e3116c">    token: $slack-token</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">...</span><br></div></code></pre></div></div>
-<p>기존 rollout 에 위에 선언한 grafana에 알림 전달을 위한 annotatinos을 추가한다.</p>
-<div class="language-yaml codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-yaml codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#393A34"><span class="token key atrule" style="color:#00a4db">apiVersion</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> argoproj.io/v1alpha1</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">kind</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> Rollout</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token key atrule" style="color:#00a4db">metadata</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">name</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> myapp</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">  </span><span class="token key atrule" style="color:#00a4db">annotations</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"></span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">notifications.argoproj.io/subscribe.on-analysis-run-running.grafana</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> analysis</span><span class="token punctuation" style="color:#393A34">-</span><span class="token plain">run  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">notifications.argoproj.io/subscribe.on-app-sync-status.grafana</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> appsync  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">notifications.argoproj.io/subscribe.on-rollout-completed.grafana</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> rollout  </span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">    </span><span class="token key atrule" style="color:#00a4db">notifications.argoproj.io/subscribe.on-scaling-replica-set.grafana</span><span class="token punctuation" style="color:#393A34">:</span><span class="token plain"> scalling</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain"></span><span class="token punctuation" style="color:#393A34">...</span><br></div></code></pre></div></div>
-<p>Grafana 설정으로 이동해서 아래 그림과 같이 Settings - Annotation 메뉴로 이동하여 Query - Filter by 항목을 Tag로 변경하고 설정을 저장한다&nbsp;</p>
-<p><img decoding="async" loading="lazy" alt="rollout" src="https://ddii.dev/assets/images/grafana-annotation-af1b39ed8972be1106e7773d78584d34.png" width="1053" height="1070" class="img_ev3q"></p>
-<p>이후 Rollout에 변경 이벤트가 발생하면 아래 그림과 같이 해당 시점에 annotation이 표기되는것을 확인할 수 있다. 이를 통해 특정 배포 버전에 대한 전,후 비교가 가능해진다.</p>
-<p><img decoding="async" loading="lazy" alt="grafana" src="https://ddii.dev/assets/images/rollout-annotation-d70189af2a3efdbfa71bc6631942b237.png" width="1180" height="637" class="img_ev3q"></p>
-<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="정리">정리<a href="https://ddii.dev/kubernetes/argo-rollout-advanced/#%EC%A0%95%EB%A6%AC" class="hash-link" aria-label="Direct link to 정리" title="Direct link to 정리" translate="no">​</a></h2>
-<p>이번 3주차 스터디에는 구성된 환경에 Argo CD, Argo Rollout을 구성하는 테스트를 진행했고, 이번 포스팅에서는 Argo Rollout Notification을 통해 운영자가 Rollout 이벤트가 다양한 이벤트가 발생했을때 Slack으로 알림을 받아보거나 자동으로 Grafana 대시보드 상에 annotation을 표기하는 실습을 진행했다.</p>
-<blockquote>
-<p>해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 자료로 활용할 예정입니다.</p>
-</blockquote>]]></content:encoded>
-            <category>Kubernetes</category>
-            <category>kOps</category>
-            <category>argo</category>
-            <category>argo-rollout</category>
-            <category>notification</category>
-            <category>grafana</category>
-            <category>slack</category>
         </item>
     </channel>
 </rss>
