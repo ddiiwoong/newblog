@@ -47,11 +47,11 @@ Ch.1~4가 대화형의 세계, Ch.5가 CLI 자동화의 세계였다면 Ch.6은 
 
 ## 1. SDK 기본
 
-> **해결하는 문제**: 저수준 API를 직접 조립하면 코드의 8할을 배관 작업에 소모한다. 에이전트 로직에만 집중할 수 없는가?
+> **해결하는 문제**: 저수준 API를 직접 다루면 코드의 80%가 보일러플레이트에 쓰인다. 에이전트 로직에만 집중할 수 없는가?
 
-### 제품 지형 속의 자리
+### 전체 구조에서의 위치
 
-Agent SDK는 Claude Code의 에이전트 하네스를 라이브러리로 노출한 것입니다. 대화형 CLI, 헤드리스 `-p`, SDK, 이 셋이 같은 엔진의 세 창구입니다.
+Agent SDK는 Claude Code의 에이전트 하네스를 라이브러리로 노출한 것입니다. 대화형 CLI, 헤드리스 `-p`, SDK, 이 셋은 같은 엔진을 쓰는 세 가지 인터페이스입니다.
 
 ```mermaid
 graph LR
@@ -61,12 +61,12 @@ graph LR
 
 ```
 
-| 비교 | 저수준 API 직접 조립 | Agent SDK |
+| 비교 | 저수준 API 직접 사용 | Agent SDK |
 | --- | --- | --- |
-| 메시지 배열, tool_use 루프 | 수작업 | `query` 한 함수가 전체 관리 |
+| 메시지 배열, tool_use 루프 | 직접 작성 | `query` 한 함수가 전체 관리 |
 | 재시도, 컨텍스트, 캐싱 | 직접 구현 | SDK가 관리 |
-| 권한, 파일 도구 | 전부 자작 | Claude Code의 도구·권한·훅 그대로 |
-| 코드 비율 | 8할이 배관 | 8할이 도메인 로직 |
+| 권한, 파일 도구 | 전부 직접 만들어야 함 | Claude Code의 도구·권한·훅 그대로 |
+| 코드 비율 | 80%가 보일러플레이트 | 80%가 도메인 로직 |
 
 ### 설치와 인증
 
@@ -166,18 +166,18 @@ sequenceDiagram
 | --- | --- | --- |
 | `system` (init) | 세션 시작, 모델과 도구 구성 | 첫 메시지 |
 | `assistant` | text 블록(사고) + tool_use 블록(호출) | 진행 관찰 |
-| `user` (tool_result) | 도구 실행 결과 회신 | 진행 추적 |
-| `result` | subtype, result, usage, session_id | 최종 봉투 |
+| `user` (tool_result) | 도구 실행 결과 반환 | 진행 추적 |
+| `result` | subtype, result, usage, session_id | 최종 결과 수신 |
 
-> 💡 **필터링 관례**: `assistant`의 `text`와 `result`만 표시하면 잡음이 제거됩니다. Ch.5의 `stream-json` 이벤트와 동형입니다.
+> 💡 **필터링 요령**: `assistant`의 `text`와 `result`만 표시하면 잡음이 제거됩니다. Ch.5의 `stream-json` 이벤트와 구조가 같습니다.
 
-### options 지도
+### options 한눈에 보기
 
 | 분류 | 옵션 | 파트 |
 | --- | --- | --- |
 | **능력** | `allowedTools`, `disallowedTools`, `tools`, `mcpServers` | P3, P5 |
 | **감독** | `permissionMode`, `canUseTool`, `hooks` | P5 |
-| **정체성** | `systemPrompt` (preset, append), `agents` | P2, P6 |
+| **역할 정의** | `systemPrompt` (preset, append), `agents` | P2, P6 |
 | **출력** | `outputFormat` (json_schema) | P4 |
 | **세션** | `continue`, `resume`, `forkSession` | P6 |
 | **실행** | `model`, `maxTurns`, `cwd`, `env`, `settingSources` | P2, P6 |
@@ -293,7 +293,7 @@ Ch.5의 `-c`, `-r`, `--fork-session`과 동일한 의미론입니다.
 | **루프 층** (query 실패) | 인증, 네트워크, 미처리 예외 | `try/catch`로 감싸 재시도, 폴백 |
 | **도구 층** (isError) | 핸들러가 `isError: true`로 반환 | Claude가 보고 재시도·우회. **루프는 계속** |
 
-> ⚠️ **핵심 구분**: `throw`하면 루프가 중단되고 `isError`로 반환하면 루프가 이어집니다. Ch.5의 재시도 골격을 이식할 수 있습니다.
+> ⚠️ **핵심 구분**: `throw`하면 루프가 중단되고 `isError`로 반환하면 루프가 이어집니다. Ch.5의 재시도 구조를 그대로 옮길 수 있습니다.
 
 ---
 
@@ -520,7 +520,7 @@ graph TB
 | **canUseTool** | 호출별 동적 승인/거부 | 콜백 함수 |
 | **훅** | 이벤트 전후 개입, 변조, 감사 | `hooks` 옵션 |
 
-> 🔑 **조합 원칙**: 선언으로 8할을 막고 `canUseTool`은 회색 지대에만 투입합니다.
+> 🔑 **조합 원칙**: 선언으로 대부분을 막고 `canUseTool`은 판단이 애매한 경우에만 사용합니다.
 
 ### canUseTool 콜백
 
@@ -644,7 +644,7 @@ options: {
 
 Ch.2의 서브에이전트 정의와 동일한 구조입니다.
 
-### CC 기능 계승
+### CC 기능 그대로 쓰기
 
 > 📌 `query` 하나가 CC 하네스 전체를 포함합니다:
 
@@ -666,7 +666,7 @@ Ch.2의 서브에이전트 정의와 동일한 구조입니다.
 
 ### 서브프로세스 아키텍처
 
-SDK는 내부적으로 Claude Code CLI 바이너리를 **서브프로세스**로 실행합니다. 그래서 다음 세 가지를 감안해야 합니다.
+SDK는 내부적으로 Claude Code CLI 바이너리를 **서브프로세스**로 실행합니다. 그래서 다음 세 가지를 고려해야 합니다.
 
 - CPU/메모리를 넉넉하게 잡아야 합니다
 - 컨테이너 배포 시 CLI 바이너리가 포함되어야 합니다 (pip/npm 설치 시 자동 번들)
@@ -697,9 +697,9 @@ CMD ["node", "server.js"]
 
 | 항목 | 권장 |
 | --- | --- |
-| **리소스** | CPU/메모리 limits 필수 (서브프로세스 감안) |
+| **리소스** | CPU/메모리 limits 필수 (서브프로세스 고려) |
 | **자격** | IRSA / Pod Identity로 Bedrock 역할, 시크릿 0 |
-| **상태** | 세션은 외부 스토리지, 파드는 소모품 |
+| **상태** | 세션은 외부 스토리지, 파드는 언제든 교체 가능 |
 | **프로브** | liveness = 프로세스, readiness = 의존성 점검 |
 | **게이트웨이** | Ch.3 조직 경로와 병행 가능 |
 
@@ -835,16 +835,16 @@ CMD ["handler.handler"]
 
 ## 8. 실전 프로젝트: 사내 위키 Q&A 에이전트
 
-> **해결하는 문제**: 지금까지 배운 부품을 조립하면 어떤 서비스가 되는가?
+> **해결하는 문제**: 지금까지 배운 구성 요소를 모두 합치면 어떤 서비스가 되는가?
 
-### 설계: 부품 총조립
+### 설계: 전체 구성
 
 | 계층 | 역할 | 파트 |
 | --- | --- | --- |
 | **API** (Fastify) | POST /ask, 잡 큐, 승인 웹훅 | P5 UI 패턴 |
 | **에이전트 코어** | query + wiki 도구 + 스키마 | P2, P3, P4 |
 | **통제** | tools 축소, dontAsk, 훅 감사 | P5 |
-| **상태** | session_id 저장, S3 미러, usage 회계 | P6 |
+| **상태** | session_id 저장, S3 미러, usage 집계 | P6 |
 | **인프라** | 컨테이너, IRSA, OTel | P7, Ch.3 |
 
 ### 에이전트 코어
@@ -926,14 +926,14 @@ canUseTool: async ({ toolName, input }) => {
 
 | Part | 한 줄 핵심 |
 | --- | --- |
-| 1. SDK 기본 | `query` 한 함수 = 에이전틱 루프 전체, 1엔진 3창구 |
+| 1. SDK 기본 | `query` 한 함수 = 에이전틱 루프 전체, 엔진 하나에 인터페이스 셋 |
 | 2. 쿼리와 멀티턴 | 스트리밍/단일수집, resume/fork, maxTurns 필수 |
 | 3. 커스텀 도구 | 인프로세스 MCP, 4요소 정의, isError로 루프 유지 |
 | 4. 구조화 출력 | Zod/Pydantic 스키마 = 파싱에서 계약으로 |
-| 5. 권한과 훅 | 4수단 지형: 선언으로 8할을 처리하고 canUseTool은 회색 지대 |
-| 6. 세션·상태 | resume/fork, 외부 스토리지, CC 기능 계승 |
-| 7. 호스팅 | 서브프로세스 감안, 4축 8칸 체크리스트 |
-| 8. 실전 | 부품 총조립 = 서비스 |
+| 5. 권한과 훅 | 통제 4수단: 선언으로 대부분을 처리하고 canUseTool은 애매한 경우에만 |
+| 6. 세션·상태 | resume/fork, 외부 스토리지, CC 기능 그대로 사용 |
+| 7. 호스팅 | 서브프로세스 고려, 4축 8칸 체크리스트 |
+| 8. 실전 | 구성 요소 결합 = 서비스 |
 
 ### FAQ 6가지
 
@@ -950,7 +950,7 @@ canUseTool: async ({ toolName, input }) => {
 
 | Lab | 주제 | 소요 | 핵심 확인 | 사전 준비 |
 | --- | --- | --- | --- | --- |
-| Lab 1 | query + 구조화 출력 | ~15분 | 스트리밍, result 봉투, Zod 스키마 | Node 18+, API 키 또는 Bedrock |
+| Lab 1 | query + 구조화 출력 | ~15분 | 스트리밍, result 메시지, Zod 스키마 | Node 18+, API 키 또는 Bedrock |
 | Lab 2 | 도구 통제 + 보안 분석 | ~20분 | allowedTools 제한, 구조화 출력 결합 | Lab 1 환경 |
 | Lab 3 | Python + 세션 이어가기 | ~15분 | Python SDK, resume, 멀티턴 | Python 3.10+, pip |
 
@@ -1400,7 +1400,7 @@ python3 lab3-session.py
 ```
 Lab 1: query + 구조화 출력
   □ 4가지 메시지 타입 관찰 (system, assistant, user, result)
-  □ result 봉투에서 subtype, usage, session_id 추출
+  □ result 메시지에서 subtype, usage, session_id 추출
   □ Zod 스키마로 타입세이프 결과 수신
 
 Lab 2: 도구 통제 + 보안 분석

@@ -551,7 +551,7 @@ thesesettingstobeconfigured.
 
 승인 목록이 무엇을 담는지도 살펴볼 만합니다. `CLAUDE_CODE_ENABLE_TELEMETRY`,
 `OTEL_METRICS_EXPORTER`, `OTEL_EXPORTER_OTLP_PROTOCOL`은 목록에 없고 **엔드포인트만** 있습니다.
-승인 대상은 "텔레메트리를 켜는 것"이 아니라 **"데이터가 어디로 가는지"** 다. 이 구분은 정직합니다.
+승인 대상은 "텔레메트리를 켜는 것"이 아니라 **"데이터가 어디로 가는지"**입니다. 이 구분은 정직합니다.
 
 세 프롬프트 중 이것만 기본 커서가 1번 Yes에 있습니다. 앞의 둘과 달리 Enter로 승인됩니다.
 

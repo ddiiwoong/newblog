@@ -61,7 +61,7 @@ $ claude -r "auth-refactor" "Finish this PR" # 이름으로 세션 재개
 
 ```
 
-### 서브커맨드 지도
+### 서브커맨드 한눈에 보기
 
 | 분류 | 서브커맨드 | 용도 |
 | --- | --- | --- |
@@ -194,7 +194,7 @@ graph LR
 
 | 계약 | 채널 | 용도 |
 | --- | --- | --- |
-| 결과 | stdout | 본문 또는 JSON 봉투 |
+| 결과 | stdout | 본문 또는 JSON 응답 |
 | 진단 | stderr | 에러, 경고, 훅 메시지 |
 | 판정 | exit code | 0=성공, 비0=실패/상한도달 |
 
@@ -253,8 +253,8 @@ $ claude -p "고위험 파일 3개" --output-format json
 | --- | --- |
 | `.result` | 본문 텍스트 |
 | `.total_cost_usd` | 비용 관측 |
-| `.session_id` | 세션 재개 열쇠 |
-| `.is_error` | 오류 봉투 분기 |
+| `.session_id` | 세션 재개 키 |
+| `.is_error` | 오류 여부 분기 |
 
 ### stream-json 이벤트 순서
 
@@ -262,8 +262,8 @@ $ claude -p "고위험 파일 3개" --output-format json
 | --- | --- | --- |
 | 1 | `system` | 세션 시작, 모델/도구 목록 |
 | 2~N | `assistant` | 모델 응답 메시지 단위 |
-| 2~N | `user` (tool_result) | 도구 실행 결과 회신 |
-| 마지막 | `result` | 최종 봉투 (json과 동일) |
+| 2~N | `user` (tool_result) | 도구 실행 결과 반환 |
+| 마지막 | `result` | 최종 결과 (json과 동일) |
 
 추가 옵션: `--include-partial-messages` (토큰 단위), `--include-hook-events` (훅 수명주기)
 
@@ -398,7 +398,7 @@ $ claude -p --resume "$SID" "2단계: 스캔 결과로 수정"
 $ claude --remote
 # → URL 반환, 브라우저에서 이어서 작업
 
-# 웹에서 만든 세션을 로컬로 회수
+# 웹에서 만든 세션을 로컬로 가져오기
 $ claude --teleport <session-id>
 
 ```
@@ -408,16 +408,16 @@ $ claude --teleport <session-id>
 | 역할 | 동작 |
 | --- | --- |
 | 로컬 → 웹 | `--remote`로 URL 발급 |
-| 웹 → 로컬 | `--teleport`로 회수 |
+| 웹 → 로컬 | `--teleport`로 가져오기 |
 | 용도 | 모바일에서 확인, 팀원에게 세션 공유 |
 
 ---
 
 ## 4. 스케줄과 자동실행
 
-> **해결하는 문제**: "반복 작업을 어떤 표면에서 실행할지, Routines와 cron의 차이는 무엇인가?"
+> **해결하는 문제**: "반복 작업을 어떤 방식으로 실행할지, Routines와 cron의 차이는 무엇인가?"
 
-### 자동화 표면 5종 지도
+### 자동화 실행 방식 5종
 
 ```mermaid
 graph TB
@@ -435,7 +435,7 @@ graph TB
 
 ```
 
-| 표면 | 트리거 | 인프라 | 제어 수준 |
+| 실행 방식 | 트리거 | 인프라 | 제어 수준 |
 | --- | --- | --- | --- |
 | `/loop` | 세션 안 반복 지시 | 로컬 | 대화형 |
 | `/goal` | 조건 도달 판정 | 로컬 | 대화형 |
@@ -486,7 +486,7 @@ $ claude --bg "flaky 테스트 원인 조사"
 # → 세션 ID 반환, 터미널 즉시 복귀
 
 $ claude logs 7c5dcf5d     # 진행 확인
-$ claude attach 7c5dcf5d   # 터미널로 회수
+$ claude attach 7c5dcf5d   # 터미널로 가져오기
 
 # 셸 명령을 PTY 잡으로
 $ claude --bg --exec 'pytest -x'
@@ -749,7 +749,7 @@ done
 
 > **해결하는 문제**: "어떤 환경변수가 있고, 어떻게 점검하며, 보안 원칙은 무엇인가?"
 
-### 7칸 분류 지도
+### 7칸 분류표
 
 | 분류 | 대표 변수 | 용도 |
 | --- | --- | --- |
@@ -846,10 +846,10 @@ claude --debug tool,permission,hook,mcp -p "test"
 
 | Part | 한 줄 핵심 |
 | --- | --- |
-| 1. 명령과 플래그 | 서브커맨드 2지도 + 플래그 6서랍이면 전집 정리 |
+| 1. 명령과 플래그 | 서브커맨드 2계열 + 플래그 6분류로 전체 정리 |
 | 2. Headless | `-p`는 SDK 경유 단발 에이전트, 구조화 출력으로 계약 |
 | 3. 세션 제어 | 어디서든 이어가고(-c/-r), 분기하고(fork), 웹으로 넘기기(remote) |
-| 4. 스케줄 | 5종 표면 지도: /loop, /goal, Routines, cron, CI |
+| 4. 스케줄 | 실행 방식 5종: /loop, /goal, Routines, cron, CI |
 | 5. CI/CD | 3원칙: 묻지 않고, 넘치지 않고, 남긴다 |
 | 6. 자동화 패턴 | 트리아지, 로그분석, 보고서, 문서, 배치 — 5패턴 |
 | 7. 환경변수 | 7칸 분류, 점검 원라이너, 시크릿은 env에만 |
@@ -870,7 +870,7 @@ claude --debug tool,permission,hook,mcp -p "test"
 
 | Lab | 주제 | 핵심 확인 | 소요 |
 | --- | --- | --- | --- |
-| Lab 1 | Headless 파이프라인 | `-p`, JSON 봉투, `--json-schema`, exit code, 예산 상한 | ~10분 |
+| Lab 1 | Headless 파이프라인 | `-p`, JSON 응답, `--json-schema`, exit code, 예산 상한 | ~10분 |
 | Lab 2 | 세션 제어 | `-c`, `-r`, `session-id`, `fork-session`, 저장 구조 | ~10분 |
 | Lab 3 | 자동화 스크립트 | 배치 분석, 재시도 골격, 일일 보고서 | ~15분 |
 
@@ -896,7 +896,7 @@ claude -p "이 프로젝트에 파일이 몇 개 있는지 알려줘"
 
 ```
 
-Step 3: JSON 봉투 확인
+Step 3: JSON 응답 확인
 
 ```bash
 claude -p "index.js의 역할을 한 줄로 설명해" --output-format json
@@ -1060,7 +1060,7 @@ ls ~/.claude/projects/
 
 ### Lab 3: 자동화 스크립트
 
-**목표**: 구조화 출력 + jq 집계 → 배치 분석, 에러 재시도, 일일 보고서까지 자동화 패턴을 조립합니다. **소요 시간**: ~15분 **사전 준비**: Lab 1 프로젝트, `jq`
+**목표**: 구조화 출력 + jq 집계 → 배치 분석, 에러 재시도, 일일 보고서까지 자동화 패턴을 구성합니다. **소요 시간**: ~15분 **사전 준비**: Lab 1 프로젝트, `jq`
 
 Step 1: 실습 파일 준비
 

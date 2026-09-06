@@ -808,7 +808,7 @@ Verification Skill은 "코드 수정 → 자동으로 검증 실행"을 묶는 �
 
 ## 8. 통합과 트러블슈팅
 
-> **해결하는 문제**: "설정이 안 먹을 때, 훅이 안 도를 때, 어디서 진단을 시작하는가?"
+> **해결하는 문제**: "설정이 안 먹을 때, 훅이 안 돌 때, 어디서 진단을 시작하는가?"
 
 ### .claude 디렉토리 풀스택
 
@@ -1291,7 +1291,7 @@ npx -y @modelcontextprotocol/server-filesystem /Users/jinwoong/lab-ch4
 
 ### Lab 4: 풀스택 통합
 
-**목표**: settings + permissions + hook + MCP + command를 하나의 프로젝트에 조립하고 전체가 물리는지 확인합니다  
+**목표**: settings + permissions + hook + MCP + command를 하나의 프로젝트에 통합하고 전체가 맞물리는지 확인합니다  
 **소요 시간**: 20분  
 **사전 준비**: Lab 1~3 완료 또는 동등한 이해
 
@@ -1325,7 +1325,7 @@ EOF
 
 ```
 
-Step 3: settings.json 조립
+Step 3: settings.json 작성
 
 ```bash
 cat > .claude/settings.json << 'EOF'
