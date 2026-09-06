@@ -24,6 +24,7 @@ module.exports = {
         'claude-code/gateway',
         'claude-code/settings',
         'claude-code/cli-reference',
+        'claude-code/agent-sdk',
       ],
     },
   ],
