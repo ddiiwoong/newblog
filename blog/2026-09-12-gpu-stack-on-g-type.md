@@ -1,0 +1,1474 @@
+---
+layout: single
+title: "GPU 인식 경로를 AWS G 타입에서 따라가기 - 드라이버부터 K8s DRA까지"
+comments: true
+classes: wide
+description: "AWS EC2 g6.2xlarge(NVIDIA L4)에 순정 Ubuntu로 시작해 드라이버·컨테이너 런타임·Device Plugin·DCGM·NFD/GFD·HAMi·DRA까지 직접 올리고, 로컬 GeForce PC와 데이터센터 GPU가 갈리는 지점을 기록"
+authors: jinwoong
+toc: true
+toc_label: Table of Contents
+slug: aws/gpu-stack-on-g-type
+date: 2026-09-12
+categories:
+  - AWS
+tags:
+  - AWS
+  - GPU
+  - NVIDIA
+  - Kubernetes
+  - K3s
+  - DCGM
+  - HAMi
+  - DRA
+  - vLLM
+---
+
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+
+# GPU 인식 경로를 AWS G 타입에서 따라가기 - 드라이버부터 K8s DRA까지
+
+> 로컬 PC에서 테스트한 내용은 [gasida](https://www.linkedin.com/in/gasida99/) 님이 작성하신 설치 가이드를 참고했습니다.
+>
+> 비교 기준: 로컬 PC(RTX 4070 Ti SUPER, GeForce) 환경의 같은 절차
+>
+> 측정 환경: AWS EC2 g6.2xlarge (NVIDIA L4 24GB, compute capability 8.9) · **순정 Ubuntu 24.04.4 LTS AMI** · NVIDIA Driver 595.84 / CUDA 13.2 · Container Toolkit 1.20.0 · K3s v1.36.4 · device-plugin v0.20.0 · DCGM Exporter 4.6.0 · NFD 0.18.3 · HAMi v2.10.0 · vLLM 0.28.0
+
+GPU가 꽂힌 물리 PC에 Ubuntu를 깔고 드라이버부터 쿠버네티스 GPU 분할까지 올리는 방법을 바탕으로 AWS EC2에서 그대로 진행해 보고 로컬 PC 환경과 어떤 부분에 차이가 있는지 비교하고 기록했다.
+
+**Deep Learning AMI를 쓰지 않았다.** 앞선 실습들은 드라이버가 미리 깔린 DL용 AMI를 썼는데 이번에는 드라이버 설치 과정 자체가 주요 내용이다. DKMS 빌드, `.ko.zst` 모듈, `/dev/nvidia*` 장치 노드가 어떻게 생기는지 보려면 순정 이미지에서 시작해야 한다. 그래서 Canonical 순정 Ubuntu 24.04 AMI로 진행했다.
+
+결론부터 말하자면 계획한 항목이 Utilyze 하나만 빼고 전부 통과했고 로컬 PC와 갈린 지점이 몇 가지 확인되었다. kubeadm과 GPU Operator를 전제로 한 후반부(HAMi, DRA)는 K3s에서 수동 스택으로 돌리려면 손을 봐야 했고, 그 과정에서 나온 것들을 정리했다.
+
+<!--truncate-->
+
+***
+
+## 용어 사전
+
+| 용어                | 의미                                                                        |
+| ----------------- | ------------------------------------------------------------------------- |
+| DKMS              | Dynamic Kernel Module Support. 커널이 바뀔 때마다 모듈을 다시 빌드해 준다                   |
+| `.ko.zst`         | zstd로 압축된 커널 모듈 바이너리                                                      |
+| nouveau           | 리눅스 기본 오픈소스 NVIDIA 드라이버. 정식 드라이버와 충돌한다                                    |
+| OCI prestart hook | 컨테이너가 시작되기 직전 런타임이 실행하는 훅. toolkit이 여기 끼어든다                               |
+| CDI               | Container Device Interface. GPU를 컨테이너에 주입하는 방법을 YAML로 명세한다                |
+| Device Plugin     | 쿠버네티스에 GPU 개수를 알려 주는 gRPC 플러그인                                            |
+| NVML              | NVIDIA Management Library. `nvidia-smi`·DCGM이 GPU 상태를 조회할 때 쓴다            |
+| RuntimeClass      | 파드가 어떤 컨테이너 런타임으로 뜰지 고르는 쿠버네티스 리소스                                        |
+| DCGM              | Data Center GPU Manager. GPU 텔레메트리 수집 도구                                  |
+| CUPTI             | CUDA Profiling Tools Interface. 커널 단위 프로파일링 API                           |
+| NFD / GFD         | Node Feature Discovery / GPU Feature Discovery. 노드 하드웨어 특성을 라벨로 붙인다       |
+| HAMi              | Heterogeneous AI Computing Virtualization Middleware. GPU 한 장을 여러 파드로 쪼갠다 |
+| DRA               | Dynamic Resource Allocation. 쿠버네티스 1.34에서 GA된 장치 할당 API                   |
+| ResourceSlice     | DRA 드라이버가 "이 노드에 이런 장치가 있다"고 광고하는 리소스                                     |
+
+***
+
+## 1. 인스턴스를 고르는 기준
+
+비교 기준으로 삼은 로컬 PC의 스펙은 RTX 4070 Ti SUPER, VRAM 16GB, 16 vCPU, 64GB RAM이다. AWS G 타입에서 이걸 대신할 후보를 놓고 봤다.
+
+| 후보             | GPU         | compute cap   | vCPU/RAM     | 단가(us-east-2) |
+| -------------- | ----------- | ------------- | ------------ | ------------- |
+| g4dn.xlarge    | T4 16GB     | 7.5 (Turing)  | 4 / 16GB     | $0.526        |
+| g6.xlarge      | L4 24GB     | 8.9 (Ada)     | 4 / 16GB     | $0.8048       |
+| **g6.2xlarge** | **L4 24GB** | **8.9 (Ada)** | **8 / 32GB** | **$0.9776**   |
+| g5.2xlarge     | A10G 24GB   | 8.6 (Ampere)  | 8 / 32GB     | $1.2021       |
+
+**g6.2xlarge를 골랐다.** L4가 Ada Lovelace이고 compute capability가 8.9인데, 로컬 PC의 RTX 4070 Ti SUPER도 Ada에 8.9다. 같은 아키텍처 세대라 드라이버 계열과 커널 모듈 구성이 그대로 대조된다. T4는 Turing이라 세대가 두 개 아래고 A10G는 Ampere다.
+
+RAM 32GB는 K3s에 kube-prometheus-stack과 DCGM Exporter를 함께 올리려면 필요했다. 뒤에 HAMi와 DRA 드라이버, MinIO, vLLM 두 파드까지 얹으니 여유를 두는게 맞을 거라 생각했다. 
+
+> **용량이 없어 리전을 옮겼다**: us-east-2 세 AZ 전부에서 `InsufficientInstanceCapacity`가 떴다. ap-northeast-2a에서 떠서 그쪽으로 갔고 단가가 $0.9776에서 $1.2021로 올랐다. GPU 인스턴스는 타입과 AZ 조합에 용량이 없는 일이 흔하니 AZ를 순회하고 리전까지 넘어가는 기동 스크립트를 두는 편이 낫다.
+
+접속은 SSH 키 없이 SSM Session Manager만 썼다. 인바운드 규칙이 하나도 없는 보안 그룹을 붙이고 user-data로 자체 종료를 예약해 세션이 끊겨도 인스턴스가 스스로 사라지게 했다.
+
+***
+
+## 2. Ubuntu와 Secure Boot - 첫 번째 차이
+
+물리 PC라면 BIOS에서 Secure Boot를 꺼야 한다. 서명되지 않은 커널 모듈을 로드하려면 필요한 절차다. EC2에서 확인해 봤다.
+
+```bash
+mokutil --sb-state
+# SecureBoot disabled
+# Platform is in Setup Mode
+
+[ -d /sys/firmware/efi ] && echo 'EFI 부팅'
+# EFI 부팅
+```
+
+**EFI로 부팅하지만 Secure Boot는 처음부터 꺼져 있다.** `Platform is in Setup Mode`가 함께 나오는데 플랫폼 키가 등록되지 않은 상태라는 뜻이다. EC2 인스턴스는 기본적으로 UEFI Secure Boot를 적용하지 않으므로 BIOS에 들어가 끌 일이 없다. **이 단계 대부분이 EC2에서는 불필요하다.**
+
+GPU 장착 확인은 물리 PC와 형태가 같고 값만 다르다.
+
+```bash
+lspci -nn | grep -i nvidia
+# 31:00.0 3D controller [0302]: NVIDIA Corporation AD104GL [L4] [10de:27b8] (rev a1)
+```
+
+GeForce가 꽂힌 PC는 `VGA compatible controller`로 나오고 오디오 장치(`22bb`)가 함께 잡힌다. L4는 `3D controller`이고 오디오가 없다. 디스플레이 출력이 없는 데이터센터 GPU라서다. PCI 클래스가 `0300`(VGA)이 아니라 `0302`(3D)인 것도 같은 이유다. 이 클래스 값이 뒤쪽 NFD 라벨에서 다시 나온다.
+
+**두 번째 차이는 nouveau였다.** 순정 Ubuntu AMI는 nouveau가 로드된 상태로 시작한다.
+
+```bash
+lsmod | grep -i nouveau
+# nouveau              3104768  0
+# gpu_sched              69632  1 nouveau
+# drm_gpuvm              53248  1 nouveau
+# ... (10개 모듈)
+```
+
+물리 PC에 Ubuntu Server를 깔면 GPU가 잡혀 있어 nouveau가 설치 과정에서 이미 처리되는 경우가 많다. EC2 순정 AMI에서는 살아 있다. 다만 별도로 blacklist하지 않았고 나중에 설치한 드라이버 패키지가 알아서 처리했다. 설치 후 확인하면 nouveau가 사라져 있다.
+
+시작 시점의 순정 상태도 확인해 뒀다.
+
+```bash
+which nvidia-smi   # 없음
+ls /dev/nvidia*    # 없음
+```
+
+***
+
+## 3. 드라이버 설치 - 로컬 PC와 같은 버전이 나왔다
+
+```bash
+apt-get install -y ubuntu-drivers-common pciutils mokutil
+ubuntu-drivers devices
+```
+
+```
+== /sys/devices/pci0000:30/0000:30:00.0/0000:31:00.0 ==
+modalias : pci:v000010DEd000027B8sv000010DEsd000016CAbc03sc02i00
+vendor   : NVIDIA Corporation
+model    : AD104GL [L4]
+driver   : nvidia-driver-595 - distro non-free
+driver   : nvidia-driver-610 - distro non-free
+driver   : nvidia-driver-610-open - distro non-free
+driver   : nvidia-driver-580-server - distro non-free
+driver   : nvidia-driver-595-open - distro non-free recommended
+```
+
+**recommended가 `nvidia-driver-595-open`으로, 로컬 PC와 같은 버전이다.** 같은 시점의 Ubuntu 저장소를 보니 그렇다. device ID는 RTX 40 시리즈가 `2705`이고 L4는 `27b8`이다.
+
+```bash
+apt-get install -y nvidia-driver-595-open
+# Setting up nvidia-dkms-595-open (595.84-0ubuntu0.24.04.1) ...
+# Loading new nvidia-595.84 DKMS files...
+#    - Installing to /lib/modules/7.0.0-1012-aws/updates/dkms/
+reboot
+```
+
+### 설치 후 확인
+
+```
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 595.84                 Driver Version: 595.84         CUDA Version: 13.2     |
++-----------------------------------------+------------------------+----------------------+
+|   0  NVIDIA L4                      Off |   00000000:31:00.0 Off |                    0 |
+| N/A   33C    P8             12W /   72W |       0MiB /  23034MiB |      0%      Default |
++-----------------------------------------+------------------------+----------------------+
+```
+
+| 항목         | 로컬 PC (RTX 4070 Ti SUPER) | 이 실습 (L4)  |
+| ---------- | ---------------------- | ------------- |
+| 드라이버       | 595.84                 | **595.84**    |
+| CUDA       | 13.2                   | **13.2**      |
+| VRAM       | 16,376 MiB             | 23,034 MiB    |
+| 전력 상한      | 285W                   | **72W**       |
+| Fan / Temp | 0% / 44C               | **N/A** / 33C |
+| ECC        | N/A                    | **0 (지원)**    |
+
+**전력 상한이 285W에서 72W로 내려간 것이 L4의 성격을 말해 준다.** 게이밍 카드는 전력을 부어 클럭을 올리는데 L4는 단일 슬롯 저전력 설계다. Fan이 `N/A`인 것은 팬이 없어 서버 섀시 공기 흐름에 의존하기 때문이다. ECC 값이 `0`으로 잡히는 것은 데이터센터 GPU라서 메모리 오류 정정 기능이 있다는 뜻이다. GeForce는 `N/A`다.
+
+DKMS와 커널 모듈은 물리 PC와 구조가 같다.
+
+```bash
+dkms status | grep -i nvidia
+# nvidia/595.84, 7.0.0-1012-aws, x86_64: installed
+
+ls -l /lib/modules/$(uname -r)/updates/dkms/
+# nvidia-drm.ko.zst       62700
+# nvidia-modeset.ko.zst  746544
+# nvidia-peermem.ko.zst    2057
+# nvidia-uvm.ko.zst      686295
+# nvidia.ko.zst         6839074
+```
+
+커널이 `7.0.0-1012-aws`다. 로컬 PC는 `6.8.0-138-generic`이고 DKMS 항목이 세 커널 버전에 걸쳐 있는데 여기는 갓 만든 인스턴스라 하나뿐이다. **AWS 커널(`-aws` 접미사)에서도 DKMS 빌드가 문제없이 됐다.**
+
+### 장치 노드 - 세 번째 차이
+
+```bash
+ls -l /dev/nvidia*
+# crw-rw-rw- 1 root root 195, 254 /dev/nvidia-modeset
+# crw-rw-rw- 1 root root 234,   0 /dev/nvidia-uvm
+# crw-rw-rw- 1 root root 234,   1 /dev/nvidia-uvm-tools
+# crw-rw-rw- 1 root root 195,   0 /dev/nvidia0
+# crw-rw-rw- 1 root root 195, 255 /dev/nvidiactl
+#
+# /dev/nvidia-caps:
+# cr-------- 1 root root 237, 1 nvidia-cap1
+# cr--r--r-- 1 root root 237, 2 nvidia-cap2
+```
+
+**`/dev/nvidia-caps` 디렉터리가 추가로 생겼다.** GeForce 쪽 목록에는 없다. 이것은 MIG(Multi-Instance GPU) 관련 capability 장치로, GPU를 하드웨어 수준에서 쪼갤 수 있는 계열에서 만들어진다. L4는 MIG를 지원하지 않지만 드라이버가 데이터센터 GPU로 인식해 노드를 만든 것으로 보인다. GeForce에서는 나오지 않는다. 이 추측은 GFD가 붙인 `nvidia.com/mig.capable = false` 라벨로 확인됐다.
+`nvidia-uvm`의 major 번호도 다르다. 로컬 PC는 507이고 여기는 234다. 동적으로 할당되는 값이라 환경마다 갈린다.
+
+라이브러리는 로컬 PC와 같다.
+
+```bash
+ls -l /usr/lib/x86_64-linux-gnu/libcuda.so*
+# libcuda.so -> libcuda.so.1
+# libcuda.so.1 -> libcuda.so.595.84
+# libcuda.so.595.84   91,505,672 bytes
+```
+
+`dmesg`에서 흥미로운 부분을 볼 수 있다.
+
+```
+[    4.555173] nvidia 0000:31:00.0: [drm] No compatible format found
+[    4.555183] nvidia 0000:31:00.0: [drm] Cannot find any crtc or sizes
+```
+
+디스플레이 출력이 없어 DRM이 모드 설정에 실패한다. GeForce가 꽂힌 PC에서는 `fbcon: nvidia-drmdrmfb (fb0) is primary device`가 나오며 프레임버퍼가 잡힌다. **연산만 하는 GPU라서 그렇고, 오류처럼 보이지만 정상이다.**
+
+### 실제로 연산을 돌려 본다
+
+검증 스크립트 `verify_gpu.py`에 반복 횟수와 실측 TFLOP/s 계산을 더해 돌렸다.
+
+```python
+n = 4096
+a = torch.randn(n, n, device="cuda")
+b = torch.randn(n, n, device="cuda")
+torch.cuda.synchronize()
+start = time.time(); iters = 0
+while time.time() - start < 5:
+    c = a @ b; iters += 1
+torch.cuda.synchronize()
+tflops = 2 * n**3 * iters / (time.time() - start) / 1e12
+```
+
+```
+GPU: NVIDIA L4
+compute capability: (8, 9)
+GPU 행렬곱 4096x4096 반복 실행: 17.0초 / 1450회
+결과 checksum: -111633.640625
+GPU 메모리 사용량(MB): 200.125
+실측 FP32 처리량: 11.75 TFLOP/s
+```
+
+`compute capability (8, 9)`가 RTX 4070 Ti SUPER와 같다. 메모리 사용량 200.125MB도 로컬 PC와 정확히 일치한다. 4096×4096 float32 텐서 세 개면 그 값이 나오므로 그래야 맞다.
+
+**5초를 기대했는데 17초가 걸렸다.** `while time.time() - start < 5`는 루프 조건만 5초로 잡고 GPU에 쌓인 커널이 끝나기를 마지막 `synchronize()`에서 기다린다. CUDA 호출이 비동기라 파이썬은 1450회를 다 던져 놓고 빠져나오고, 실제 계산이 12초 더 걸린 것이다. **비동기 API에서 시간을 재려면 측정 구간마다 동기화를 넣어야 한다.**
+
+torch 설치는 5.4GB였다. 로컬 PC의 4.7GB보다 큰데 cuDNN 버전 차이(9.24.0 대 9.20.0)로 보인다.
+
+***
+
+## 4. Docker와 Container Toolkit - 차이가 없었다
+
+이 절은 물리 PC와 다른 점이 거의 없었다. Docker CE와 NVIDIA Container Toolkit을 설치하고 런타임을 등록한다.
+
+```bash
+nvidia-ctk runtime configure --runtime=docker
+systemctl restart docker
+
+cat /etc/docker/daemon.json
+```
+
+```json
+{
+    "runtimes": {
+        "nvidia": {
+            "args": [],
+            "path": "nvidia-container-runtime"
+        }
+    }
+}
+```
+
+설치된 버전은 toolkit 1.20.0, runc 1.5.1, containerd 2.x다.
+
+### 순정 ubuntu 이미지에서 nvidia-smi가 도는 이유
+
+이 절의 핵심 검증이다. CUDA 이미지가 아닌 순정 `ubuntu`에서 `nvidia-smi`를 돌린다.
+
+```bash
+docker run --rm --gpus all ubuntu nvidia-smi
+# 정상 출력
+```
+
+컨테이너 안을 열어 보면 toolkit이 무엇을 넣었는지 보인다.
+
+```
+[which] /usr/bin/nvidia-smi
+[dev]
+/dev/nvidia-modeset
+/dev/nvidia-uvm
+/dev/nvidia-uvm-tools
+/dev/nvidia0
+/dev/nvidiactl
+[libcuda]
+libcuda.so -> libcuda.so.1
+libcuda.so.1 -> libcuda.so.595.84
+libcuda.so.595.84   91,505,672
+[env]
+NVIDIA_VISIBLE_DEVICES=void
+NVIDIA_CTK_LIBCUDA_DIR=/usr/lib/x86_64-linux-gnu
+```
+
+**`NVIDIA_VISIBLE_DEVICES=void`까지 물리 PC와 같다.** 이 값은 훅이 이미 주입을 끝냈다는 표시이고 중복 주입을 막는다. `--gpus all`이 실제로는 환경변수 설정으로 변환되고 OCI prestart 훅이 그것을 읽어 장치 노드와 드라이버 라이브러리를 컨테이너 안으로 밀어 넣는다. 이미지에 없던 `/usr/bin/nvidia-smi`가 호스트에서 마운트돼 들어온 것이다.
+
+이 `void` 값은 DRA 파드에서 다시 등장한다. 그때는 의미가 조금 다르다.
+
+CDI 스펙도 자동 생성돼 있었다.
+
+```bash
+cat /etc/nvidia-container-runtime/config.toml | grep -A3 "modes.cdi"
+# annotation-prefixes = ["cdi.k8s.io/"]
+# default-kind = "nvidia.com/gpu"
+# spec-dirs = ["/etc/cdi", "/var/run/cdi"]
+
+ls -l /var/run/cdi/
+# -rw-r--r-- 1 root root 23176 nvidia.yaml
+```
+
+***
+
+## 5. K3s와 Device Plugin
+
+절차대로 Docker를 지우고 K3s로 갈아탔다. Docker와 K3s가 각자 containerd를 들고 있어 충돌하기 때문이다.
+
+```bash
+systemctl disable --now docker.service docker.socket containerd.service
+apt-get purge -y docker-ce docker-ce-cli containerd.io ...
+rm -rf /var/lib/docker /var/lib/containerd /etc/docker /etc/containerd
+ip link delete docker0
+
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="server \
+  --kube-controller-manager-arg=bind-address=0.0.0.0 \
+  --kube-scheduler-arg=bind-address=0.0.0.0 \
+  --kube-proxy-arg=metrics-bind-address=0.0.0.0 \
+  --kube-apiserver-arg=feature-gates=DRAConsumableCapacity=true \
+  --kube-scheduler-arg=feature-gates=DRAConsumableCapacity=true \
+  --kube-controller-manager-arg=feature-gates=DRAConsumableCapacity=true \
+  --kubelet-arg=feature-gates=DRAConsumableCapacity=true \
+  --write-kubeconfig-mode=644" sh -
+```
+
+`DRAConsumableCapacity` feature gate는 이 단계에서 보통 넣지 않는다. DRA 실습에서 필요한데 K3s를 다시 깔지 않으려면 처음부터 넣어야 한다. 이 실습에서는 미리 넣어 뒀다.
+
+```
+NAME             STATUS   ROLES           VERSION        CONTAINER-RUNTIME
+ip-172-31-3-180  Ready    control-plane   v1.36.4+k3s1   containerd://2.3.4-k3s1.36
+```
+
+### K3s가 nvidia 런타임을 자동으로 찾는다
+
+```bash
+grep -A2 nvidia /var/lib/rancher/k3s/agent/etc/containerd/config.toml
+```
+
+```toml
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'nvidia']
+  runtime_type = "io.containerd.runc.v2"
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.'nvidia'.options]
+  BinaryName = "/usr/bin/nvidia-container-runtime"
+  SystemdCgroup = true
+```
+
+**Docker를 지웠는데도 `nvidia-container-runtime` 바이너리는 남아 있어서 K3s가 그것을 감지했다.** toolkit 패키지는 Docker와 별개라 지워지지 않는다. 설치 순서가 Docker → toolkit → Docker 삭제 → K3s인데, 이 순서가 성립하는 이유가 여기 있다.
+
+RuntimeClass도 자동 등록된다.
+
+```
+NAME                  HANDLER               AGE
+crun                  crun                  11s
+lunatic               lunatic               11s
+nvidia                nvidia                11s
+nvidia-experimental   nvidia-experimental   11s
+slight, spin, wasmedge, wasmer, wasmtime, wws ...
+```
+
+`nvidia` 하나만 있으면 되는데 K3s v1.36은 열 개를 등록한다. wasm 계열이 늘어난 것이고 `nvidia`가 있으면 목적은 달성한 것이다.
+
+### Device Plugin 설치
+
+`runtimeClassName: nvidia`를 주입해야 한다. 흔히 쓰는 `sed -i "30a\\..."` 방식은 30번째 행에 넣는데 매니페스트 버전이 바뀌면 행 번호가 틀어진다. 정규식으로 첫 `spec:` 블록을 찾아 넣는 방식으로 바꿨다.
+
+```python
+t = re.sub(r"(\n    spec:\n)", r"\1      runtimeClassName: nvidia\n", t, count=1)
+```
+
+```bash
+kubectl apply -f nvidia-device-plugin.yml
+# device plugin Running (15초)
+```
+
+### GPU가 리소스로 잡힌다
+
+```
+Capacity:
+  cpu:                8
+  memory:             31619288Ki
+  nvidia.com/gpu:     1
+Allocatable:
+  nvidia.com/gpu:     1
+```
+
+플러그인 파드의 권한 설정을 확인하면 눈에 띄는 대목이 있다.
+
+```bash
+kubectl get pod -n kube-system -l name=nvidia-device-plugin-ds \
+  -o jsonpath='{.items[0].spec.containers[0].securityContext}'
+# {"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]}}
+
+# runtimeClassName: nvidia
+# image: nvcr.io/nvidia/k8s-device-plugin:v0.20.0
+```
+
+**`privileged: true`도 없고 `/dev` 전체 마운트도 없다.** 커널 capability를 전부 버리고(`drop: ALL`) 권한 상승도 막았다. 그런데도 NVML로 GPU를 조회할 수 있는 것은 `runtimeClassName: nvidia` 덕분이다. 이 파드도 GPU를 쓰는 평범한 파드로 취급받아 prestart 훅이 필요한 만큼만 주입해 준다.
+
+kubelet 소켓도 물리 PC와 같다.
+
+```bash
+ls -l /var/lib/kubelet/device-plugins/ | grep -i nvidia
+# srwxr-xr-x 1 root root 0 nvidia-gpu.sock
+```
+
+***
+
+## 6. GPU 파드 기동
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gpu-test
+spec:
+  runtimeClassName: nvidia
+  restartPolicy: Never
+  containers:
+  - name: gpu-test
+    image: ubuntu:24.04
+    command: ["sleep", "infinity"]
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+```
+
+10초 정도 이후에 Running이 됐다. 컨테이너 안을 보면 이렇다.
+
+```
+[env NVIDIA]
+NVIDIA_VISIBLE_DEVICES=GPU-b5aaff9f-545f-9ee4-6550-1d57db703632
+[nvidia-smi]
+index, name, memory.total [MiB], compute_cap
+0, NVIDIA L4, 23034 MiB, 8.9
+[dev]
+/dev/nvidia-modeset  /dev/nvidia-uvm  /dev/nvidia-uvm-tools
+/dev/nvidia0  /dev/nvidiactl
+/dev/nvidia-caps/nvidia-cap1  /dev/nvidia-caps/nvidia-cap2
+[mount]
+tmpfs  /run/nvidia-persistenced/socket
+tmpfs  /run/nvidia-ctk-hookb8c72281-c9a7-4e65-9bce-0da1f9673349
+```
+
+**Docker 때와 달리 `NVIDIA_VISIBLE_DEVICES`에 GPU UUID가 박힌다.** Docker에서는 `void`였다. Device Plugin이 Allocate API로 "이 GPU를 줘라"고 응답할 때 UUID를 지정하고 그 값이 환경변수로 내려온 것이다. 물리 PC에서도 같은 형태다.
+
+역할 분담이 여기서 드러난다. Device Plugin은 **어떤 GPU를 줄지만 결정**하고 실제 장치 마운트와 라이브러리 주입은 **컨테이너 런타임과 toolkit**이 한다. `/run/nvidia-ctk-hook…` 마운트가 훅이 지나간 흔적이다.
+
+***
+
+## 7. 모니터링 - GeForce에서 막히던 것이 열렸다
+
+kube-prometheus-stack과 DCGM Exporter를 올렸다. Alertmanager와 Grafana PersistentVolume은 껐다. 실습 시간이 짧고 디스크를 아끼려는 목적이다.
+
+```bash
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  -f monitor-values.yaml --create-namespace --namespace monitoring --wait
+
+helm upgrade --install dcgm-exporter nvidia/dcgm-exporter -n monitoring \
+  --set runtimeClassName=nvidia --set serviceMonitor.enabled=true --wait
+```
+
+DCGM Exporter도 `runtimeClassName=nvidia`가 필요하다. NVML로 GPU를 읽어야 하니 Device Plugin과 같은 이유다.
+
+`monitor-values.yaml`에는 기본값에 없는 두 줄을 넣었다. 하나는 Grafana 익명 접근이고 하나는 룰 셀렉터다.
+
+```yaml
+grafana:
+  grafana.ini:
+    auth.anonymous: { enabled: true, org_role: Admin }
+prometheus:
+  prometheusSpec:
+    ruleSelectorNilUsesHelmValues: false
+```
+
+`ruleSelectorNilUsesHelmValues: false`가 없으면 직접 만든 `PrometheusRule`이 Prometheus에 실리지 않는다. Operator가 기본적으로 `release=<helm 릴리스>` 라벨이 붙은 룰만 집어 오기 때문이다.
+
+ServiceMonitor가 실제로 붙었는지는 Prometheus 타깃에서 본다.
+
+![Prometheus DCGM 타깃](/img/gpu-aws-06-prom-targets.png)
+
+`serviceMonitor/monitoring/dcgm-exporter/0`이 `1/1 up`이고 스크레이프가 2ms에 끝난다. 엔드포인트는 파드 IP를 직접 가리킨다(`http://10.42.0.27:9400/metrics`).
+
+유휴 상태 메트릭은 물리 PC와 형태가 같다.
+
+```
+DCGM_FI_DEV_GPU_UTIL{gpu="0",modelName="NVIDIA L4",...} 0
+DCGM_FI_DEV_FB_USED{...} 0
+DCGM_FI_DEV_GPU_TEMP{...} 32
+DCGM_FI_DEV_POWER_USAGE{...} 16.912
+DCGM_FI_DEV_SM_CLOCK{...} 210
+```
+
+### 네 번째 차이 - 프로파일링 메트릭
+
+GeForce 카드(RTX 4070 Ti SUPER)에서는 `DCGM_FI_PROF_*` 계열을 켤 수 없다. 드라이버 레벨의 제품 세분화 제한 때문이고 설정으로 여는 방법이 없다.
+
+L4에서 세어 봤다.
+
+```bash
+grep -c '^DCGM_FI_PROF_' dcgm_idle.txt
+# 5
+grep -oE '^DCGM_FI_PROF_[A-Z_]+' dcgm_idle.txt | sort -u
+# DCGM_FI_PROF_DRAM_ACTIVE
+# DCGM_FI_PROF_GR_ENGINE_ACTIVE
+# DCGM_FI_PROF_PCIE_RX_BYTES
+# DCGM_FI_PROF_PCIE_TX_BYTES
+# DCGM_FI_PROF_PIPE_TENSOR_ACTIVE
+```
+
+**다섯 종이 나온다.** GeForce에서 막힌 것은 하드웨어 한계가 아니라 NVIDIA의 제품 구분 정책이었고, 데이터센터 GPU로 바꾸면 열린다. 이것이 이 실습에서 가장 큰 발견이다.
+
+Prometheus에서 시계열로도 확인된다.
+
+![DCGM\_FI\_PROF\_PIPE\_TENSOR\_ACTIVE 시계열](/img/gpu-aws-05-prom-prof-tensor.png)
+
+이 메트릭이 중요한 이유는 다음과 같다. `DCGM_FI_DEV_GPU_UTIL`은 "GPU가 일을 하고 있었던 시간의 비율"이라서 커널 하나만 돌아도 100%가 된다. 반면 `DCGM_FI_PROF_GR_ENGINE_ACTIVE`는 그래픽·컴퓨트 엔진이 실제로 얼마나 채워졌는지를, `DCGM_FI_PROF_PIPE_TENSOR_ACTIVE`는 텐서 코어 사용률을 본다. **활용률이 100%인데 성능이 안 나올 때 원인을 가리는 것이 이 계열이다.**
+
+### 부하를 걸어 확인
+
+로컬 PC에서는 nbody를 5,000,000 body로 돌렸다. L4는 전력 상한이 72W라 더 오래 걸릴 것으로 보고 2,000,000으로 한 번, 3,000,000으로 한 번 돌렸다.
+
+```yaml
+image: nvcr.io/nvidia/k8s/cuda-sample:nbody
+args: ["nbody", "-gpu", "-benchmark", "-numbodies=3000000"]
+```
+
+**부하 전후 비교**
+
+| 메트릭                               | 유휴   | 2M body | 3M body      |
+| --------------------------------- | ---- | ------- | ------------ |
+| `DCGM_FI_DEV_GPU_UTIL`            | 0    | **100** | **100**      |
+| `DCGM_FI_DEV_FB_USED` (MiB)       | 0    | 478     | **610**      |
+| `DCGM_FI_DEV_GPU_TEMP` (C)        | 32   | 61      | **73**       |
+| `DCGM_FI_DEV_POWER_USAGE` (W)     | 16.9 | 72.0    | **71.97**    |
+| `DCGM_FI_DEV_SM_CLOCK` (MHz)      | 210  | 2,040   | **1,245**    |
+| `DCGM_FI_PROF_GR_ENGINE_ACTIVE`   | -    | 1.000   | **1.000**    |
+| `DCGM_FI_PROF_PIPE_TENSOR_ACTIVE` | -    | 0.000   | **0.000**    |
+| `DCGM_FI_PROF_DRAM_ACTIVE`        | -    | 0.001   | **0.000241** |
+
+GeForce 쪽은 온도 43 → 76도, 전력 17 → 285W, SM 클럭 210MHz → 2.48GHz, VRAM 17MB → 7.11GB로 움직였다. L4는 두 회차 모두 전력이 **72W 상한에 딱 붙었다.**
+
+**body 수를 늘리자 클럭이 2,040MHz에서 1,245MHz로 떨어졌다.** 온도는 61도에서 73도로 올랐다. 전력이 이미 상한이므로 부하가 길어지면 드라이버가 클럭을 낮춰 예산을 맞춘다. 짧게 재면 부스트 구간만 보고 지나칠 수 있다. **전력 상한이 낮은 GPU에서 성능을 재려면 정상 상태에 들어간 뒤 읽어야 한다.**
+
+Grafana 대시보드에서도 같은 상태가 보인다.
+
+![DCGM Exporter Dashboard - nbody 부하 중](/img/gpu-aws-01-dcgm-exporter-load.png)
+
+**프로파일링 메트릭이 유용한 정보를 준다.** `GR_ENGINE_ACTIVE`가 1.000으로 그래픽·컴퓨트 엔진이 완전히 포화됐다. 그런데 `PIPE_TENSOR_ACTIVE`는 0.000이다. nbody는 FP32 일반 연산이라 텐서 코어를 전혀 쓰지 않는다. `DRAM_ACTIVE`도 0.000241로 사실상 0인데, N-body 시뮬레이션이 연산 집약적이고 메모리 대역폭을 거의 쓰지 않기 때문이다.
+
+**`GPU_UTIL 100%`만 봤다면 "GPU를 다 쓰고 있다"고 결론 냈을 것이다.** 프로파일링 메트릭을 함께 보면 실제로는 FP32 파이프라인만 포화되고 텐서 코어와 메모리 대역폭은 놀고 있다. 11절에서 vLLM을 올려 같은 대시보드를 보면 텐서 사용률이 0이 아니게 나온다. 같은 100%가 워크로드에 따라 다른 의미라는 사실은 그 대조에서 드러난다.
+
+### 커뮤니티 대시보드 두 종
+
+DCGM용 Grafana 대시보드로는 12239가 표준처럼 쓰인다. 여기에 쿠버네티스용인 23382를 함께 넣어 봤다. Grafana API로 import할 때는 데이터소스를 `inputs`로 지정해야 한다.
+
+```bash
+curl -s -X POST "http://$GRAFANA/api/dashboards/import" \
+  -H 'Content-Type: application/json' \
+  -d "{\"dashboard\":$DASH, \"overwrite\":true,
+       \"inputs\":[{\"name\":\"DS_PROMETHEUS\",\"type\":\"datasource\",
+                    \"pluginId\":\"prometheus\",\"value\":\"Prometheus\"}]}"
+```
+
+```
+--- dashboard 12239 ---
+  import OK uid=Oxed_c6Wz slug=nvidia-dcgm-exporter-dashboard
+--- dashboard 23382 ---
+  import OK uid=pgv-h42QjU_J title=NVIDIA DCGM Dashboard for Kubernetes (MIG & Non-MIG GPUs)
+```
+
+![Grafana 대시보드 목록](/img/gpu-aws-07-grafana-dashboards.png)
+
+두 대시보드가 보는 각도가 다르다. 12239는 GPU 한 장을 하드웨어 관점으로 보고 23382는 쿠버네티스 관점으로 본다. 후자에 있는 Allocation Table이 그 차이다.
+
+![DCGM Kubernetes Dashboard - Allocation Table](/img/gpu-aws-02-dcgm-k8s-alloc.png)
+
+`GPU ID 0 / namespace default / pod gpu-load`가 표에 찍힌다. **어느 파드가 이 GPU를 쓰는지를 대시보드에서 바로 읽을 수 있다.** DCGM Exporter가 kubelet에 물어 파드 정보를 메트릭 라벨로 붙이기 때문이다.
+
+![DCGM\_FI\_DEV\_GPU\_UTIL 라벨](/img/gpu-aws-04-prom-gpu-util.png)
+
+Prometheus에서 같은 메트릭을 보면 시계열이 두 개다. 하나는 기본 라벨만 있고 다른 하나에는 `exported_namespace="default"`, `exported_pod="gpu-load"`, `exported_container="cuda"`가 붙어 있다. 파드가 GPU를 잡고 있는 동안만 후자가 생긴다. **파드 단위 GPU 과금이나 팀별 사용량 집계를 이 라벨로 만든다.**
+
+### 알림 규칙
+
+모니터링을 올린 목적이 결국 알림이라 규칙 세 개를 넣었다.
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: gpu-alert-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: gpu.rules
+    rules:
+    - alert: GPUHighTemperature
+      expr: DCGM_FI_DEV_GPU_TEMP > 85
+      for: 2m
+    - alert: GPUMemoryNearFull
+      expr: DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE) > 0.9
+      for: 5m
+    - alert: GPUIdleButAllocated
+      expr: DCGM_FI_DEV_GPU_UTIL < 5 and on(gpu) DCGM_FI_DEV_FB_USED > 1024
+      for: 15m
+```
+
+![Prometheus Alerts - gpu.rules](/img/gpu-aws-03-prometheus-alerts.png)
+
+`gpu.rules` 그룹에 세 규칙이 `INACTIVE`로 올라와 있다. 조건이 참이 아니라 정상이다. 세 번째 `GPUIdleButAllocated`가 실무에서 유용하다. **활용률은 0인데 메모리를 1GB 넘게 잡고 있는 상태는 파드가 GPU를 붙들고 놀고 있다는 신호다.** 앞에서 본 `GPU_UTIL`과 `FB_USED`를 조합해야 잡히고 어느 하나만으로는 안 보인다.
+
+### nbody 결과
+
+```
+MapSMtoCores for SM 8.9 is undefined.  Default to use 128 Cores/SM
+MapSMtoArchName for SM 8.9 is undefined.  Default to use Ampere
+GPU Device 0: "Ampere" with compute capability 8.9
+
+> Compute 8.9 CUDA device: [NVIDIA L4]
+Warning: "number of bodies" specified 3000000 is not a multiple of 256.
+Rounding up to the nearest multiple: 3000064.
+3000064 bodies, total time for 10 iterations: 172857.781 ms
+= 520.681 billion interactions per second
+= 10413.629 single-precision GFLOP/s at 20 flops per interaction
+```
+
+`MapSMtoCores for SM 8.9 is undefined`가 GeForce에서와 똑같이 나온다. 이 CUDA 샘플 이미지가 SM 8.9 매핑 테이블을 갖고 있지 않아 Ampere로 표시하는데 **RTX 4070 Ti SUPER와 L4가 같은 SM 8.9라서 같은 경고가 뜬다.**
+
+성능을 비교하면 이렇다.
+
+| <br />     | 로컬 PC (RTX 4070 Ti SUPER) | 이 실습 (L4) |
+| ---------- | ---------------------- | ---------- |
+| body 수     | 5,000,192              | 3,000,064  |
+| GFLOP/s    | 23,611                 | **10,414** |
+| 전력 상한      | 285W                   | 72W        |
+| W당 GFLOP/s | 82.8                   | **144.6**  |
+
+**절대 성능은 L4가 44%지만 전력당 효율은 1.75배다.** 전력 상한이 4분의 1인데 성능은 절반 가까이 낸다. 데이터센터 GPU가 어디를 최적화했는지가 이 숫자에 드러난다. body 수를 2M에서 3M으로 늘려도 GFLOP/s는 10,191에서 10,414로 거의 같다. 클럭이 떨어진 만큼 병렬도가 올라 상쇄된 것이다.
+
+앞서 PyTorch 행렬곱으로 잰 11.75 TFLOP/s와 nbody의 10.41 TFLOP/s가 가까운데, 둘 다 FP32 연산이라 그래야 맞다. L4의 스펙상 FP32는 30.3 TFLOPS인데 실측이 3분의 1인 것은 스펙 값이 부스트 클럭 기준이고 실제로는 전력 상한에 묶이기 때문이다.
+
+***
+
+## 8. Utilyze - 유일하게 끝까지 안 된 것
+
+[Utilyze](https://github.com/systalyze/utilyze)는 GPU 활용률을 커널 단위로 쪼개 보는 TUI 도구다. 이 절만 목표에 도달하지 못했고 이유가 흥미로웠다.
+
+설치에서 두 번 걸렸다.
+
+```bash
+curl -sSfL https://systalyze.com/utilyze/install.sh | sh
+# Error: HOME is not set
+```
+
+SSM으로 실행하면 `HOME`이 없다. 설치 위치를 명시하면 넘어간다.
+
+```bash
+UTLZ_INSTALL_DIR=/usr/local/bin sh install.sh
+```
+
+두 번째는 CUPTI였다. Utilyze는 CUDA Profiling Tools Interface를 요구하는데 없으면 설치 여부를 대화형으로 묻는다. 비대화형 실행에서는 프롬프트에 답할 수 없어 멈춘다. 의사 터미널을 붙여 `y`를 흘려 넣었다.
+
+```bash
+printf 'y\n' | script -qec 'utlz' /dev/null
+```
+
+### DCGM Exporter와 성능 카운터를 다툰다
+
+CUPTI가 깔린 뒤에도 실행이 안 됐다.
+
+```
+NVPA_STATUS_RESOURCE_UNAVAILABLE
+```
+
+**DCGM Exporter가 GPU 성능 카운터를 배타적으로 점유하고 있었다.** 7절에서 `DCGM_FI_PROF_*` 계열이 열린 것과 같은 자원이다. 이 계열은 하드웨어 카운터를 읽고, 카운터는 한 번에 한 프로세스에만 열린다. DCGM DaemonSet을 0으로 내리면 오류가 사라진다.
+
+```bash
+kubectl -n monitoring patch ds dcgm-exporter -p \
+  '{"spec":{"template":{"spec":{"nodeSelector":{"nonexistent":"true"}}}}}'
+# DCGM 파드 0개 (6초)
+```
+
+서버 모드로 실행했다.
+
+```bash
+utlz --server
+# Live metrics URL: ws://127.0.0.1:8079/live
+```
+
+접속할 포트가 열렸다.
+
+```
+LISTEN 0 4096 127.0.0.1:8079 0.0.0.0:* users:(("utlz",pid=18316,fd=32))
+```
+
+그런데 HTTP로는 아무것도 주지 않는다.
+
+| 경로             | 응답                 |
+| -------------- | ------------------ |
+| `/`            | 404 page not found |
+| `/metrics`     | 404 page not found |
+| `/api/metrics` | 404 page not found |
+| `/ws`          | 404 page not found |
+
+웹소켓으로 직접 붙어도 핸드셰이크에서 막혔다.
+
+```
+핸드셰이크: HTTP/1.1 400 Bad Request
+```
+
+**서버 모드가 웹소켓 하나만 노출하고 그 프로토콜은 자체 클라이언트(`utlz --connect`)를 전제한다.** Prometheus가 긁어 갈 HTTP 엔드포인트가 없다. 저장소 README도 서버 모드를 이렇게 설명한다. "macOS와 Windows 버전에서 Utilyze는 프로파일링이 가능한 원격 리눅스 머신에서 도는 다른 Utilyze 프로세스의 클라이언트로 동작한다." 애초에 사람이 눈으로 보는 원격 뷰어로 설계된 도구다.
+
+여기서 멈췄다. 결론만 적으면 이렇다.
+
+| 항목        | 결과                            |
+| --------- | ----------------------------- |
+| 설치        | 됨 (`UTLZ_INSTALL_DIR` 필요)     |
+| CUPTI 의존성 | 됨 (터미널로 프롬프트 통과)           |
+| 실행        | **DCGM Exporter를 내려야 가능**     |
+| TUI 캡처    | 안 됨 (헤드리스 환경에서 렌더링 결과가 남지 않음) |
+| 메트릭 외부 노출 | 안 됨 (웹소켓 전용)                  |
+
+**이 도구는 사람이 터미널에 앉아 보는 용도다.** 상시 모니터링에는 DCGM Exporter를 쓰고 Utilyze는 특정 순간을 파고들 때 꺼내는 편이 맞다. 다만 두 도구를 동시에 켤 수 없다는 것이 실무에서 걸린다. 클러스터에 DCGM이 상주하는 상태에서 Utilyze를 쓰려면 그 노드의 DCGM을 잠시 내려야 하고 그 사이 메트릭에 구멍이 생긴다.
+
+***
+
+## 9. NFD와 GFD - 노드 라벨로 GPU를 표현한다
+
+GPU Operator의 구성 요소인 NFD와 GFD를 따로 설치해 라벨을 본다. GPU Operator는 자체 드라이버와 toolkit을 들고 오는데 호스트에 이미 둘 다 있으니 쓰지 않았다.
+
+설치 전 노드 라벨은 여덟 개뿐이다. 주요한 것만 보면 이렇다.
+
+```json
+{
+ "beta.kubernetes.io/arch": "amd64",
+ "beta.kubernetes.io/instance-type": "k3s",
+ "kubernetes.io/hostname": "ip-172-31-3-180",
+ "node-role.kubernetes.io/control-plane": "true",
+ "node.kubernetes.io/instance-type": "k3s"
+}
+```
+
+`instance-type`이 `k3s`다. EC2 인스턴스 타입이 아니다. K3s가 클라우드 프로바이더 통합 없이 도니 자기 이름을 넣는다. **이 값으로는 GPU 인스턴스인지 알 수 없다.** GFD가 이걸 고친다.
+
+### NFD가 59개를 붙인다
+
+```bash
+helm upgrade --install nfd nfd/node-feature-discovery \
+  --create-namespace -n node-feature-discovery --wait
+```
+
+```
+  총 59개
+   feature.node.kubernetes.io/cpu-cpuid.AVX2 = true
+   feature.node.kubernetes.io/cpu-model.vendor_id = AMD
+   feature.node.kubernetes.io/cpu-model.family = 25
+   feature.node.kubernetes.io/kernel-version.full = 7.0.0-1012-aws
+   feature.node.kubernetes.io/pci-0300_1d0f.present = true
+   feature.node.kubernetes.io/pci-0302_10de.present = true
+   feature.node.kubernetes.io/system-os_release.VERSION_ID = 24.04
+   ...
+```
+
+### 다섯 번째 차이 - PCI 라벨이 다르다
+
+| <br />        | 로컬 PC (RTX 4070 Ti SUPER) | 이 실습 (L4)                 |
+| ------------- | ----------------------- | --------------------------- |
+| NVIDIA PCI 라벨 | `pci-0300_10de.present` | **`pci-0302_10de.present`** |
+| 추가 라벨         | -                       | **`pci-0300_1d0f.present`** |
+
+라벨 이름의 앞 네 자리는 PCI 클래스다. 2절에서 `lspci`가 L4를 `3D controller [0302]`로, GeForce를 `VGA compatible controller [0300]`으로 보여 준 것이 여기 그대로 반영된다. **`nodeSelector`에 `pci-0300_10de.present: "true"`를 박아 두면 L4 노드에는 스케줄되지 않는다.** 물리 PC 기준으로 복사해 온 셀렉터가 데이터센터 GPU에서 조용히 실패하는 지점이다.
+
+`0300_1d0f`가 하나 더 붙은 것도 EC2 특성이다. 벤더 `1d0f`는 Amazon이고 이것은 인스턴스에 붙는 가상 VGA 장치다. 클래스가 `0300`이니 **"VGA 장치가 있는 노드"를 조건으로 걸면 GPU와 무관한 이 장치에 걸려 참이 된다.**
+
+### GFD가 nvidia.com/\* 26개를 붙인다
+
+GFD는 device plugin 차트에서 함께 켠다.
+
+```bash
+helm upgrade --install nvidia-device-plugin nvdp/nvidia-device-plugin \
+  -n kube-system --set runtimeClassName=nvidia --set gfd.enabled=true --wait
+```
+
+```
+  총 26개
+   nvidia.com/cuda.driver-version.full = 595.84
+   nvidia.com/cuda.runtime-version.full = 13.2
+   nvidia.com/gpu.compute.major = 8
+   nvidia.com/gpu.compute.minor = 9
+   nvidia.com/gpu.count = 1
+   nvidia.com/gpu.family = ada-lovelace
+   nvidia.com/gpu.machine = g6.2xlarge
+   nvidia.com/gpu.memory = 23034
+   nvidia.com/gpu.mode = compute
+   nvidia.com/gpu.product = NVIDIA-L4
+   nvidia.com/gpu.replicas = 1
+   nvidia.com/gpu.sharing-strategy = none
+   nvidia.com/mig.capable = false
+   nvidia.com/mps.capable = false
+   nvidia.com/vgpu.present = false
+```
+
+### 여섯 번째 차이 - gpu.mode와 gpu.machine
+
+| 라벨                       | 로컬 PC               | 이 실습             |
+| ------------------------ | ------------------- | ---------------- |
+| `nvidia.com/gpu.mode`    | `graphics`          | **`compute`**    |
+| `nvidia.com/gpu.machine` | `MS-7D76` (메인보드 모델) | **`g6.2xlarge`** |
+| `nvidia.com/gpu.family`  | `ada-lovelace`      | `ada-lovelace`   |
+
+**`gpu.mode`가 `graphics`에서 `compute`로 바뀐 것이 이 라벨의 존재 이유를 설명한다.** 같은 Ada 세대에 같은 compute capability 8.9인데 모드가 다르다. GFD가 디스플레이 출력 유무를 보고 판정한다. 3절에서 본 `dmesg`의 `Cannot find any crtc` 줄이 같은 사실의 다른 표현이다. **추론 워크로드를 `gpu.mode=compute` 노드에만 보내려면 이 라벨 하나로 된다.**
+
+`gpu.machine`이 EC2 인스턴스 타입으로 나오는 것도 의미가 있다. GFD는 DMI에서 시스템 제품명을 읽는데 물리 PC에서는 메인보드 모델이 나오고 EC2에서는 인스턴스 타입이 나온다. **앞서 `node.kubernetes.io/instance-type`이 `k3s`로 쓸모없던 문제가 이 라벨로 풀린다.** 클라우드 프로바이더 통합 없이도 인스턴스 타입 기반 스케줄링이 된다.
+
+`mig.capable = false`는 3절에서 `/dev/nvidia-caps`를 보고 세운 추측을 확인해 준다. 장치 노드는 만들어졌지만 MIG는 지원하지 않는다.
+
+### 라벨 기반 스케줄링을 검증한다
+
+라벨이 붙었으니 실제로 스케줄링에 쓰이는지 본다.
+
+```yaml
+spec:
+  nodeSelector:
+    nvidia.com/gpu.product: NVIDIA-L4
+    nvidia.com/gpu.mode: compute
+  containers:
+  - resources: { limits: { nvidia.com/gpu: 1 } }
+```
+
+```
+Warning  FailedScheduling  0/1 nodes are available:
+  1 Insufficient nvidia.com/gpu.
+```
+
+**라벨은 통과하고 리소스에서 막혔다.** 그 시점에 다른 파드가 GPU 한 장을 이미 잡고 있었다. 라벨 조건이 틀렸다면 `didn't match Pod's node affinity/selector`가 나온다. 메시지가 `Insufficient nvidia.com/gpu`인 것은 셀렉터를 통과한 뒤 리소스 계산에서 걸렸다는 뜻이다. **라벨 셀렉터와 리소스 요청은 스케줄러의 다른 단계이고 실패 메시지로 구분된다.**
+
+***
+
+## 10. 서빙 스택 - MinIO에서 모델을 스트리밍한다
+
+GPU가 파드에 노출되는 경로를 확인했으니 그 위에 실제 워크로드를 올린다. 보통은 Open WebUI로 마무리하는데 그 뒤에 있는 vLLM이 어디서 모델을 읽을지가 실무 쟁점이라 S3 호환 스토리지를 끼웠다.
+
+### MinIO를 클러스터 안에 둔다
+
+```bash
+kubectl apply -f minio.yaml   # PVC 40Gi (local-path), NodePort 콘솔
+```
+
+K3s의 기본 스토리지 클래스가 `local-path`다. PVC가 노드 디스크의 디렉터리로 바인딩된다.
+
+```
+persistentvolumeclaim/minio-data   Bound   pvc-603cde50-...   40Gi   RWO   local-path
+```
+
+### 모델을 Job으로 옮긴다
+
+```yaml
+# model-loader Job
+- huggingface-cli download skt/A.X-4.0-Light --local-dir /model
+- mc mirror /model localminio/models/A.X-4.0-Light
+```
+
+```
+┌───────────┬─────────────┬──────────┬──────────────┐
+│ Total     │ Transferred │ Duration │ Speed        │
+│ 13.53 GiB │ 13.53 GiB   │ 01m54s   │ 120.86 MiB/s │
+└───────────┴─────────────┴──────────┴──────────────┘
+
+NAME           STATUS     COMPLETIONS   DURATION
+model-loader   Complete   1/1           4m14s
+```
+
+13.5GB를 받아 올리기까지 4분 14초다. MinIO로 미러링하는 구간이 1분 54초에 120.86 MiB/s로 끝났다. 같은 노드 안이라 네트워크가 아니라 디스크 속도다.
+
+### vLLM이 s3://를 직접 읽는다
+
+```yaml
+args:
+  - s3://models/A.X-4.0-Light
+  - --load-format=runai_streamer
+  - --served-model-name=ax4-light
+env:
+  - { name: AWS_ENDPOINT_URL, value: "http://minio.vllm.svc.cluster.local:9000" }
+  - { name: AWS_EC2_METADATA_DISABLED, value: "true" }
+```
+
+`runai_streamer`는 오브젝트 스토리지에서 safetensors를 GPU로 바로 흘려 넣는 로더다. 로컬 디스크에 내려받는 단계가 없다. `AWS_EC2_METADATA_DISABLED=true`가 필요한데, 없으면 boto3가 EC2 인스턴스 메타데이터에서 자격증명을 찾다가 MinIO 키를 무시한다.
+
+```
+Available KV cache memory: 5.76 GiB
+GPU KV cache size: 107,776 tokens
+Maximum concurrency for 4,096 tokens per request: 26.31x
+```
+
+14GB급 모델을 올리고 KV로 5.76 GiB가 남았다. 요청당 4,096 토큰 기준으로 26.31개를 동시에 담는다.
+
+### Open WebUI를 붙인다
+
+```yaml
+env:
+  - { name: OPENAI_API_BASE_URL, value: "http://vllm-server.vllm.svc.cluster.local:8000/v1" }
+  - { name: WEBUI_AUTH, value: "False" }
+```
+
+![Open WebUI](/img/gpu-aws-09-open-webui.png)
+
+모델 선택 드롭다운까지 나오고 vLLM의 `/v1/models` 응답을 그대로 읽는다.
+
+```json
+{"object":"list","data":[{"id":"qwen-a","object":"model",
+ "root":"s3://models/Qwen2.5-1.5B-Instruct","max_model_len":2048, ...}]}
+```
+
+`root`가 `s3://` 경로로 나온다. **모델의 출처가 API 응답까지 그대로 올라온다.** 위 캡처는 11절 HAMi 파드에 붙인 상태이고 그래서 `qwen-a`가 잡힌다.
+
+> **헤드리스 브라우저로 SPA를 찍을 때**: 첫 시도에서 10KB짜리 로딩 스피너만 찍혔다. Open WebUI가 클라이언트 렌더링이라 `--virtual-time-budget`을 넉넉히 줘야 한다. 75초로 늘리자 122KB가 나왔는데 이번에는 릴리스 노트 모달이 화면을 가렸다. 모달은 클릭해야 닫히고 `--screenshot` 모드는 클릭을 못 한다. Chrome DevTools Protocol로 붙어 `Runtime.evaluate`로 버튼을 누르고 `Page.captureScreenshot`을 부르면 된다.
+
+***
+
+## 11. HAMi - GPU 한 장을 두 파드가 나눠 쓴다
+
+L4는 MIG를 지원하지 않는다(9절 `mig.capable = false`). 하드웨어 분할이 안 되니 소프트웨어로 한다. [HAMi](https://project-hami.io/)가 그 도구다.
+
+```bash
+helm upgrade --install hami hami-charts/hami -n kube-system \
+  --set scheduler.kubeScheduler.imageTag=v1.33.0 --wait
+# Resource name: nvidia.com/gpu
+```
+
+### 일곱 번째 차이 - 노드 라벨과 플러그인 충돌
+
+설치는 됐는데 `hami-device-plugin` 파드가 0개였다.
+
+```
+0/1 nodes are available: node(s) didn't match Pod's node affinity/selector
+```
+
+**HAMi DaemonSet의 nodeSelector가 `gpu=on`이다.** 9절에서 NFD와 GFD가 라벨을 59개, 26개씩 붙였는데 그중에 `gpu=on`은 없다. HAMi 자체 규약이라 손으로 붙여야 한다.
+
+```bash
+kubectl label node ip-172-31-3-180 gpu=on
+```
+
+그리고 5절에서 깐 독립 NVIDIA device plugin을 지워야 한다. HAMi가 자체 플러그인으로 같은 `nvidia.com/gpu` 리소스를 광고하니 둘이 부딪힌다.
+
+```bash
+helm uninstall nvidia-device-plugin -n kube-system
+```
+
+### GPU 한 장이 열 장이 된다
+
+```
+Capacity:
+  nvidia.com/gpu = 10
+Allocatable:
+  nvidia.com/gpu = 10
+```
+
+**5절에서 1이었던 값이 10이다.** 물리 GPU는 그대로 한 장이다. HAMi가 노드 어노테이션에 실제 구성을 적어 둔다.
+
+```json
+hami.io/node-nvidia-register = [{
+  "id": "GPU-06e5abff-7a63-1976-2ddb-a613c1e239cc",
+  "count": 10, "devmem": 23034, "devcore": 100,
+  "type": "NVIDIA L4", "mode": "hami-core", "health": true
+}]
+```
+
+`devmem 23034`와 `devcore 100`이 나눠 쓸 총량이고 `count 10`이 최대 분할 수다. `mode: hami-core`는 CUDA 호출을 가로채는 라이브러리 방식이라는 뜻이다.
+
+### 두 파드에 메모리와 코어를 나눠 준다
+
+```yaml
+resources:
+  limits:
+    nvidia.com/gpu: 1
+    nvidia.com/gpumem: 8000     # MiB
+    nvidia.com/gpucores: 40     # %
+```
+
+```
+vllm-hami-a-7598b99556-dltp4   1/1   Running   10.42.0.51
+vllm-hami-b-66684649bd-dbfjz   1/1   Running   10.42.0.52
+```
+
+파드 안에서 VRAM을 조회하면 이렇다.
+
+| <br /> | memory.total  |
+| ------ | ------------- |
+| 파드 a   | **8,000 MiB** |
+| 파드 b   | **8,000 MiB** |
+| 호스트    | 23,034 MiB    |
+
+**파드가 보는 VRAM이 가상화됐다.** `CUDA_DEVICE_SM_LIMIT=40`이 함께 주입되고 이것이 코어 제한이다. HAMi가 `libvgpu.so`를 파드에 밀어 넣어 `cudaMalloc`과 커널 실행을 가로채서 만드는 값이다.
+
+두 파드가 같은 모델을 올렸는데 기동 로그가 동일하다.
+
+```
+Model loading took 2.98 GiB memory and 3.924050 seconds
+Available KV cache memory: 2.92 GiB
+GPU KV cache size: 109,264 tokens, Maximum concurrency for 2,048 tokens per request: 53.35x
+```
+
+두 파드 모두 KV 2.92 GiB, 109,264 토큰, 53.35x다. **8,000 MiB 안에서 각자 독립적으로 메모리를 프로파일링하고 같은 결론에 도달한다.** vLLM은 자기가 GPU 전체를 쓴다고 믿는다.
+
+### 여덟 번째 차이 - 가상 VRAM 기준으로 비율을 다시 잡아야 한다
+
+처음에 `--gpu-memory-utilization 0.28`을 줬다. 23,034 MiB의 28%면 6.4GB로 넉넉하다고 계산한 값인데 파드가 CrashLoopBackOff에 빠졌다.
+
+**28%는 가상화된 8,000 MiB의 28%, 곧 2,240 MiB다.** 모델 하나가 2.98 GiB이므로 들어가지 않는다. HAMi가 이미 8,000 MiB 상한을 강제하니 vLLM 쪽 비율은 높게 줘도 된다. 0.80으로 올려 통과했다.
+
+```
+0.28 × 8,000 MiB = 2,240 MiB < 모델 2.98 GiB → 실패
+0.80 × 8,000 MiB = 6,400 MiB > 모델 2.98 GiB → 통과
+```
+
+**GPU 분할을 쓰면 컨테이너 안의 모든 비율 계산 기준이 가상 값으로 바뀐다.** 호스트 값으로 계산한 설정은 전부 다시 봐야 한다.
+
+### RollingUpdate가 교착에 빠진다
+
+비율을 고쳐 배포하니 이번에는 롤아웃이 멈췄다.
+
+```
+vllm-hami-a-6cffdfdd5d-74gfr   0/1   CrashLoopBackOff   7   24m
+vllm-hami-a-7598b99556-pb4jd   0/1   Pending            0   20m
+vllm-hami-b-66684649bd-wxxbk   0/1   Pending            0   20m
+vllm-hami-b-76444bd46-wnms7    1/1   Running            8   24m
+```
+
+```
+CardInsufficientMemory
+```
+
+**구 파드 두 개가 16,000 MiB를 붙들고 있고 신 파드 두 개가 16,000 MiB를 더 요구한다.** 합이 32,000 MiB로 23,034를 넘는다. RollingUpdate는 신 파드가 Ready가 된 뒤 구 파드를 지우는데 신 파드가 메모리를 못 받아 Ready가 안 되고 구 파드는 안 지워진다.
+
+`Recreate` 전략으로 바꾸고 하나씩 올려 풀었다.
+
+```bash
+kubectl -n vllm scale deploy vllm-hami-a vllm-hami-b --replicas=0
+kubectl -n vllm patch deploy vllm-hami-a -p '{"spec":{"strategy":{"type":"Recreate"}}}'
+kubectl -n vllm scale deploy vllm-hami-a --replicas=1   # 하나씩
+```
+
+**GPU 메모리를 꽉 채워 나눈 배포에는 RollingUpdate를 쓰지 않는다.** 여유가 신 파드 한 몫보다 작으면 반드시 교착이 생긴다. `Recreate`는 다운타임이 생기지만 이 조건에서는 선택지가 없다.
+
+### 두 파드가 동시에 답한다
+
+```bash
+curl http://10.42.0.51:8000/v1/chat/completions -d '{"model":"qwen-a", ...}'
+curl http://10.42.0.52:8000/v1/chat/completions -d '{"model":"qwen-b", ...}'
+```
+
+```
+-- qwen-a --
+  응답: 대한민국의 수도는 서울입니다.
+  usage: {'prompt_tokens': 45, 'completion_tokens': 11, 'total_tokens': 56}
+-- qwen-b --
+  응답: 대한민국의 수도는 서울입니다.
+  usage: {'prompt_tokens': 45, 'completion_tokens': 11, 'total_tokens': 56}
+```
+
+부하를 걸고 호스트에서 보면 실체가 드러난다.
+
+```
+utilization.gpu, memory.used, power.draw, clocks.sm
+100 %, 14214 MiB, 71.94 W, 1650 MHz
+
+pid, process_name, used_gpu_memory
+49237, VLLM::EngineCore, 7100 MiB
+49736, VLLM::EngineCore, 7100 MiB
+```
+
+**`VLLM::EngineCore` 프로세스가 두 개이고 각각 7,100 MiB다.** 파드는 각자 8,000 MiB 한도 안에 있고 호스트 합계는 14,214 MiB로 23,034 안에 든다. 한 장의 물리 GPU에서 두 개의 독립 서빙 프로세스가 도는 상태다.
+
+![DCGM Dashboard - HAMi 2파드 동시 부하](/img/gpu-aws-08-dcgm-hami-2pods.png)
+
+7절 nbody와 같은 대시보드인데 값이 다르다.
+
+| <br />                 | nbody (7절) | vLLM 2파드 (11절) |
+| ---------------------- | ---------- | -------------- |
+| GPU Engine Utilization | 100.00%    | 78.02%         |
+| **Tensor Utilization** | **0.00%**  | **2.43%**      |
+| GPU Memory Usage       | 610 MB     | **14.2 GB**    |
+| GPU Memory Utilization | 0.03%      | **65.07%**     |
+
+**Tensor Utilization이 0에서 2.43%로 올라갔다.** 7절에서 vLLM을 올리면 텐서 사용률이 0이 아니게 나올 것이라고 적은 것이 확인됐다. 다만 2.43%도 낮다. 1.5B 모델을 짧은 프롬프트로 돌리니 배치가 작고 텐서 코어가 채워지지 않는다. Engine Utilization이 78%인데 Tensor가 2%라는 조합은 **"GPU는 바쁘지만 텐서 코어는 놀고 있다"는** 뜻이고 이 상태에서 처리량을 늘리려면 배치를 키워야 한다. `GPU_UTIL`만 봤다면 포화로 읽고 GPU를 더 사도록 결론 냈을 것이다.
+
+***
+
+## 12. K8s DRA - Device Plugin의 다음 세대
+
+마지막으로 쿠버네티스 1.34에서 GA된 Dynamic Resource Allocation과 HAMi의 DRA 드라이버를 다룬다. Device Plugin이 "GPU 몇 장"만 표현할 수 있는 한계를 API 수준에서 푸는 것이 목표다.
+
+```bash
+kubectl api-resources | grep resource.k8s.io
+```
+
+```
+deviceclasses            resource.k8s.io/v1   false   DeviceClass
+resourceclaims           resource.k8s.io/v1   true    ResourceClaim
+resourceclaimtemplates   resource.k8s.io/v1   true    ResourceClaimTemplate
+resourceslices           resource.k8s.io/v1   false   ResourceSlice
+```
+
+`v1`이다. 알파나 베타가 아니다. K3s v1.36에 그대로 들어 있다. 5절에서 넣은 `DRAConsumableCapacity` feature gate도 확인해 둔다.
+
+```bash
+ps aux | grep kube-apiserver | grep -o 'feature-gates=[^ ]*'
+# feature-gates=DRAConsumableCapacity=true
+```
+
+### 아홉 번째 차이 - 드라이버가 GPU Operator 경로를 전제한다
+
+HAMi DRA 드라이버 매니페스트를 적용하면 initContainer가 끝나지 않는다.
+
+```
+hami-dra-driver-kubelet-plugin-lfsnj   0/1   Init:0/1   0   4m2s
+```
+
+원인은 경로였다.
+
+```yaml
+- name: NVIDIA_DRIVER_ROOT
+  value: /run/nvidia/driver
+```
+
+**GPU Operator는 드라이버를 컨테이너로 배포하고 `/run/nvidia/driver`에 마운트한다.** 이 실습은 호스트에 apt로 깔았으니 그 경로가 없다. 값을 `/`로 바꿔 봤지만 initContainer가 빈 디렉터리를 보고 멈췄다(`current contents: []`). hostPath 마운트 구조까지 얽혀 있어 환경변수 하나로는 안 됐다.
+
+기대하는 레이아웃을 만들어 주는 쪽으로 돌렸다.
+
+```bash
+mkdir -p /run/nvidia/driver
+mountpoint -q /run/nvidia/driver || mount --bind / /run/nvidia/driver
+```
+
+```
+-rwxr-xr-x 1 root root 1259616 /run/nvidia/driver/usr/bin/nvidia-smi
+lrwxrwxrwx 1 root root      22 /run/nvidia/driver/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1
+/run/nvidia/driver is a mountpoint
+```
+
+**루트를 그 자리에 bind mount하면 GPU Operator 레이아웃과 구별되지 않는다.** 매니페스트를 손대지 않고 적용해 5초에 Running이 됐다.
+
+```
+hami-dra-driver-kubelet-plugin-89db7   1/1   Running   0   15s
+```
+
+initContainer 로그도 정상이다.
+
+```
+nvidia-smi returned with code 0: success, leave
+```
+
+**GPU Operator 전제로 쓰인 매니페스트를 수동 스택에 얹을 때는 매니페스트를 고치기보다 경로를 맞춰 주는 쪽이 빠르다.** 매니페스트는 환경변수 하나만 보는 게 아니라 hostPath, initContainer 검증, 본 컨테이너 마운트가 서로 엮여 있다.
+
+### ResourceSlice - 장치가 스스로를 설명한다
+
+드라이버가 뜨자 노드의 GPU를 광고한다.
+
+```
+NAME                                                  DRIVER                          POOL
+ip-172-31-3-180-hami-core-gpu.project-hami.io-qfk6t   hami-core-gpu.project-hami.io   ip-172-31-3-180
+```
+
+```
+device: hami-gpu-0
+  attr architecture          = Ada Lovelace
+  attr brand                 = Nvidia
+  attr cudaComputeCapability = 8.9.0
+  attr cudaDriverVersion     = 13.2.0
+  attr driverVersion         = 595.84.0
+  attr minor                 = 0
+  cap  cores  = value 100,      requestPolicy: default 100,      range 0–100 step 1
+  cap  memory = value 23034Mi,  requestPolicy: default 23034Mi,  range 1Mi–23034Mi step 1Mi
+```
+
+**Device Plugin과 표현력이 다르다.** Device Plugin은 `nvidia.com/gpu: 1`이라는 정수 하나를 광고하고 아키텍처나 드라이버 버전은 9절처럼 노드 라벨로 따로 붙여야 했다. DRA는 장치 자체에 속성을 달고 스케줄러가 그것으로 필터링한다. `cap`에 `requestPolicy`가 붙어 요청 단위(`step 1Mi`)와 범위까지 API에 적혀 있다.
+
+### ResourceClaim - 필요한 만큼만 요청한다
+
+```yaml
+apiVersion: resource.k8s.io/v1
+kind: ResourceClaim
+metadata: { name: single-gpu-0, namespace: test-dra }
+spec:
+  devices:
+    requests:
+    - name: single-gpu
+      exactly:
+        deviceClassName: hami-core-gpu.project-hami.io
+        allocationMode: ExactCount
+        count: 1
+        capacity:
+          requests: { cores: "30", memory: "4Gi" }
+```
+
+파드가 이 클레임을 참조하면 스케줄러가 할당한다.
+
+```
+NAME           STATE                AGE
+single-gpu-0   allocated,reserved   9m47s
+double-gpu-0   pending              9m47s
+```
+
+```
+device: hami-gpu-0 | driver: hami-core-gpu.project-hami.io | pool: ip-172-31-3-180
+shareID: d81c7e73-5f13-4250-b55b-b1c3bdf8ad32
+consumedCapacity: {'cores': '30', 'memory': '4Gi'}
+reservedFor: pods pod-0
+```
+
+**`shareID`와 `consumedCapacity`가 `DRAConsumableCapacity` feature gate가 하는 일이다.** 장치 하나를 여러 클레임이 나눠 쓰고 각자 얼마를 먹었는지 API가 기록한다. 11절 HAMi가 어노테이션에 JSON 문자열로 적어 두던 것이 정식 리소스 필드가 됐다.
+
+`double-gpu-0`이 `pending`인 것은 오류가 아니다. 그 클레임을 참조하는 파드를 만들지 않았다. **DRA는 파드 스케줄링이 할당을 끌고 간다.** 클레임만 만들어 두면 영원히 대기한다.
+
+### 파드 안에서 확인한다
+
+```
+CUDA_DEVICE_SM_LIMIT_0=30
+CUDA_DEVICE_MEMORY_LIMIT_0=4096m
+CUDA_DEVICE_MEMORY_SHARED_CACHE=/usr/local/vgpu/claims/e5347def-.../8db165c2-....cache
+NVIDIA_VISIBLE_DEVICES=void
+NVIDIA_CTK_LIBCUDA_DIR=/usr/lib/x86_64-linux-gnu
+```
+
+```bash
+ls /usr/local/vgpu/
+# claims  libvgpu.so
+grep -c vgpu /proc/self/mountinfo
+# 4
+```
+
+`CUDA_DEVICE_SM_LIMIT_0=30`과 `CUDA_DEVICE_MEMORY_LIMIT_0=4096m`이 ResourceClaim의 `cores: 30`, `memory: 4Gi`와 정확히 맞는다. 11절 HAMi 파드에는 `CUDA_DEVICE_SM_LIMIT`(접미사 없음)이 들어갔는데 여기는 `_0`이 붙는다. **클레임 단위로 여러 장치를 받을 수 있으니 인덱스가 필요하다.**
+
+`NVIDIA_VISIBLE_DEVICES=void`가 4절 Docker 실험과 같은 값인데 의미가 다르다. 4절에서는 훅이 주입을 끝냈다는 표시였다. 여기서는 **DRA 드라이버가 장치 주입을 직접 처리하니 toolkit 훅이 손대지 말라는 표시다.** 실제 GPU 접근은 `libvgpu.so`가 CUDA 호출을 가로채 처리한다.
+
+세 계층을 나란히 놓으면 이렇다.
+
+| <br /> | Device Plugin (5·6절)            | HAMi (11절)                     | DRA (12절)                        |
+| ------ | ------------------------------- | ------------------------------ | -------------------------------- |
+| 표현 단위  | `nvidia.com/gpu: 1`             | `gpumem: 8000`, `gpucores: 40` | `capacity.requests`              |
+| 분할     | 불가                              | 가능 (확장 리소스)                    | 가능 (API 필드)                      |
+| 장치 속성  | 노드 라벨로 별도(GFD)                  | 노드 어노테이션 JSON                  | **ResourceSlice 속성**             |
+| 공유 기록  | 없음                              | 어노테이션                          | **`shareID`·`consumedCapacity`** |
+| 환경변수   | `NVIDIA_VISIBLE_DEVICES=<UUID>` | `CUDA_DEVICE_SM_LIMIT`         | `CUDA_DEVICE_SM_LIMIT_0`         |
+
+**GPU를 몇 장 줄지에서 어떤 GPU를 얼마만큼 줄지로 표현이 옮겨간다.** 실제 장치 주입은 세 계층 모두 `libvgpu.so`나 toolkit 훅이 맡는다. 달라지는 것은 그 위의 표현과 스케줄링이다.
+
+***
+
+## 13. 실습 시 유의사항
+
+### SSM 원격 실행에서 홑따옴표를 쓰지 않는다
+
+원격 실행 래퍼가 명령을 홑따옴표로 감싸는 구조라면 명령 안의 홑따옴표가 인용을 깨뜨린다. Docker 저장소를 등록하는 줄이 정확히 그렇다.
+
+```bash
+# 깨진다 - apt 소스 문자열과 sed 표현식에 홑따옴표가 있다
+ssm run "echo 'deb [arch=amd64 ...] https://...' > /etc/apt/sources.list.d/docker.list"
+```
+
+로그 파일조차 만들어지지 않고 조용히 실패하므로 원인을 찾기 어렵다. 스크립트를 파일로 만들어 전송한 뒤 `bash <파일>`로 실행하면 이 문제가 사라진다. 이 실습에서도 한 번 걸렸다.
+
+### 완료 판정에 grep -c를 쓰지 않는다
+
+원격 작업이 끝났는지 마커로 확인할 때 다음이 오판을 만든다.
+
+```bash
+# 위험
+DONE=$(grep -c '완료' setup.log 2>/dev/null || echo 0)
+```
+
+`grep -c`는 0건일 때 종료 코드 1을 낸다. `|| echo 0`이 붙어 있으면 grep이 찍은 `0`과 echo의 `0`이 겹쳐 출력이 `00`이 된다. `"00" != "0"`이 참이라 완료로 읽는다. **아직 만들어지지 않은 것을 다음 단계가 쓰기 시작한다.**
+
+```bash
+# 안전 - 카운트를 쓰지 않고 고정 토큰만 본다
+if grep -q 'SETUP_OK' setup.log; then ... ; fi
+```
+
+`tail -N`으로 마커를 찾는 것도 위험하다. 완료 마커 뒤에 여러 줄 출력이 붙으면 마커가 tail 창 밖으로 밀린다. 파일 전체를 본다.
+
+### 매니페스트 패치를 행 번호로 하지 않는다
+
+흔히 쓰는 `sed -i "30a\\      runtimeClassName: nvidia"`는 매니페스트 30번째 행에 삽입한다. device plugin 버전이 올라가 행이 하나 밀리면 엉뚱한 곳에 들어간다. 정규식으로 구조를 찾는 편이 안전하다.
+
+```python
+t = re.sub(r"(\n    spec:\n)", r"\1      runtimeClassName: nvidia\n", t, count=1)
+```
+
+### 비동기 CUDA 호출에서 시간을 재는 방법
+
+`verify_gpu.py`의 5초 루프가 17초 걸린 까닭이 여기 있다. CUDA 커널 실행은 비동기라 파이썬 루프는 명령을 큐에 쌓고 즉시 반환한다.
+
+```python
+# 구간마다 동기화해야 실제 시간이 나온다
+torch.cuda.synchronize(); t0 = time.time()
+c = a @ b
+torch.cuda.synchronize(); print(time.time() - t0)
+```
+
+### GPU 성능 카운터는 한 프로세스만 쓴다
+
+8절에서 Utilyze가 `NVPA_STATUS_RESOURCE_UNAVAILABLE`로 죽은 원인이다. DCGM Exporter가 `DCGM_FI_PROF_*`를 수집하려고 하드웨어 카운터를 점유한다. Nsight Compute도 같은 자원을 쓰니 같은 충돌이 난다. **프로파일링 도구를 쓰려면 그 노드의 DCGM을 먼저 내려야 하고 그 사이 메트릭에 구멍이 생긴다.**
+
+### GPU 분할 환경에서는 비율 설정을 다시 계산한다
+
+11절에서 `--gpu-memory-utilization 0.28`이 실패한 이유다. 컨테이너가 보는 VRAM이 가상화되면 비율의 분모가 바뀐다.
+
+```
+호스트 23,034 MiB 기준으로 계산 → 0.28 = 6.4GB (기대)
+파드가 보는 8,000 MiB 기준     → 0.28 = 2,240 MiB (실제)
+```
+
+**분할 미들웨어가 상한을 이미 강제하므로 컨테이너 안의 비율은 높게 주면 된다.**
+
+### 꽉 채운 GPU 분할 배포에 RollingUpdate를 쓰지 않는다
+
+신 파드 한 몫의 여유가 없으면 구 파드가 안 지워지고 신 파드가 안 뜨는 교착이 생긴다. 11절에서 `CardInsufficientMemory`로 20분을 잡아먹었다. `strategy.type: Recreate`로 두고 필요하면 수동으로 하나씩 올린다.
+
+### GPU Operator 전제 매니페스트는 경로를 맞춰 준다
+
+12절 DRA 드라이버가 `/run/nvidia/driver`를 요구한다. 환경변수만 고치면 initContainer 검증이나 hostPath 중 하나가 어긋난다. 호스트 루트를 그 자리에 bind mount하면 매니페스트를 손대지 않고 통과한다.
+
+```bash
+mkdir -p /run/nvidia/driver && mount --bind / /run/nvidia/driver
+```
+
+### 결과 가져오기 경로를 측정 전에 검증한다
+
+SSM `send-command`의 출력이 24,000자에서 잘린다. 결과를 base64로 감싸 받으면 80KB tarball도 넘기지 못하고 잘린 자리의 문자 때문에 로컬에서 디코딩이 깨진다. 인스턴스 역할에 S3 쓰기 권한을 붙이면 이 한계가 사라진다.
+
+```bash
+# 측정 전에 더미 파일로 왕복을 확인한다
+head -c 400000 /dev/urandom | base64 > /tmp/probe.txt
+aws s3 cp /tmp/probe.txt s3://<버킷>/probe.txt   # 인스턴스에서
+aws s3 cp s3://<버킷>/probe.txt ./probe.txt      # 로컬에서
+```
+
+### 헤드리스 브라우저로 대시보드를 찍는 법
+
+Grafana와 Prometheus는 `--screenshot`으로 바로 된다. 시간 범위와 변수를 URL에 박고 `kiosk`를 붙이면 사이드바가 사라진다.
+
+```bash
+google-chrome --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage \
+  --hide-scrollbars --window-size=1600,1500 --virtual-time-budget=45000 \
+  --screenshot=out.png \
+  "http://$HOST:$PORT/d/$UID/?var-instance=$DCGM_IP:9400&from=now-30m&to=now&kiosk"
+```
+
+세 가지가 걸렸다.
+
+| 증상                 | 원인                                                           |
+| ------------------ | ------------------------------------------------------------ |
+| `No data` 패널만 나온다  | `var-instance`에 이미 바뀐 예전 파드 IP를 넣었다. DCGM 파드가 재시작되면 IP가 바뀐다       |
+| 30KB짜리 오류 페이지      | 대시보드 uid를 잘못 넣어 URL이 `/d//`가 됐다. `/api/search`로 uid를 먼저 확인한다 |
+| `Invalid Date NaN` | Prometheus URL에 `g0.moment_input=`을 빈 값으로 넣었다. 아예 빼야 한다      |
+
+**NodePort 번호를 추측하지 않는다.** `kubectl get svc -A | grep NodePort`로 실제 값을 읽는다. 이 실습에서 Grafana는 30002, Prometheus는 30001이었는데 30300과 30090으로 짐작해 네 장을 버렸다.
+
+SPA는 클릭이 필요한 경우가 있다. Open WebUI의 릴리스 노트 모달이 그렇다. `--screenshot` 모드로는 못 닫으니 CDP로 붙는다.
+
+```bash
+google-chrome --headless=new --remote-debugging-port=9222 "$URL" &
+# /json 에서 webSocketDebuggerUrl 을 얻어 Runtime.evaluate 로 클릭,
+# Page.captureScreenshot 으로 캡처
+```
+
+### DLAMI와 순정 AMI 중 무엇을 쓸지
+
+| <br />  | Deep Learning AMI | 순정 Ubuntu          |
+| ------- | ----------------- | ------------------ |
+| 드라이버    | 미리 설치됨            | 직접 설치 (약 3분 + 재부팅) |
+| nouveau | 처리됨               | 로드된 상태로 시작         |
+| 디스크     | 크다 (수십 GB)        | 작다                 |
+| 학습 목적   | 2·3절이 사라진다        | **설치 경로를 볼 수 있다**  |
+| 실습 목적   | 빠르다               | 준비 시간이 더 든다        |
+
+**드라이버 스택을 이해하려는 실습이면 순정을, 상위 계층만 볼 것이면 DLAMI를 쓰면 된다.** 이 실습은 전자였다.
+
+***
+
+## 14. 마무리
+
+계획한 열개의 섹션 가운데 Utilyze 하나만 빼고 전부 통과했다. 물리 PC를 전제로 한 절차인데도 거의 그대로 옮겨진다는 것이 소득이였다. 드라이버 recommended 버전이 같았고 커널 모듈 구성, 장치 노드, 컨테이너 주입 방식, Device Plugin 등록 절차가 모두 일치했다.
+
+갈린 지점 아홉 곳은 두 갈래로 나뉜다.
+
+**GeForce와 데이터센터 GPU의 차이**
+
+| 차이                 | 내용                                                                  |
+| ------------------ | ------------------------------------------------------------------- |
+| Secure Boot        | EC2는 처음부터 꺼져 있어 이 단계 대부분이 불필요                                        |
+| nouveau            | 순정 AMI는 로드된 상태로 시작하지만 드라이버 패키지가 알아서 처리                              |
+| `/dev/nvidia-caps` | L4에만 생긴다. MIG 계열 capability 장치                                      |
+| `DCGM_FI_PROF_*`   | GeForce에서 막히던 것이 **L4에서는 5종 열린다**                                    |
+| 전력 특성              | 285W → 72W. 절대 성능은 44%인데 전력당 효율은 1.75배                              |
+| PCI 라벨             | `pci-0300_10de` → **`pci-0302_10de`**. 복사한 nodeSelector가 실패   |
+| GFD 라벨             | `gpu.mode` graphics → **compute**, `gpu.machine` 메인보드 → **인스턴스 타입** |
+
+**물리 PC와 kubeadm 전제에서 온 차이**
+
+| 차이          | 내용                                                        |
+| ----------- | --------------------------------------------------------- |
+| HAMi 노드 라벨  | `gpu=on`을 손으로 붙여야 하고 기존 device plugin과 충돌한다               |
+| DRA 드라이버 경로 | GPU Operator의 `/run/nvidia/driver`를 전제한다. bind mount로 맞춘다 |
+
+**프로파일링 메트릭이 가장 유용했다.** GeForce에서 못 하던 것이 열리자 `GPU_UTIL 100%`가 무엇을 뜻하는지 갈라 볼 수 있었다.
+
+| 워크로드            | GPU Util | GR Engine | Tensor    | 읽는 법                       |
+| --------------- | -------- | --------- | --------- | -------------------------- |
+| nbody (FP32)    | 100%     | 1.000     | **0.000** | FP32 파이프라인만 포화. 텐서 코어는 유휴  |
+| vLLM 2파드 (1.5B) | 78%      | -         | **2.43%** | GPU는 바쁜데 텐서 코어가 빈다. 배치가 작다 |
+
+같은 대시보드에서 두 워크로드를 대조해 보니 `GPU_UTIL`만으로는 어느 쪽도 진단이 안 된다. **활용률이 높다고 GPU를 더 사는 결정을 내리기 전에 프로파일링 계열을 봐야 한다.**
+
+GPU를 파드에 노출하는 방법이 세 세대에 걸쳐 어떻게 표현을 바꿔 왔는지도 한 인스턴스에서 나란히 확인했다. Device Plugin은 정수 하나를 광고하고 GFD가 라벨로 속성을 보충한다. HAMi는 확장 리소스로 메모리와 코어를 나누고 어노테이션에 JSON으로 상태를 적는다. DRA는 그 전부를 정식 API 필드로 올린다. **계층이 올라갈수록 스케줄러가 아는 정보가 늘어난다.** 장치를 실제로 주입하는 자리는 세 경우 모두 같으니 달라진 것은 그 앞단의 표현력이다.
+
+끝까지 안 된 것은 Utilyze 하나다. 원인은 도구 문제가 아니라 자원 경합이었다. DCGM Exporter가 성능 카운터를 배타적으로 쥐고 있어 두 도구를 함께 켤 수 없다. 이것도 정보다. **상시 텔레메트리와 심층 프로파일링은 같은 노드에서 동시에 못 한다.**
+
+***
+
+## 15. 참고 자료
+
+* [NVIDIA Driver Installation Guide (Ubuntu)](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/ubuntu.html) - apt 설치 절차
+* [NVIDIA Container Toolkit - Install Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+* [NVIDIA Container Toolkit - Architecture Overview](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/arch-overview.html) - OCI 훅이 끼어드는 지점
+* [K3s Quick Start](https://docs.k3s.io/quick-start) · [Alternative Container Runtime Support](https://docs.k3s.io/advanced#alternative-container-runtime-support) - nvidia 런타임 자동 감지
+* [NVIDIA k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin/) - DaemonSet 매니페스트, GFD 연동
+* [kube-prometheus-stack](https://artifacthub.io/packages/helm/prometheus-community/kube-prometheus-stack)
+* [DCGM Exporter](https://github.com/NVIDIA/dcgm-exporter) · [GPU Telemetry](https://docs.nvidia.com/datacenter/cloud-native/gpu-telemetry/latest/index.html)
+* [DCGM Profiling Metrics](https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/feature-overview.html) - `DCGM_FI_PROF_*` 계열 정의
+* [Grafana Dashboard 12239](https://grafana.com/grafana/dashboards/12239) · [23382](https://grafana.com/grafana/dashboards/23382) - DCGM 대시보드 두 종
+* [Utilyze](https://github.com/systalyze/utilyze) · [제품 페이지](https://www.systalyze.com/utilyze) - 커널 단위 GPU 활용률 TUI
+* [NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/overview.html) - 이 실습의 수동 절차를 한 번에 관리
+* [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery) · [GPU Feature Discovery](https://catalog.ngc.nvidia.com/orgs/nvidia/-/containers/gpu-feature-discovery)
+* [HAMi](https://project-hami.io/) · [HAMi DRA 튜토리얼](https://project-hami.io/tutorials/labs/hami-dra) - GPU 분할과 DRA 드라이버
+* [Kubernetes: Dynamic Resource Allocation](https://kubernetes.io/docs/concepts/scheduling-eviction/dynamic-resource-allocation/) · [장치 할당 태스크](https://kubernetes.io/ko/docs/tasks/configure-pod-container/assign-resources/allocate-devices-dra/)
+* [vLLM: Run:ai Model Streamer](https://docs.vllm.ai/en/latest/models/extensions/runai_model_streamer/) - `s3://` 직접 로드
+* [Open WebUI](https://github.com/open-webui/open-webui) · [MinIO](https://min.io/)
+* [NVIDIA L4 제품 스펙](https://www.nvidia.com/en-us/data-center/l4/)
