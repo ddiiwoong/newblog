@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "LLM 서빙 실습 가이드 — AWS GPU에서 끝까지 돌려보기"
+title: "LLM 서빙 실습 가이드 - AWS GPU에서 끝까지 돌려보기"
 comments: true
 classes: wide
 description: "Hands-On LLM Serving 실습을 AWS g5 인스턴스에서 실행하며 단일 모델 서빙, 배치 효과, vLLM, RAG 에이전트, AWS 관리형 서빙을 검증한 실습 기록"
@@ -22,9 +22,9 @@ tags:
   - SageMaker
 ---
 
-> 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
-# LLM 서빙 실습 가이드 — 저장소 코드를 AWS GPU에서 끝까지 돌려보기
+# LLM 서빙 실습 가이드 - 저장소 코드를 AWS GPU에서 끝까지 돌려보기
 
 > 실습 저장소: [llm-model-inference](https://github.com/orca3/llm-model-inference) (검증 커밋 `80dcd9f`)
 >
@@ -53,14 +53,14 @@ Ch.4의 RAG 에이전트를 돌려 질문 하나에 LLM이 몇 번 호출되는�
 
 ## 용어 사전 (Glossary)
 
-이 문서에 나오는 용어를 먼저 정리해둠. 모르는 게 나올 때마다 여기로 돌아와서 확인하면 된다.
+이 문서에 나오는 용어를 먼저 정리해둔다. 모르는 게 나올 때마다 여기로 돌아와서 확인하면 된다.
 
 ### 서빙 구조 용어
 
 | 용어 | 설명 |
 |------|------|
 | **Serving (서빙)** | 학습이 끝난 모델을 배포해서 실시간 요청에 예측을 돌려주는 것. Forward Pass만 수행한다. |
-| **엔드포인트 (Endpoint)** | 요청을 받는 HTTP 주소 하나. 이 실습에서는 `/basic_generate`, `/generate` 처럼 경로 단위로 나뉜다. |
+| **엔드포인트 (Endpoint)** | 요청을 받는 HTTP 주소 하나. 이 실습에서는 `/basic_generate`, `/generate`처럼 경로 단위로 나뉜다. |
 | **Auto-Regressive** | 이전 출력을 다음 입력으로 다시 넣는 생성 방식. 토큰 하나 만들 때마다 모델을 통째로 한 번 통과한다. |
 | **KV Cache** | 이전 토큰의 Key·Value 벡터를 저장해둔 캐시. 매 스텝 재계산을 막아 O(n²)를 O(n)으로 낮추지만, 그 대가로 메모리를 계속 먹는다. |
 | **Continuous Batching** | 끝난 요청의 슬롯에 즉시 새 요청을 밀어넣는 배치 전략. GPU가 노는 시간을 줄인다. |
@@ -89,12 +89,12 @@ Ch.4의 RAG 에이전트를 돌려 질문 하나에 LLM이 몇 번 호출되는�
 |------|------|
 | **SageMaker Endpoint** | 모델을 올려 HTTPS로 서빙해주는 관리형 추론 엔드포인트. 인스턴스 수명·오토스케일링을 AWS가 관리한다. |
 | **JumpStart** | SageMaker가 미리 준비해둔 모델·컨테이너·스크립트 묶음. 모델 ID만 주면 배포되는 게 목표지만, 지원 인스턴스 타입이 버전마다 바뀐다. |
-| **Bedrock** | 여러 벤더의 파운데이션 모델을 API로 쓰는 관리형 서비스. `converse()` / `invoke_model()` 로 호출한다. |
-| **Bedrock Mantle** | Bedrock의 **OpenAI 호환** 엔드포인트. `https://bedrock-mantle.<region>.api.aws/v1` 로 OpenAI SDK를 그대로 쓸 수 있다. 챗 전용이고 임베딩 모델은 없다. |
+| **Bedrock** | 여러 벤더의 파운데이션 모델을 API로 쓰는 관리형 서비스. `converse()` / `invoke_model()`로 호출한다. |
+| **Bedrock Mantle** | Bedrock의 **OpenAI 호환** 엔드포인트. `https://bedrock-mantle.<region>.api.aws/v1`로 OpenAI SDK를 그대로 쓸 수 있다. 챗 전용이고 임베딩 모델은 없다. |
 | **Inference Profile** | 크로스리전 추론용 모델 ID. `us.` 접두사가 붙는다. 최신 Bedrock 모델은 대부분 이쪽만 지원한다. |
 | **DLC (Deep Learning Container)** | AWS가 관리하는 학습·추론용 컨테이너 이미지. 이 실습의 `dlc` 노트북이 다루는 대상이다. |
 | **LMI (Large Model Inference)** | DJL 기반 대형 모델 추론 컨테이너. JumpStart가 내부적으로 쓴다. |
-| **Service Quotas** | 계정·리전별 리소스 상한. `ml.g6e.2xlarge for endpoint usage` 처럼 인스턴스 타입 단위로 걸린다. |
+| **Service Quotas** | 계정·리전별 리소스 상한. `ml.g6e.2xlarge for endpoint usage`처럼 인스턴스 타입 단위로 걸린다. |
 | **DLAMI** | Deep Learning AMI. NVIDIA 드라이버·CUDA가 미리 깔린 EC2 이미지. |
 | **SSM Session Manager** | 인바운드 포트를 열지 않고 인스턴스에 접속하는 방법. 이 실습은 SSH 키 없이 진행했다. |
 
@@ -117,7 +117,7 @@ Ch.4의 RAG 에이전트를 돌려 질문 하나에 LLM이 몇 번 호출되는�
 > 돌려줄 때까지 마주치는 문제를 순서대로 해결한다. 각 단계에서 **프로세스와 GPU 메모리가
 > 어떻게 변하는지**를 같이 추적한다.
 
-## 1. 실습 개요 — 무엇을 확인하려는가
+## 1. 실습 개요 - 무엇을 확인하려는가
 
 Ch.3은 두 개의 서버를 다룬다. 하나는 **단일 모델 LLM 서버**로, 같은 모델(`facebook/opt-125m`)을
 transformers 경로와 vLLM 경로로 나란히 서빙해서 둘을 비교할 수 있게 해둔 것이다. 다른 하나는
@@ -151,9 +151,9 @@ flowchart TD
     style I fill:#e6f3ff,stroke:#36c
 ```
 
-표시가 실습을 진행하려면 먼저 고쳐야 하는 두 곳이다. 각각 §4와 §7에서 다룬다.
+빨간색으로 표시한 두 곳이 실습을 진행하려면 먼저 고쳐야 하는 지점이다. 각각 §4와 §7에서 다룬다.
 
-## 2. 환경 준비 — 왜 GPU 리눅스여야 하나
+## 2. 환경 준비 - 왜 GPU 리눅스여야 하나
 
 ### 왜 맥에서는 안 되나:
 
@@ -290,7 +290,7 @@ PORT=8003 /opt/lab/venv2/bin/python -m app.server     # 멀티모델을 8003으�
 각 단계로 넘어가기 전 GPU를 완전히 비우는 절차는 §7에 있다. §7의 `daemon=True` 수정을 미리
 넣어 두면 이 단계 전환이 훨씬 수월하다.
 
-## 3. 저장소 구조 — 문서와 실제가 다르다
+## 3. 저장소 구조 - 문서와 실제가 다르다
 
 원본 문서의 트리는 실제 저장소와 상당히 다르다. 파일명을 그대로 믿고 열면 없는 파일을 찾게
 된다. 아래가 커밋 `80dcd9f`의 실제 구조다.
@@ -415,7 +415,7 @@ devices, cpu and cuda:0!
 감싸지 않으면 pytest가 영원히 돌아간다. 두 줄을 넣은 뒤 같은 테스트는 **4개 전부
 통과(45.42s)** 했다(§16).
 
-## 5. 단일 모델 서버 — 4개 엔드포인트 추적
+## 5. 단일 모델 서버 - 4개 엔드포인트 추적
 
 **하는 일**: `facebook/opt-125m`을 두 경로(transformers / vLLM)로 동시에 서빙하고, 4개
 엔드포인트로 노출한다.
@@ -439,7 +439,7 @@ Maximum concurrency for 2,048 tokens per request: 267.45x
 기동 시 **모델이 두 번 로드된다**는 점에 유의한다. `ModelExecutor`가 띄우는 ModelWorker
 프로세스(transformers)와 `LLMEngine`이 직접 만드는 vLLM 인스턴스가 각각 opt-125m을 올린다.
 
-### 엔드포인트별 스키마 — 문서의 요청 형식이 틀렸다
+### 엔드포인트별 스키마 - 문서의 요청 형식이 틀렸다
 
 요청이 들어와서 어느 경로를 타는지 먼저 정리하면 이렇다.
 
@@ -561,7 +561,7 @@ data: {"token": " the", "sequence_id": "f4e29b4a-8528-4802-83bb-932e1eb11f67"}
 공정하게 비교하려면 `llm.py`의 `max_tokens`와 `model_worker.py`의 `max_new_tokens`를 같은
 값으로 맞춰야 한다.
 
-## 6. 프로세스와 GPU — 격리가 실제로 되는가
+## 6. 프로세스와 GPU - 격리가 실제로 되는가
 
 **확인하려는 것**: "API 서버는 CPU 작업만 하고 추론은 별도 프로세스가 담당한다"는 설계가
 말뿐인지, 아니면 실제로 관측되는지.
@@ -586,7 +586,7 @@ PID     GPU Memory
 합계     20616 MiB / 23028 MiB  (89.5%)
 ```
 
-새 인스턴스에서 다시 재도 값이 그대로 재현됐다.
+새 인스턴스에서 다시 측정해도 값이 그대로 재현됐다.
 
 | 항목 | 1차 | 재검증 |
 |------|-----|--------|
@@ -608,7 +608,7 @@ PID     GPU Memory
 > 목록에 안 나올 수 있다. 첫 요청이 200을 돌려준 시점과 KV Cache 할당이 끝나는 시점이 조금
 > 어긋난다. 10초쯤 뒤에 다시 찍어야 위 세 줄이 온전히 보인다.
 
-## 7. 서버가 안 죽는다 — 원인과 1줄 수정
+## 7. 서버가 안 죽는다 - 원인과 1줄 수정
 
 `main.py`는 `signal_handler`에서 `cleanup()` 후 `exit(0)`을 부른다. 그런데 **실측상 SIGTERM으로는
 죽지 않았다.** `pkill -f main.py`를 보낸 뒤에도 부모 프로세스가 살아남아 포트를 계속 점유했고,
@@ -712,7 +712,7 @@ ss -ltn | grep 8000 || echo "port free"
 >         which can leak resources.
 > ```
 
-## 8. 멀티 모델 서빙 — LRU 캐시 동작
+## 8. 멀티 모델 서빙 - LRU 캐시 동작
 
 **하는 일**: 모델 4개를 등록해두고, 요청이 올 때 필요한 모델만 메모리에 올린다. 캐시는 2개까지.
 
@@ -732,7 +732,7 @@ cd /opt/lab/llm-model-inference/ch03/multi_model_serving
 > `tritonclient 2.41.0`, `sympy 1.14.0`. CUDA 13.2 드라이버에서 cu121 휠은 하위 호환으로
 > 정상 동작한다 (`torch.cuda.is_available() == True`).
 
-### 서버 기동 — 진입점과 포트가 문서와 다르다
+### 서버 기동 - 진입점과 포트가 문서와 다르다
 
 원본 문서의 `docker-compose up -d` + `python main.py`는 **둘 다 틀렸다.**
 `docker-compose.yml`은 존재하지 않고, 진입점은 `app.server` 모듈이며 **기본 포트는 8001**이다.
@@ -756,7 +756,7 @@ curl -s http://localhost:8001/models | jq
 > 원본 문서가 이미지 모델 ID로 쓴 `660e8400-e29b-41d4-a716-446655440001`은 **존재하지 않는
 > ID**다. 올바른 값은 위 표의 `7c9e6679-...`다.
 
-### 입력 형식 — 워커 종류마다 다르다
+### 입력 형식 - 워커 종류마다 다르다
 
 원본 문서는 이미지 모델에 `{"shape":[1,3,224,224],"data":[...]}`를 보내라고 하는데, 그 형식은
 **Triton 워커용**이다. `TorchVisionWorker`는 `Image.open(input_data)`를 호출하므로 **이미지 파일
@@ -848,7 +848,7 @@ pid, used_gpu_memory [MiB]
 인스턴스에서 돌려도 마찬가지다. 이 실습의 목적은 GPU 가속이 아니라 **모델 캐시 수명주기
 관리**이므로 설계상 문제는 아니지만, "GPU 실습"으로 오해하면 안 된다.
 
-## 9. Triton 백엔드 — 백엔드 위임의 실제
+## 9. Triton 백엔드 - 백엔드 위임의 실제
 
 **확인하려는 것**: 추론을 별도 컨테이너에 위임하면 서비스 코드가 정말 하드웨어를 몰라도
 되는지.
@@ -961,7 +961,7 @@ Triton은 별도 프로세스이자 별도 컨테이너이므로, 파이썬 서�
 > JumpStart, DLC)이 섞여 있다. 실습을 순서대로 진행하고, 진행이 막힌 지점은 **실행 로그에 남은
 > 원인만 기록**한다.
 
-## 10. Knowledge Agent — 1질문에 LLM이 몇 번 호출되나
+## 10. Knowledge Agent - 1질문에 LLM이 몇 번 호출되나
 
 **하는 일**: PDF 4개를 읽어 벡터 DB를 만들고, 질문이 오면 Planner가 실행 계획을 세우고
 Action들이 그 계획을 수행한다. RAG + 에이전트 패턴의 최소 구현이다.
@@ -1018,7 +1018,7 @@ export OPENAI_API_KEY="sk-..."
 > `client.chat.completions.create(...)` 경로가 모두 정상 동작했다. 다만 Ch.3 실습을 다시
 > 돌려야 한다면 **Ch.4는 별도 venv를 쓰는 편이 안전하다.**
 
-### 키가 없을 때 — GPU에 vLLM으로 OpenAI API를 흉내내기
+### 키가 없을 때 - GPU에 vLLM으로 OpenAI API를 흉내내기
 
 1차 검증에는 OpenAI 키를 쓰지 않고, **같은 GPU 인스턴스에 vLLM의 OpenAI 호환 서버 2개를
 띄워** 외부 API 호출 없이 전 과정을 돌렸다. 챗과 임베딩 모델이 다르므로 서버도 2개가 필요하다.
@@ -1164,7 +1164,7 @@ success: True / sections: 3 / wall 10.2s / LLM calls: 4
 한계다. **변하지 않는 것은 "Planner 1회 + Action N회" 구조**이고, N과 Action 종류는 모델·질문에
 따라 달라진다.
 
-## 11. 실제 OpenAI 모델로 재검증 — Bedrock Mantle
+## 11. 실제 OpenAI 모델로 재검증 - Bedrock Mantle
 
 로컬 vLLM 대체는 코드 경로만 확인해준다. 임베딩 차원이 384(OpenAI는 1536)이고, Planner 계획이
 문서와 다르게 나왔고, 답변 품질이 1.5B 수준이라는 물음표가 남았다. **Amazon Bedrock Mantle**을
@@ -1202,7 +1202,7 @@ Mantle은 챗 전용이라 임베딩은 별도로 조달해야 한다. 그래서
 
 ### 함정 1: GPT-5.x는 `chat.completions`를 지원하지 않는다
 
-Mantle 모델은 API 표면이 갈린다. `llm_manager.py`는 `client.chat.completions.create()`를 쓰는데,
+Mantle 모델은 API 인터페이스가 갈린다. `llm_manager.py`는 `client.chat.completions.create()`를 쓰는데,
 **최신 모델은 Responses API 전용**이다.
 
 | 모델 | `/v1/chat/completions` |
@@ -1232,7 +1232,7 @@ bedrock.invoke_model(modelId="amazon.titan-embed-text-v2:0",
                                       "normalize": True}))
 ```
 
-### 필요한 코드 수정 — 하나는 늘고 하나는 없어졌다
+### 필요한 코드 수정 - 하나는 늘고 하나는 없어졌다
 
 **(1) 임베딩 base_url 분리** — §10과 동일하다.
 
@@ -1268,7 +1268,7 @@ export CHUNK_SIZE=1000 CHUNK_OVERLAP=200 MAX_TOKENS=4096
 python agent.py
 ```
 
-### 실측 결과 — 로컬 vLLM 대비
+### 실측 결과 - 로컬 vLLM 대비
 
 | 항목 | Qwen2.5-1.5B + bge-small | gpt-oss-120b + Titan v2 |
 |------|--------------------------|-------------------------|
@@ -1335,7 +1335,7 @@ success: True   sections: 2   wall 19.6s   LLM calls: 3
 분리도는 오히려 더 좋다. 여기서 얻을 실무 교훈은 하나다 — **절대값으로 임계값(threshold)을
 하드코딩하면 임베딩 모델을 바꿀 때 조용히 깨진다.**
 
-## 12. Bedrock 노트북 — 모델 ID는 언젠가 퇴역한다
+## 12. Bedrock 노트북 - 모델 ID는 언젠가 퇴역한다
 
 `ch04/bedrock/` 노트북 내용은 매우 단순하다. `bedrock-runtime` 클라이언트를 만들고
 `converse()`를 한 번 호출하는 게 전부다. 별도 인프라를 띄우지 않으므로 **비용은 토큰
@@ -1384,12 +1384,12 @@ for m in json.load(open('models.json'))['modelSummaries']:
   `LEGACY` 상태여서 최근 미사용 계정은 거부된다.
 - 최신 모델들은 전부 `INFERENCE_PROFILE` 전용이다. 이 경우 **`us.` 접두사가 붙은 크로스리전
   추론 프로파일 ID**를 써야 한다.
-- `modelId`에 프로파일 전용 모델의 맨 ID(`anthropic.claude-sonnet-4-5-...`)를 그대로 넣으면
+- `modelId`에 접두사 없는 원본 모델 ID(`anthropic.claude-sonnet-4-5-...`)를 그대로 넣으면
   호출이 실패한다.
 
 즉 **`inferenceTypesSupported`가 `INFERENCE_PROFILE`이면 `us.` 접두사를 붙인다**가 실무 규칙이다.
 
-## 13. JumpStart — 배포 전에 확인해야 하는 것들
+## 13. JumpStart - 배포 전에 확인해야 하는 것들
 
 `ch04/jumpstart/` 노트북은 `huggingface-llm-mistral-7b-instruct`를 `ml.g5.2xlarge`로 배포한다.
 그런데 **현재 모델 버전(3.28.0)의 지원 인스턴스 목록에 `ml.g5.2xlarge`가 없다.** 노트북이
@@ -1459,7 +1459,7 @@ aws service-quotas request-service-quota-increase --service-code sagemaker \
 ```
 
 두 리전에 신청해 **약 9시간 뒤 둘 다 `APPROVED`(값 1)** 되었다. 즉시 승인은 아니므로 실습
-일정에 대기 시간을 감안해야 한다.
+일정에 대기 시간을 고려해야 한다.
 
 ### ③ 삭제 코드를 미리 붙여둔다
 
@@ -1476,7 +1476,7 @@ print(out)
 predictor.delete_endpoint(delete_endpoint_config=True)
 ```
 
-### 실행 결과 — 이 계정·시점에서는 배포가 완료되지 않았다
+### 실행 결과 - 이 계정·시점에서는 배포가 완료되지 않았다
 
 지원 타입과 쿼터를 모두 맞춘 뒤 리전·타입을 바꿔 여러 조합으로 시도했지만 엔드포인트가
 `InService`에 도달하지 못했다. 실행 로그에 남은 원인은 두 종류다.
@@ -1498,7 +1498,7 @@ FailureReason: Request to service failed. If failure persists after retry,
 있는 신호는 소요시간이 아니라 다음 두 가지다.
 
 - **`FailureReason` 문자열** — `InsufficientInstanceCapacity`가 명시되면 용량 문제로 확정할 수
-  있다. 단 엔드포인트를 삭제하면 회수할 수 없으니 **삭제 전에 먼저 찍어야 한다.**
+  있다. 단 엔드포인트를 삭제하면 가져올 수 없으니 **삭제 전에 먼저 찍어야 한다.**
 - **`LastModifiedTime`과 CloudWatch 로그 그룹** — 인스턴스 확보에 실패하면 `LastModifiedTime`이
   `CreationTime`에서 한 번도 안 움직이고, `/aws/sagemaker/Endpoints/<name>` 로그 그룹도 생기지
   않는다.
@@ -1529,7 +1529,7 @@ FailureReason: Request to service failed. If failure persists after retry,
 > SageMaker가 assume할 수 없었다. 역할을 새로 만들거나 신뢰 정책에 `sagemaker.amazonaws.com`을
 > 추가해야 한다.
 
-## 14. 대안 — 같은 모델을 EC2에 직접 올리기
+## 14. 대안 - 같은 모델을 EC2에 직접 올리기
 
 §13의 JumpStart 엔드포인트는 이 계정·시점에서 완료되지 않았지만, **같은 Mistral-7B-Instruct
 가중치를 EC2에 직접 올려 서빙하는 경로는 동작했다.** 관리형 배포에서 걸렸던 세 가지를 모두
@@ -1563,7 +1563,7 @@ config.json  → MistralForCausalLM, 32 layers, num_key_value_heads 8 (GQA),
 tokenizer_config.json → chat_template 포함 (그래서 /v1/chat/completions 를 바로 쓸 수 있다)
 ```
 
-### 인스턴스 확보 — g5 계열은 EC2에서도 빡빡했다
+### 인스턴스 확보 - g5 계열은 EC2에서도 빡빡했다
 
 `g5.2xlarge`(노트북의 `ml.g5.2xlarge`와 같은 스펙)를 노렸으나 **us-east-1 전 AZ에서 용량
 부족**이었다. 타입·AZ를 훑어 `g5.xlarge @ us-east-1c`에서 잡았다.
@@ -1585,7 +1585,7 @@ an Availability Zone in your request or choosing us-east-1a, us-east-1b, us-east
 us-east-1d.
 ```
 
-### `pip install vllm==0.9.0.1` 만 하면 깨진다
+### `pip install vllm==0.9.0.1`만 하면 깨진다
 
 저장소 requirements 없이 vLLM만 설치하면 **transformers 5.15.0**이 함께 올라오고, 서버가 기동
 중 죽는다.
@@ -1646,7 +1646,7 @@ A: Amazon SageMaker is a fully managed platform provided by Amazon Web Services 
 | 총 소요 (200토큰 상한, 110토큰 생성) | 3.695s |
 | 단일 스트림 디코딩 속도 | **30.7 tok/s** |
 
-### Continuous Batching 효과 — 동시 요청을 늘려도 벽시계가 거의 그대로다
+### Continuous Batching 효과 - 동시 요청을 늘려도 벽시계가 거의 그대로다
 
 각 요청 128토큰 고정, 동시 요청 수만 바꿔 측정했다.
 
@@ -1677,7 +1677,7 @@ EC2 직접 배포는 **SageMaker 엔드포인트의 대체재가 아니다.** �
 | `g5.xlarge` 온디맨드 | $1.006/hr |
 | 이번 실습 (셋업 + 로딩 + 측정) | 약 50분 → **$1 미만** |
 
-## 15. DLC 노트북 — 실행 대상이 아니다
+## 15. DLC 노트북 - 실행 대상이 아니다
 
 `ch04/dlc/`와 `ch04/dlc_customization/` 두 노트북은 돌리는 게 아니라 읽는 것이다. 첫 마크다운
 셀이 직접 그렇게 밝힌다.
@@ -1719,7 +1719,7 @@ guide, TorchServe/DJL Serving 배포 가이드)를 따르는 게 맞다.
 
 # Part 3: 테스트 · 트러블슈팅 · 정리
 
-## 16. 저장소 테스트 32개 — 30개 통과, 2개 실패
+## 16. 저장소 테스트 32개 - 30개 통과, 2개 실패
 
 커밋 `80dcd9f`에는 테스트 파일이 7개 있다. 전부 돌린 결과 **32개 중 30개 통과, 2개 실패**이며
 **두 실패 모두 환경 문제가 아니라 코드·테스트 자체의 문제**다.
@@ -1734,7 +1734,7 @@ guide, TorchServe/DJL Serving 배포 가이드)를 따르는 게 맞다.
 | `ch04/KnowledgeAgent/test_rag_system.py` | unittest | **10 passed / 1 실패** | 12s |
 | `ch04/KnowledgeAgent/test_api_key.py` | 평문 스크립트 | **실패 (실제 OpenAI 키 필수)** | 즉시 |
 
-### 실행 전 알아야 할 것 — `pytest.ini`가 한쪽에만 있다
+### 실행 전 알아야 할 것 - `pytest.ini`가 한쪽에만 있다
 
 ```
 ch03/single_model_llm_serving/pytest.ini   ← 있다
@@ -1751,15 +1751,15 @@ pythonpath = . llm
 
 | 대상 | 명령 | 이유 |
 |------|------|------|
-| 단일모델 | `pytest tests/` 로도 된다 | `pythonpath = . llm` 덕에 `from main import app`이 해결된다 |
-| 멀티모델 | **`python -m pytest tests/` 를 써야 한다** | `pytest.ini`가 없어 `from app.server import app`이 `ModuleNotFoundError`가 된다. `python -m`은 CWD를 `sys.path`에 넣어 준다 |
+| 단일모델 | `pytest tests/`로도 된다 | `pythonpath = . llm` 덕에 `from main import app`이 해결된다 |
+| 멀티모델 | **`python -m pytest tests/`를 써야 한다** | `pytest.ini`가 없어 `from app.server import app`이 `ModuleNotFoundError`가 된다. `python -m`은 CWD를 `sys.path`에 넣어 준다 |
 
 `asyncio_mode = auto`도 중요하다. `test_api.py`는 async 픽스처(`async_client`)를 평범한
 `@pytest.fixture`로 선언하는데, pytest-asyncio 1.0의 기본값인 strict 모드라면 이게 async
 제너레이터 객체로 그대로 주입돼 실패한다. `auto` 모드라서 통과한다. **`pytest.ini`를 지우거나
 다른 디렉토리에서 돌리면 통과하던 테스트가 깨진다.**
 
-### 단일모델 — 8개 전부 통과 (§4 수정 필수)
+### 단일모델 - 8개 전부 통과 (§4 수정 필수)
 
 ```
 tests/test_vllm.py::test_generate_vllm_single_prompt      PASSED
@@ -1798,7 +1798,7 @@ tests/test_api.py::test_generate_stream_concurrent   PASSED
    `httpx==0.27.0`으로 핀돼 있어 지금은 통과하지만, 핀을 풀면 async 테스트 2개가 `TypeError`로
    깨진다.
 
-### 멀티모델 — 10개 전부 통과 (Triton이 떠 있어야 한다)
+### 멀티모델 - 10개 전부 통과 (Triton이 떠 있어야 한다)
 
 ```
 ======================= 10 passed, 8 warnings in 36.51s ========================
@@ -1830,7 +1830,7 @@ torch 덕에 우연히 동작한다. 참고로 이 import는 파일 어디에서
 
 멀티모델 pytest는 **종료 정지가 없다.** `mp.Process`를 쓰지 않아서 §7의 문제와 무관하다.
 
-### Ch.4 — 테스트 버그와 실행 불가 스크립트를 가려내기
+### Ch.4 - 테스트 버그와 실행 불가 스크립트를 가려내기
 
 **`test_agent.py` — 6/6 통과.** 임포트·설정·PDF 존재만 확인하는 스모크 테스트다. LLM을 호출하지
 않으므로 OpenAI 키 없이도 통과한다.
@@ -1870,7 +1870,7 @@ except ValueError:
 Bedrock Mantle + Titan 임베딩(§11)으로 다시 돌려도 결과는 같다(`1 failed, 10 passed in 95.60s`).
 임베딩 모델이나 LLM 공급자와 무관한 코드·테스트 불일치라는 뜻이다.
 
-### Python 3.13+ 에서는 `test_rag_system.py`가 아예 실행되지 않는다
+### Python 3.13+에서는 `test_rag_system.py`가 아예 실행되지 않는다
 
 파일 하단의 실행부가 `unittest.makeSuite`를 쓰는데, 이 API는 **Python 3.13에서 제거됐다**
 (3.12에서는 deprecated).
@@ -1881,10 +1881,10 @@ File "test_rag_system.py", line 290, in run_real_rag_tests
 AttributeError: module 'unittest' has no attribute 'makeSuite'
 ```
 
-**3.13+ 라면 `python test_rag_system.py` 대신 `python -m pytest test_rag_system.py`로
+**3.13+라면 `python test_rag_system.py` 대신 `python -m pytest test_rag_system.py`로
 실행한다** — pytest는 `unittest.TestCase`를 직접 수집하므로 `__main__` 블록을 타지 않는다.
 
-### `test_api_key.py` — OpenAI 직결 키 전용이다
+### `test_api_key.py` - OpenAI 직결 키 전용이다
 
 진짜 OpenAI 엔드포인트를 전제로 세 가지를 확인하는 스크립트다. 호환 엔드포인트로는 첫 관문부터
 막힌다.
@@ -1953,7 +1953,7 @@ AttributeError: module 'unittest' has no attribute 'makeSuite'
 | Ch.4 설치 후 openai/pandas 버전이 바뀜 | `ch04` requirements는 전부 `>=`다. openai가 3.0.0까지 올라간다. Ch.4도 별도 venv 권장. §10 |
 | `vllm serve`가 `'aimv2' is already used by a Transformers config` | `pip install vllm==0.9.0.1`만 하면 transformers 5.x가 올라온다. **`transformers==4.52.4`로 내린다.** §14 |
 | 7B 모델 로딩이 12분 걸림 | RAM 부족이다. g5.xlarge(16GB)에서 13.5GiB 가중치를 읽으면 페이지 캐시가 밀려 약 22MB/s가 된다. RAM 32GB인 g5.2xlarge를 쓰면 개선된다. §14 |
-| 멀티모델 테스트가 `ModuleNotFoundError: app` | `pytest.ini`가 없다. **`python -m pytest tests/`** 로 실행한다. §16 |
+| 멀티모델 테스트가 `ModuleNotFoundError: app` | `pytest.ini`가 없다. **`python -m pytest tests/`로** 실행한다. §16 |
 | 단일모델 테스트를 다른 디렉토리에서 돌리면 깨짐 | `pytest.ini`의 `pythonpath = . llm` + `asyncio_mode = auto`에 의존한다. §16 |
 | 디스크 부족 | 단일모델 venv 8.0GB + 멀티모델 venv + Triton 이미지 27.4GB. **200GB 권장.** |
 

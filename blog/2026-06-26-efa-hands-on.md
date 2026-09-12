@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "AWS EFA 직접 써보기 — 멀티노드 통신"
+title: "AWS EFA 직접 써보기 - 멀티노드 통신"
 comments: true
 classes: wide
 description: "EFA를 켠 EC2 2대로 노드 간 RDMA 통신을 확인하고 NCCL 벤치마크까지 직접 돌려보는 핸즈온"
@@ -22,7 +22,7 @@ tags:
   - placement-group
 ---
 
-> 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
 지난 글 [일반 InfiniBand vs AWS EFA](https://ddii.dev/aws/infiniband-vs-efa/)에서는 EFA가 무엇인지, InfiniBand와 어떻게 다른지를 정리했다. EFA가 빠른 이유(커널 TCP/IP 스택을 우회하는 OS bypass, 패킷을 여러 경로로 분산 전송하는 SRD)까지는 개념으로 짚었다.
 
@@ -45,7 +45,7 @@ tags:
 4. `nccl-tests`로 멀티노드 all-reduce 대역폭 측정
 5. **EFA 켜기 전 vs 후**를 비교해서 효과를 확인
 
-이 글은 **GPU 분산 학습(NCCL)** 을 메인 예제로 한다. CPU/HPC(MPI) 쪽도 흐름은 거의 같으니 중간중간 짚어주겠다. 그리고 실제로 돌렸을 때 무엇을 확인할 수 있는지 "따라 하기 가이드" 수준으로 정리했다.
+이 글은 **GPU 분산 학습(NCCL)을** 메인 예제로 한다. CPU/HPC(MPI) 쪽도 흐름은 거의 같으니 중간중간 짚어주겠다. 그리고 실제로 돌렸을 때 무엇을 확인할 수 있는지 "따라 하기 가이드" 수준으로 정리했다.
 
 ## 1. 사전 준비
 
@@ -58,7 +58,7 @@ EFA는 모든 인스턴스에서 켤 수 있는 게 아니다. GPU 분산 학습
 - **`p4d.24xlarge`** (A100 8장), **`p5.48xlarge`** (H100 8장): GPUDirect RDMA를 완전히 지원하는 인스턴스. 이 글의 메인 타깃이다.
 - HPC/CPU라면: `hpc6a.48xlarge`, `c5n.18xlarge`, `c5n.9xlarge` 등
 
-> 지난 글에서 짚었듯, AWS의 NCCL + EFA 공식 가이드는 **P 계열만 지원 대상으로 명시**한다. g5/g6에서도 EFA 자체는 동작하지만 GPUDirect RDMA가 없어 효과가 제한적이다. 이 글에서는 설명은 P 계열 기준으로 하되, 실제 벤치마크는 비용을 고려해 `g6.12xlarge`로 진행했다.
+> 지난 글에서 짚었듯, AWS의 NCCL + EFA 공식 가이드는 **P 계열만 지원 대상으로 명시**한다. g5/g6에서도 EFA 자체는 동작하지만 GPUDirect RDMA가 없어 효과가 제한적이다. 이 글에서 설명은 P 계열 기준으로 하되, 실제 벤치마크는 비용을 고려해 `g6.12xlarge`로 진행했다.
 
 ### 같은 서브넷 + Cluster Placement Group
 
@@ -172,7 +172,7 @@ protocol: FI_PROTO_EFA
 
 `p4d`/`p5`처럼 네트워크 카드가 여러 개인 인스턴스라면 `efa_0-rdm`, `efa_1-rdm`... 식으로 여러 개가 나온다. **여기서 아무것도 안 나오면** EFA 인터페이스가 안 붙은 것이다. 7번 트러블슈팅 절을 보자.
 
-## 4. 진짜 되는지 확인 — 노드 간 통신 테스트
+## 4. 진짜 되는지 확인 - 노드 간 통신 테스트
 
 한 노드에서 `fi_info`가 떴다는 건 "이 노드에 EFA가 달려 있다"는 의미일 뿐이다. 우리가 보고 싶은 건 **두 노드가 EFA로 실제로 대화하는지**다.
 
@@ -186,7 +186,7 @@ ssh-keygen -t rsa -N "" -f ~/.ssh/id_rsa
 # 생성된 ~/.ssh/id_rsa.pub 를 각 노드의 ~/.ssh/authorized_keys 에 추가
 ```
 
-설정 후 마스터에서 워커로 `ssh <워커 private IP>` 가 비밀번호 없이 되면 성공이다.
+설정 후 마스터에서 워커로 `ssh <워커 private IP>`가 비밀번호 없이 되면 성공이다.
 
 ### libfabric 레벨 핑퐁 테스트
 
@@ -206,7 +206,7 @@ fi_pingpong -e rdm -p efa -f efa <노드 B private IP>
 
 > **왜 더 빠른가?** 일반 TCP는 커널의 TCP/IP 스택을 거치면서 매번 메모리 복사와 패킷 처리가 일어난다. 반면 EFA는 이 커널 경로를 우회(OS bypass)해 애플리케이션이 상대 노드 메모리에 직접 데이터를 쓴다. 게다가 SRD는 패킷을 여러 경로로 분산 전송(multipath)해 특정 경로의 혼잡을 피한다. 이 두 가지가 마이크로초 단위의 낮은 latency로 나타난다.
 
-### 실측 비교 — EFA vs TCP
+### 실측 비교 - EFA vs TCP
 
 수치로 확인하기 위해, 같은 인스턴스 2대(c5n.9xlarge, 같은 서브넷)에서 `fi_pingpong`을 **EFA**와 **TCP**로 각각 돌려 비교했다. EFA는 `-e rdm -p efa -f efa`, TCP는 `-e rdm -p "tcp;ofi_rxm"`로 측정했다.
 
@@ -229,7 +229,7 @@ fi_pingpong -e rdm -p efa -f efa <노드 B private IP>
 
 > 위 수치는 GPU 없는 c5n(EFA v1) 2노드에서 libfabric 레벨로 측정한 값이다. 절대값은 인스턴스 타입·네트워크 카드 수·메시지 패턴에 따라 달라지므로, 경향(메시지가 클수록 EFA 우위 확대)에 주목하자.
 
-## 5. 실전 워크로드 — NCCL 멀티노드 all-reduce
+## 5. 실전 워크로드 - NCCL 멀티노드 all-reduce
 
 GPU 분산 학습에서 가장 빈번한 통신 패턴인 **all-reduce**(모든 GPU의 gradient를 합쳐 다시 나눠주는 연산)를 멀티노드로 돌려본다.
 
@@ -280,7 +280,7 @@ make MPI=1 MPI_HOME=/opt/amazon/openmpi NCCL_HOME=/opt/nccl/build CUDA_HOME=/usr
 - **`FI_EFA_USE_DEVICE_RDMA=1`**: EFA 디바이스의 RDMA 기능 사용 (p4d/p5에서 권장)
 - **`NCCL_DEBUG=INFO`**: NCCL이 어떤 경로로 통신하는지 로그로 보여줌
 - `-n 16 -N 8`: 전체 16 프로세스, 노드당 8 프로세스(=GPU 8장)
-- **`--mca pml ^cm --mca btl tcp,self`**: 이 플래그를 빠뜨리지 말자. MPI **자체의 제어 통신(MPI_Init 등)** 을 TCP로 처리하도록 강제하는 옵션이다. 이게 없으면 OpenMPI가 MPI 통신에도 OFI/EFA 경로를 쓰려다 **`MPI_Init` 단계에서 응답 없이 멈추는** 경우가 있다. 핵심은 *"MPI 제어는 TCP로, GPU 데이터(NCCL)만 EFA로"* 분리하는 것이다. `--mca btl_tcp_if_exclude lo,docker0`는 TCP 통신에서 루프백·도커 인터페이스를 제외해 올바른 인터페이스를 고르게 한다.
+- **`--mca pml ^cm --mca btl tcp,self`**: 이 플래그를 빠뜨리지 말자. MPI **자체의 제어 통신(MPI_Init 등)을** TCP로 처리하도록 강제하는 옵션이다. 이게 없으면 OpenMPI가 MPI 통신에도 OFI/EFA 경로를 쓰려다 **`MPI_Init` 단계에서 응답 없이 멈추는** 경우가 있다. 핵심은 *"MPI 제어는 TCP로, GPU 데이터(NCCL)만 EFA로"* 분리하는 것이다. `--mca btl_tcp_if_exclude lo,docker0`는 TCP 통신에서 루프백·도커 인터페이스를 제외해 올바른 인터페이스를 고르게 한다.
 
 > **실제로 겪은 함정.** 위 `--mca` 플래그 없이 `mpirun`을 돌렸더니 NCCL 로그조차 한 줄 찍히지 않고 `MPI_Init`에서 멈췄다. 플래그를 추가하자 곧바로 `NET/OFI Selected provider is efa ... Init COMPLETE`까지 진행됐다. NCCL이 EFA를 쓰기 이전에, MPI 런처 자체가 EFA에 발이 묶이지 않도록 하는 설정이라고 이해하면 된다.
 
@@ -312,7 +312,7 @@ EFA의 효과를 체감하려면 비교가 필요하다. 같은 테스트를 **E
 -x NCCL_NET_PLUGIN=none -x NCCL_NET=Socket -x NCCL_SOCKET_IFNAME=enp39s0
 ```
 
-로그에서 EFA는 `NET/OFI Selected provider is efa`, TCP는 `NET/Socket : Using [0]enp39s0` 로 확인된다.
+로그에서 EFA는 `NET/OFI Selected provider is efa`, TCP는 `NET/Socket : Using [0]enp39s0`로 확인된다.
 
 실제로 측정해봤다. **`g6.12xlarge` 2대, 노드당 GPU 1개**(=모든 all-reduce 트래픽이 노드 간을 건너가는 구성)에서 `all_reduce_perf`의 busbw(GB/s)를 비교한 결과다.
 
@@ -365,7 +365,7 @@ GPU/NCCL이 아니라 CPU 기반 HPC라면 설치·검증 흐름은 거의 동�
 | 1 MB | **6,131** | 1,191 |
 | 최대(peak) | **~6,725** | ~1,238 |
 
-대역폭 차이가 특히 또렷하다. EFA는 큰 메시지에서 **~6,700 MB/s(≈54 Gbps)** 까지 올라가 인스턴스 정격(50 Gbps)을 거의 채우는 반면, TCP는 **~1,190 MB/s(≈9.5 Gbps)** 에서 정체한다. 약 **5배** 차이다. (`osu_bw`는 여러 메시지를 연속으로 흘려보내 링크를 포화시키므로, 4번의 단일 왕복 `fi_pingpong`보다 높은 대역폭이 나온다.)
+대역폭 차이가 특히 또렷하다. EFA는 큰 메시지에서 **~6,700 MB/s(≈54 Gbps)까지** 올라가 인스턴스 정격(50 Gbps)을 거의 채우는 반면, TCP는 **~1,190 MB/s(≈9.5 Gbps)에서** 정체한다. 약 **5배** 차이다. (`osu_bw`는 여러 메시지를 연속으로 흘려보내 링크를 포화시키므로, 4번의 단일 왕복 `fi_pingpong`보다 높은 대역폭이 나온다.)
 
 즉 "EFA 설치 → `fi_info` 확인 → 멀티노드 벤치마크"라는 큰 틀은 NCCL이든 MPI든 같고, EFA의 이점도 MPI 워크로드에서 그대로 확인된다.
 
@@ -373,7 +373,7 @@ GPU/NCCL이 아니라 CPU 기반 HPC라면 설치·검증 흐름은 거의 동�
 
 ## 7. 자주 막히는 곳 (트러블슈팅)
 
-테스트를 진행하다 보면 거의 항상 마주치는 내용들이다.
+테스트를 진행하다 보면 거의 항상 마주치는 문제다.
 
 - **`fi_info -p efa`에 아무것도 안 뜬다**
   → EFA 인터페이스가 안 붙은 경우. 인스턴스를 `InterfaceType=efa`로 띄웠는지, EFA Installer를 깔고 재부팅했는지 확인한다.
@@ -381,20 +381,20 @@ GPU/NCCL이 아니라 CPU 기반 HPC라면 설치·검증 흐름은 거의 동�
   → **보안그룹 egress가 self-referencing이 아니다.** `ping`·SSH·TCP는 되는데 EFA 데이터만 멈춘다면 거의 확실하다. 기본 `0.0.0.0/0` egress로는 EFA(SRD) 트래픽이 안 나간다 — 보안그룹 자기 자신을 destination으로 하는 all-traffic egress 규칙을 추가하자. 인바운드 self-ref도 함께 확인.
 - **`mpirun`이 nonzero exit / 연결 실패**
   → passwordless SSH가 안 된 경우가 많다. 마스터→워커 `ssh`가 비밀번호 없이 되는지 확인한다.
-- **NCCL 로그에 `Selected Provider is efa`가 안 보이고 Socket이라고 뜬다**
+- **NCCL 로그에 `Selected provider is efa`가 안 보이고 Socket이라고 뜬다**
   → libfabric/플러그인 경로(`LD_LIBRARY_PATH`)가 빠졌거나 `FI_PROVIDER`가 설정 안 된 경우. mpirun의 `-x` 옵션을 점검한다.
 - **AZ를 넘어 통신하려 한다**
   → EFA 트래픽은 AZ/VPC를 못 넘는다. 모든 노드가 같은 서브넷·같은 placement group에 있는지 확인한다.
 
 ## 8. 마무리 + 다음 편
 
-여기까지 따라왔다면, EFA를 켠 2대의 노드가 SRD 위에서 실제로 통신하고, NCCL all-reduce가 EFA를 타는 것을 직접 확인할 수 있다. 지난 글에서 개념으로만 봤던 `fi_info`, `mpirun`, `FI_PROVIDER=efa`가 어떻게 실제로 동작하는지 알 수 있었다.
+여기까지 따라왔다면, EFA를 켠 2대의 노드가 SRD 위에서 실제로 통신하고, NCCL all-reduce가 EFA를 타는 것을 직접 확인할 수 있다. 지난 글에서 개념으로만 봤던 `fi_info`, `mpirun`, `FI_PROVIDER=efa`가 어떻게 실제로 동작하는지 알 수 있다.
 
 ### 정리 (cleanup)
 
-- GPU 인스턴스(특히 p4d/p5 계열)는 켜둔 만큼 과금되니 **테스트가 끝나면 반드시 인스턴스를 terminate** 하자. 인스턴스별 요금은 [Amazon EC2 온디맨드 요금](https://aws.amazon.com/ec2/pricing/on-demand/) 페이지에서 확인할 수 있다.
+- GPU 인스턴스(특히 p4d/p5 계열)는 켜둔 만큼 과금되니 **테스트가 끝나면 반드시 인스턴스를 terminate하자**. 인스턴스별 요금은 [Amazon EC2 온디맨드 요금](https://aws.amazon.com/ec2/pricing/on-demand/) 페이지에서 확인할 수 있다.
 - placement group, 보안그룹 등 부수 리소스도 함께 정리한다.
-- 잠깐 테스트 하는 검증 용도라면 [Spot 인스턴스](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html)도 선택지가 될 수 있다.
+- 잠깐 테스트하는 검증 용도라면 [Spot 인스턴스](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html)도 선택지가 될 수 있다.
 
 ```bash
 # 인스턴스 종료

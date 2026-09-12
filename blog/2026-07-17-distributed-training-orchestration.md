@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "분산 학습 클러스터 — HyperPod vs ParallelCluster vs EKS"
+title: "분산 학습 클러스터 - HyperPod vs ParallelCluster vs EKS"
 comments: true
 classes: wide
 description: "EFA와 FSx로 준비한 노드들을 하나의 멀티노드 학습 클러스터로 묶는 오케스트레이션 방식을 비교"
@@ -22,9 +22,9 @@ tags:
   - FSx for Lustre
 ---
 
-> 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
-시리즈의 마지막 편이다. 지금까지 분산 학습의 내용들을 정리해봤다.
+시리즈의 마지막 편이다. 지금까지 분산 학습 인프라를 정리해봤다.
 
 - [1편·2편](https://ddii.dev/aws/efa-hands-on/): 네트워크(EFA)로 노드 간 통신을 빠르게
 - [3편](https://ddii.dev/aws/distributed-training-storage/): 스토리지(FSx/EFS/S3)로 데이터·체크포인트 공급
@@ -89,8 +89,6 @@ HPC 전통의 Slurm 기반 클러스터를 IaC로 띄우는 도구.
 | 익숙한 대상 | HPC·연구 | 대규모 LLM 학습 | k8s 플랫폼 팀 |
 | 학습 곡선 | 중 | 낮음 | 높음 |
 
-> 발행 전 — 각 항목을 공식 문서로 재확인하고 최신 기능 반영
-
 ## EFA + FSx를 클러스터에 붙이기
 
 1~3편에서 손으로 한 것들이 오케스트레이션에선 선언/자동으로 바뀐다.
@@ -99,7 +97,7 @@ HPC 전통의 Slurm 기반 클러스터를 IaC로 띄우는 도구.
 - **HyperPod**: 클러스터 생성 시 EFA·FSx가 통합되고, 라이프사이클 스크립트로 마운트·드라이버를 구성
 - **EKS**: EFA device plugin으로 파드에 EFA 디바이스를 노출, FSx for Lustre CSI driver로 PVC 마운트
 
-### 직접 해본 검증 — ParallelCluster 소규모 구성
+### 직접 해본 검증 - ParallelCluster 소규모 구성
 
 ParallelCluster로 작은 클러스터를 띄워 위 통합이 실제로 자동으로 되는지 확인했다.
 
@@ -221,9 +219,9 @@ mpirun -n 2 -N 1 --mca pml ob1 --mca btl tcp,self osu_bw
 
 > **보안 메모 — SSH 포트 점검.** ParallelCluster는 기본적으로 헤드 노드 보안그룹에 SSH(22)를 `0.0.0.0/0`으로 열어 둔다. 이번엔 접속을 모두 SSM으로 했기 때문에 이 규칙을 제거했다(인바운드가 자기참조 규칙만 남음). SSM Session Manager를 쓰면 22를 외부에 열 필요가 없다. 키 기반 SSH가 필요하면 최소한 접속 IP를 특정 CIDR로 제한하는 게 좋다.
 
-> 한 가지 막혔던 점: 컴퓨트를 퍼블릭 IP 없이 띄우면 부트스트랩 중 SSM·S3에 닿지 못해 노드가 등록되지 않는다. 프라이빗 서브넷이라면 **NAT 게이트웨이(또는 VPC 엔드포인트)** 로 아웃바운드 경로를 반드시 열어줘야 한다.
+> 한 가지 막혔던 점: 컴퓨트를 퍼블릭 IP 없이 띄우면 부트스트랩 중 SSM·S3에 닿지 못해 노드가 등록되지 않는다. 프라이빗 서브넷이라면 **NAT 게이트웨이(또는 VPC 엔드포인트)로** 아웃바운드 경로를 반드시 열어줘야 한다.
 
-## 복원력 — 노드에 장애가 나도 학습은 계속
+## 복원력 - 노드에 장애가 나도 학습은 계속
 
 수백 노드·수일 학습에서는 노드 장애가 "예외"가 아니라 "전제"다. 그래서 오케스트레이션의 진짜 가치는 복구에 있다.
 
@@ -231,7 +229,7 @@ mpirun -n 2 -N 1 --mca pml ob1 --mca btl tcp,self osu_bw
 - 노드 장애 **감지 → 교체 → 재스케줄 → 체크포인트에서 재개**
 - HyperPod는 이 루프를 관리형으로, ParallelCluster/EKS는 구성으로 달성
 
-### 직접 해본 검증 — 노드를 강제 종료해 봤다
+### 직접 해본 검증 - 노드를 강제 종료해 봤다
 
 2노드 잡(`srun sleep`, `--requeue`)이 도는 중에 컴퓨트 노드 한 대의 EC2 인스턴스를 강제 종료(`terminate-instances`)해 장애를 흉내 냈다. ParallelCluster의 `clustermgtd`가 약 1분 안에 반응했다.
 
@@ -247,7 +245,7 @@ sinfo:  compute-dy-c5n9xl-2  idle%   <- 실패 노드 슬롯 리셋(다음 실�
 
 > 참고: ParallelCluster는 이 복구를 직접 구성(헬스 체크 + 재큐)으로 달성한다. SageMaker HyperPod는 같은 일을 관리형으로 더 적극적으로(자동 노드 교체) 해준다.
 
-### 직접 해본 검증 — HyperPod 관리형 동작
+### 직접 해본 검증 - HyperPod 관리형 동작
 
 비교를 위해 HyperPod로도 최소 클러스터(워커 2 × `ml.c5.xlarge`, `NodeRecovery: Automatic`)를 띄워봤다.
 
@@ -303,11 +301,11 @@ ip-172-22-90-124                                          # 워커에서 잡 실
 ParallelCluster와 비교해 두 가지가 달랐다.
 
 - **네트워크가 더 잠겨 있다.** `VpcConfig`를 주지 않으면 노드가 **SageMaker 관리형 VPC**에 뜬다. 내 계정 쪽에는 퍼블릭 IP·SSH·보안그룹 노출이 아예 없었고(앞서 ParallelCluster에서 손봐야 했던 SSH 0.0.0.0/0 같은 게 구조적으로 안 생긴다), 접속도 EC2가 아니라 SSM `sagemaker-cluster:` 타깃으로 한다. 대신 FSx 같은 내 VPC 리소스를 붙이려면 `VpcConfig`를 명시해야 한다.
-- **노드 관리가 관리형이다.** 노드 제거도 EC2 종료가 아니라 `batch-delete-cluster-nodes`로 하고, 목표 수를 다시 올리면 **HyperPod가 새 노드를 약 2.5분 만에 자동 투입**해 desired count를 유지했다. 하드웨어 헬스 장애 시 `NodeRecovery: Automatic`이 같은 일을 한다([문서](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html)).
+- **노드 관리가 관리형이다.** 노드 제거도 EC2 종료가 아니라 `batch-delete-cluster-nodes`로 하고, 목표 수를 다시 올리면 **HyperPod가 새 노드를 약 2.5분 만에 자동 투입**해 목표 수를 유지했다. 하드웨어 헬스 장애 시 `NodeRecovery: Automatic`이 같은 일을 한다([문서](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-hyperpod.html)).
 
 정리하면, **HyperPod는 ParallelCluster가 직접 구성하던 것(클러스터 소프트웨어 설치·네트워크·복구)을 관리형으로 떠안는 대신, 라이프사이클 스크립트라는 진입 비용과 관리형 추상화(직접 EC2 제어 불가)를 받아들이는 트레이드오프**다. (이번엔 진짜 하드웨어 헬스 장애를 강제하진 못했으니, 자동 교체는 `NodeRecovery: Automatic` 설정·문서 기준이고 내가 직접 본 건 목표 수에 맞춘 자동 프로비저닝이다.)
 
-### 직접 해본 검증 — EKS (GPU + EFA + NCCL)
+### 직접 해본 검증 - EKS (GPU + EFA + NCCL)
 
 마지막으로 EKS에서 **GPU 멀티노드 NCCL을 EFA로** 돌려봤다. `eksctl`로 GPU·EFA 노드그룹을 선언하면 device plugin까지 자동 설치된다.
 
@@ -326,7 +324,7 @@ eksctl create cluster -f cluster.yaml     # 컨트롤플레인 + GPU/EFA 노드�
 kubectl get nodes
 ```
 
-GPU(`nvidia-device-plugin`)와 EFA(`aws-efa-k8s-device-plugin`) DaemonSet이 자동으로 떴고, 각 노드가 자원을 광고했다.
+GPU(`nvidia-device-plugin`)와 EFA(`aws-efa-k8s-device-plugin`) DaemonSet이 자동으로 떴고, 각 노드가 자원을 알렸다.
 
 ```
 $ kubectl get nodes -o custom-columns=NODE:.metadata.name,GPU:...nvidia\.com/gpu,EFA:...vpc\.amazonaws\.com/efa
@@ -352,17 +350,17 @@ worker-0/1: NCCL INFO NET/OFI Selected provider is efa, fabric is efa   # EFA �
    268435456 (256MB)  float  sum  ...  2.99   # 약 3.0 GB/s (2노드 × A10G 1개)
 ```
 
-NCCL이 EFA provider를 선택했고, 256MB all-reduce에서 busbw 약 3.0 GB/s가 나왔다. EKS도 GPU·EFA·갱 스케줄링(MPIJob)을 device plugin과 오퍼레이터로 엮어 분산 학습을 돌릴 수 있음이 확인됐다. 대신 ParallelCluster의 YAML 하나, HyperPod의 관리형 대비 **손이 가장 많이 갔다**(device plugin·MPI Operator·라이브러리 경로·EFA 옵션을 직접 맞춰야 했다). 노드는 프라이빗 서브넷이라 퍼블릭 노출은 없었다.
+NCCL이 EFA provider를 선택했고, 256MB all-reduce에서 busbw 약 3.0 GB/s가 나왔다. EKS도 GPU·EFA·갱 스케줄링(MPIJob)을 device plugin과 오퍼레이터로 엮어 분산 학습을 돌릴 수 있다는 것을 확인했다. 대신 ParallelCluster의 YAML 하나, HyperPod의 관리형 대비 **손이 가장 많이 갔다**(device plugin·MPI Operator·라이브러리 경로·EFA 옵션을 직접 맞춰야 했다). 노드는 프라이빗 서브넷이라 퍼블릭 노출은 없었다.
 
 > **한계 — 이 수치는 EFA의 최대 성능이 아니다.** g5의 EFA는 GPUDirect RDMA(NIC가 GPU 메모리를 직접 읽는 zero-copy 경로)를 지원하지 않아(`FI_EFA_USE_DEVICE_RDMA=1` 설정 시 *"no rdma-read capability"* 로 중단됨), NCCL이 GPU↔호스트 메모리 복사를 거치는 경로로 동작했다. 즉 이번 측정은 **"EFA가 전송 경로로 동작하고 그 위에서 멀티노드 NCCL이 돈다"는 기능 검증**이고, GPUDirect RDMA의 최대 대역폭(수십~수백 GB/s)은 p4d/p5/p3dn급(다중 고대역폭 EFA NIC + device RDMA)이 필요하다. 비용 문제로 본 시리즈에서는 그 경로를 측정하지 않았다.
 
 > **참고 — 이 GPUDirect RDMA 경로가 추론에서 쓰이는 예.** 여기서 측정하지 못한 p5급 GPUDirect RDMA는 학습뿐 아니라 추론에서도 위력을 낸다. AWS의 [Disaggregated Prefill and Decode(DPD) on SageMaker HyperPod](https://aws.amazon.com/blogs/machine-learning/disaggregated-prefill-and-decode-for-llm-inference-on-sagemaker-hyperpod/)는 LLM 추론의 prefill(compute-bound)과 decode(memory-bound)를 **서로 다른 GPU 풀로 분리**하고, 그 사이 KV 캐시를 EFA GPUDirect RDMA로 전송한다(스택: LMCache PD → NIXL → libfabric → EFA). `ml.p5.48xlarge`의 3,200 Gbps EFA에서 Llama 3.3 70B의 8,000토큰 KV 전송이 한 자릿수 ms에 끝난다. 이 글의 EKS에서 다룬 EFA·device plugin·오퍼레이터 구성이 그대로 추론으로 확장되는 셈이고, 위에서 비용상 건너뛴 device RDMA의 실제 성과를 보여준다.
 
-### 한 걸음 더 — NVIDIA GPU Operator
+### 한 걸음 더 - NVIDIA GPU Operator
 
 위 EKS 실습에서는 GPU와 EFA device plugin을 `eksctl` 옵션(`efaEnabled`)으로 하나씩 붙였다. 노드가 몇 대일 땐 괜찮지만, GPU 드라이버·컨테이너 툴킷·device plugin·모니터링을 노드마다 버전 맞춰 관리하다 보면 금세 번거로워진다. 이걸 한 번에 묶어주는 것이 **[NVIDIA GPU Operator](https://docs.nvidia.com/datacenter/cloud-native/gpu-operator/latest/index.html)** 다.
 
-GPU Operator는 Helm으로 설치하는 쿠버네티스 오퍼레이터로, GPU 노드에 필요한 스택 전체를 **DaemonSet으로 자동 배포·수명관리**한다.
+GPU Operator는 Helm으로 설치하는 쿠버네티스 오퍼레이터로, GPU 노드에 필요한 스택 전체를 **DaemonSet으로 자동 배포·수명 관리**한다.
 
 - **NVIDIA 드라이버**(컨테이너화 옵션) + **container toolkit** — 노드에 수동 설치할 필요가 줄어든다
 - **device plugin** — GPU를 `nvidia.com/gpu` 자원으로 노출 (위에서 수동으로 한 것)
@@ -382,11 +380,11 @@ helm install gpu-operator nvidia/gpu-operator -n gpu-operator --create-namespace
   --set devicePlugin.enabled=false --set dcgmExporter.enabled=true
 ```
 
-#### 직접 해본 검증 — GPU Operator로 멀티노드 GPU 모니터링
+#### 직접 해본 검증 - GPU Operator로 멀티노드 GPU 모니터링
 
 4편에서 단일 노드에 Docker로 띄웠던 dcgm-exporter를, 이번엔 EKS 2노드(`g4dn.xlarge`, T4 각 1개)에 GPU Operator로 올려 **클러스터 전체 지표를 한 대시보드에 모으는 것**까지 확인했다.
 
-- `eksctl`로 GPU 노드그룹 2대를 만들면 EKS 가속 AMI라 NVIDIA 드라이버·device plugin이 이미 붙어 있다(`nvidia.com/gpu: 1`씩 광고).
+- `eksctl`로 GPU 노드그룹 2대를 만들면 EKS 가속 AMI라 NVIDIA 드라이버·device plugin이 이미 붙어 있다(`nvidia.com/gpu: 1`씩 노출).
 - GPU Operator를 위 옵션(드라이버·툴킷·device plugin off, DCGM on)으로 설치하니 **dcgm-exporter가 노드마다 1개씩 DaemonSet으로** 떴고, NFD/GFD·validator도 함께 배포됐다.
 - 모니터링은 `kube-prometheus-stack`(Prometheus + Grafana)을 Helm으로 올렸다. GPU Operator가 만든 `ServiceMonitor(nvidia-dcgm-exporter)` 덕에 Prometheus가 **두 노드의 dcgm-exporter를 자동으로 수집**했다.
 
@@ -405,7 +403,7 @@ DCGM_FI_DEV_GPU_UTIL
 avg by (Hostname) (DCGM_FI_PROF_SM_ACTIVE)
 ```
 
-Grafana에는 NVIDIA 공식 **DCGM 대시보드(ID 12239)** 를 임포트하면 노드·GPU 변수로 전환하며 전 클러스터를 한눈에 본다. 4편의 단일 노드 대시보드가 여기서 클러스터 규모로 확장되는 셈이다.
+Grafana에 NVIDIA 공식 **DCGM 대시보드(ID 12239)를** 임포트하면 노드·GPU 변수로 전환하며 전 클러스터를 한눈에 볼 수 있다. 4편의 단일 노드 대시보드가 여기서 클러스터 규모로 확장되는 셈이다.
 
 > EFA는 GPU Operator 범위 밖이라, EFA까지 필요하면 `aws-efa-k8s-device-plugin`(또는 `eksctl efaEnabled`)을 병행한다. 이번 모니터링 검증은 지표 수집이 목적이라 EFA 없이 진행했다(앞의 EKS NCCL 검증에서 EFA 경로는 이미 확인).
 
@@ -417,7 +415,7 @@ Grafana에는 NVIDIA 공식 **DCGM 대시보드(ID 12239)** 를 임포트하면 
 
 ## 마무리
 
-분산 학습 인프라를 개념부터 실제 클러스터 구성하는 것까지 진행해봤다.
+분산 학습 인프라를 개념부터 실제 클러스터 구성까지 다뤄봤다.
 
 1. [1편](https://ddii.dev/aws/infiniband-vs-efa/) — 네트워크 개념(InfiniBand vs EFA)
 2. [2편](https://ddii.dev/aws/efa-hands-on/) — 네트워크 핸즈온(EFA·NCCL)

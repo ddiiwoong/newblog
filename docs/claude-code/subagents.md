@@ -1,6 +1,6 @@
 ---
 id: subagents
-title: Claude Code Deep Dive — 맞춤 서브에이전트로 작업 분담하기
+title: Claude Code Deep Dive - 맞춤 서브에이전트로 작업 분담하기
 sidebar_position: 2
 sidebar_label: Subagents
 tags:
@@ -24,14 +24,14 @@ tags:
 ## 목차
 
 1. [Subagent란 무엇인가](#1-subagent란-무엇인가)
-2. [정의 방법 — Markdown 한 장으로 워커를 만들기](#2-정의-방법)
-3. [디스패치 — 부르고, 병렬로 돌리고, 이어서 깨우기](#3-디스패치)
+2. [정의 방법 - Markdown 한 장으로 워커를 만들기](#2-정의-방법)
+3. [디스패치 - 부르고, 병렬로 돌리고, 이어서 깨우기](#3-디스패치)
 4. [Pattern 1: Code Reviewer](#4-pattern-1-code-reviewer)
 5. [Pattern 2: Tester](#5-pattern-2-tester)
 6. [Pattern 3: Security Scanner](#6-pattern-3-security-scanner)
 7. [Pattern 4: Docs Writer](#7-pattern-4-docs-writer)
 8. [Pattern 5: Migration Bot](#8-pattern-5-migration-bot)
-9. [실전 데모: FinOps Agent](#9-실전-데모-finops-agent--sub-agent-병렬-분석)
+9. [실전 데모: FinOps Agent](#9-실전-데모-finops-agent---sub-agent-병렬-분석)
 10. [보충: Sub-agent 설계 핵심 원칙](#10--보충-sub-agent-설계-핵심-원칙)
 11. [선택 가이드 & 안티패턴](#11-선택-가이드--안티패턴)
 12. [References](#references)
@@ -59,7 +59,7 @@ graph LR
     style S2 fill:#E8743B,color:#fff
 ```
 
-### 왜 위임하는가 — 컨텍스트 오염 문제
+### 왜 위임하는가 - 컨텍스트 오염 문제
 
 Claude Code는 대화가 길어질수록 컨텍스트 윈도우가 채워집니다. 모든 파일 읽기, 검색 결과, 도구 호출 출력이 그대로 쌓이기 때문입니다. 이 공간은 **유한**한다 — Sonnet 5 기준 1M 토큰이지만, 그 안에 대화 초반의 지시와 방향이 묻히면 응답 품질이 눈에 띄게 떨어집니다.
 
@@ -123,7 +123,7 @@ v2.1.198부터 **백그라운드가 기본값**입니다.
 
 ## 2. 정의 방법
 
-### 정의 파일 구조 — YAML Frontmatter + 시스템 프롬프트
+### 정의 파일 구조 - YAML Frontmatter + 시스템 프롬프트
 
 ```markdown
 <!-- .claude/agents/my-agent.md -->
@@ -184,7 +184,7 @@ memory: project
 | `effort` | 노력 수준 오버라이드 | `high` |
 | `initialPrompt` | `--agent` 실행 시 첫 턴 자동 제출 | 세션형 부팅 지시 |
 
-### description 작성 — 위임되는 설명 vs 무시되는 설명
+### description 작성 - 위임되는 설명 vs 무시되는 설명
 
 ```markdown
 # ❌ 무시됨 (역할만, 시점 없음)
@@ -293,7 +293,7 @@ claude --agent code-reviewer
 
 > 💡 체이닝은 Foreground로 실행해야 한다 — 앞 결과가 없으면 다음을 시작할 수 없기 때문입니다.
 
-### Resume — 종료된 에이전트 이어서 깨우기
+### Resume - 종료된 에이전트 이어서 깨우기
 
 ```bash
 > code-reviewer 서브에이전트로 인증 모듈 리뷰해줘
@@ -304,7 +304,7 @@ claude --agent code-reviewer
 # 이전 도구 호출과 추론을 전부 가진 채 계속
 ```
 
-### /fork — 대화 전체를 물려받는 특수 서브에이전트
+### /fork - 대화 전체를 물려받는 특수 서브에이전트
 
 Named subagent는 정의 파일의 프롬프트로 **새로 출발**합니다. 반면 `/fork`는 지금까지의 **전체 대화 이력, 도구, 모델을 그대로 상속**합니다. "지금까지 함께 작업한 맥락을 다 알고 있는 곁가지 워커"를 만드는 것입니다. 프롬프트 캐시까지 공유하므로 새 sub-agent를 스폰하는 것보다 비용이 저렴합니다.
 
@@ -326,7 +326,7 @@ Named subagent는 정의 파일의 프롬프트로 **새로 출발**합니다. �
 ---
 
 
-### Resume과 SendMessage — 종료된 에이전트를 이어서 깨우기
+### Resume과 SendMessage - 종료된 에이전트를 이어서 깨우기
 
 ```bash
 ~/proj $ claude
@@ -830,7 +830,7 @@ graph TD
 
 ---
 
-## 9. 실전 데모: FinOps Agent — Sub-agent 병렬 분석
+## 9. 실전 데모: FinOps Agent - Sub-agent 병렬 분석
 
 > 출처: *Claude Code on Bedrock Online Program — 모듈07* (AWS)
 
@@ -968,7 +968,7 @@ claude
 
 > 📕 출처: Anthropic 공식 교육 과정 「Introduction to Sub-agents」 (4개 레슨, Skilljar 플랫폼) — References [2]
 
-### 핵심 판단 기준 — 단 하나의 질문
+### 핵심 판단 기준 - 단 하나의 질문
 
 > **"중간 과정(intermediate work)이 메인 스레드에 중요한가?"**
 >
@@ -992,7 +992,7 @@ description: Use this agent to review code changes.
 1. **위임 여부**를 판단하고
 2. **task description(입력 프롬프트)를 작성**할 때도 가이드로 사용한다
 
-### 출력 포맷 정의 — 가장 중요한 단일 개선
+### 출력 포맷 정의 - 가장 중요한 단일 개선
 
 > Sub-agent에 할 수 있는 **가장 중요한 단일 개선**은 시스템 프롬프트에 출력 포맷을 정의하는 것입니다.
 
@@ -1013,7 +1013,7 @@ Provide your review in a structured format:
 4. Questions: Ambiguous areas needing clarification
 ```
 
-### 장애물 보고 — 오래 실행되는 진짜 원인
+### 장애물 보고 - 오래 실행되는 진짜 원인
 
 Sub-agent가 오래 도는 가장 흔한 이유: **길을 잃었지만 보고하지 않음**.
 

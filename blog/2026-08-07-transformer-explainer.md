@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "Transformer 완벽 이해 가이드 — 구조부터 LLM Serving까지"
+title: "Transformer 완벽 이해 가이드 - 구조부터 LLM Serving까지"
 comments: true
 classes: wide
 description: "GPT-2 기준으로 Transformer 동작 원리를 처음부터 끝까지 추적하고, LLM Serving 최적화(KV Cache, Batching, Quantization 등)까지 정리한 학습 노트"
@@ -23,7 +23,7 @@ tags:
   - LLM Serving
 ---
 
-> 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
 # Transformer 완벽 이해 가이드
 
@@ -34,7 +34,7 @@ tags:
 >
 > GPT-2 (small, 124M params) 기준
 
-이 글은 두 파트로 구성된다. Part 1에서는 GPT-2를 기준으로 Transformer의 동작 원리를 하나의 예시 문장("The cat sat on the")이 입력부터 다음 단어 예측까지 거치는 전체 경로를 따라가며 설명한다. Embedding, Self-Attention, MLP, Output 각 단계에서 데이터가 어떤 형태로 변환되는지를 코드와 함께 추적한다. Part 2에서는 학습된 모델을 실제로 서빙할 때의 문제 — Auto-Regressive 생성의 비효율, KV Cache 메모리 관리, Prefill/Decode 병목 — 를 다루고, Continuous Batching, PagedAttention, Quantization, Speculative Decoding 등 주요 최적화 기법과 vLLM/TensorRT-LLM 같은 서빙 프레임워크를 정리한다.
+이 글은 두 파트로 구성된다. Part 1에서는 GPT-2를 기준으로 Transformer의 동작 원리를 하나의 예시 문장("The cat sat on the")이 입력부터 다음 단어 예측까지 거치는 전체 경로를 따라가며 설명한다. Embedding, Self-Attention, MLP, Output 각 단계에서 데이터가 어떤 형태로 변환되는지를 코드와 함께 추적한다. Part 2에서는 학습된 모델을 실제로 서빙할 때의 문제(Auto-Regressive 생성의 비효율, KV Cache 메모리 관리, Prefill/Decode 병목)를 다루고, Continuous Batching, PagedAttention, Quantization, Speculative Decoding 등 주요 최적화 기법과 vLLM/TensorRT-LLM 같은 서빙 프레임워크를 정리한다.
 
 <!--truncate-->
 
@@ -42,7 +42,7 @@ tags:
 
 ## 용어 사전 (Glossary)
 
-이 문서에서 나오는 머신러닝/딥러닝 용어를 먼저 정리해둠. 모르는 게 나올 때마다 여기로 돌아와서 확인하면 된다.
+이 문서에서 나오는 머신러닝/딥러닝 용어를 먼저 정리해둔다. 모르는 게 나올 때마다 여기로 돌아와서 확인하면 된다.
 
 ### 기본 ML 용어
 
@@ -56,9 +56,9 @@ tags:
 | <a id="term-gradient"></a>**기울기 (Gradient)** | 파라미터를 어느 방향으로 얼마나 바꿔야 오차가 줄어드는지 알려주는 값. 역전파로 계산된다. |
 | <a id="term-loss-손실함수"></a>**Loss (손실함수)** | 모델 예측과 정답 간의 차이를 수치화한 것. 학습 목표 = loss를 최소화하는 것. |
 | <a id="term-epoch"></a>**Epoch** | 전체 학습 데이터를 한 번 다 본 것 = 1 epoch. 보통 수십~수백 epoch 반복. |
-| <a id="term-batch"></a>**Batch** | 한 번의 forward/backward에 묶어서 처리하는 데이터 단위. batch size=32면 32개 샘플을 한번에 처리. |
+| <a id="term-batch"></a>**Batch** | 한 번의 forward/backward에 묶어서 처리하는 데이터 단위. batch size=32면 32개 샘플을 한 번에 처리. |
 | <a id="term-inference-추론"></a>**Inference (추론)** | 학습 완료된 모델로 새 입력에 대한 예측을 생성하는 것. Forward Pass만 수행. |
-| <a id="term-fine-tuning"></a>**Fine-tuning** | 사전학습된 모델을 특정 태스크에 맞게 추가 학습하는 것. 전체 파라미터 or 일부만 업데이트. |
+| <a id="term-fine-tuning"></a>**Fine-tuning** | 사전학습된 모델을 특정 태스크에 맞게 추가 학습하는 것. 전체 파라미터 또는 일부만 업데이트. |
 
 ### 신경망 구조 관련
 
@@ -84,8 +84,8 @@ tags:
 | <a id="term-multi-head-attention"></a>**Multi-Head Attention** | Self-Attention을 여러 개(Head)로 나눠서 병렬 수행. 각 Head가 다른 유형의 관계를 학습. |
 | <a id="term-q"></a>**Query (Q)** | Attention에서 "나는 어떤 정보가 필요한가"를 나타내는 벡터. |
 | <a id="term-k"></a>**Key (K)** | Attention에서 "나는 어떤 정보를 제공하는가"를 나타내는 벡터. Q와 K의 내적 = 유사도. |
-| <a id="term-v"></a>**Value (V)** | Attention에서 실제 전달되는 정보 벡터. 유사도가 높은 토큰의 V가 많이 가져와진다. |
-| <a id="term-attention-score"></a>**Attention Score** | Q와 K의 내적 결과. 높을수록 두 토큰이 서로 관련있음을 의미. |
+| <a id="term-v"></a>**Value (V)** | Attention에서 실제 전달되는 정보 벡터. 유사도가 높은 토큰의 V가 많이 반영된다. |
+| <a id="term-attention-score"></a>**Attention Score** | Q와 K의 내적 결과. 높을수록 두 토큰이 서로 관련 있음을 의미. |
 | <a id="term-causal-mask"></a>**Causal Mask** | 미래 위치를 -∞로 설정해서 현재 토큰이 미래 토큰을 볼 수 없게 하는 마스크. GPT 계열 모델에서 사용. |
 | <a id="term-residual-connection"></a>**Residual Connection** | 변환의 출력에 원래 입력을 더하는 구조 (출력 = x + F(x)). 기울기 소실 방지, 깊은 네트워크 학습 가능. |
 | <a id="term-layer-normalization"></a>**Layer Normalization** | 벡터의 평균=0, 분산=1로 정규화. 학습 안정화 목적. |
@@ -95,7 +95,7 @@ tags:
 | <a id="term-top-k-sampling"></a>**Top-k Sampling** | 확률 상위 k개 토큰만 후보로 남기고 나머지 제거 후 샘플링. |
 | <a id="term-nucleus"></a>**Top-p (Nucleus) Sampling** | 확률을 높은 순으로 누적해서 합이 p를 넘는 최소 집합에서 샘플링. 상황 적응적. |
 | <a id="term-dropout"></a>**Dropout** | 학습 시 뉴런을 랜덤으로 비활성화하여 과적합 방지. 추론 시에는 비활성화. |
-| <a id="term-gelu"></a>**GELU** | 활성화 함수의 한 종류. `GELU(x) = x × Φ(x)`. ReLU보다 부드럽고 NLP에서 성능 좋다. |
+| <a id="term-gelu"></a>**GELU** | 활성화 함수의 한 종류. `GELU(x) = x × Φ(x)`. ReLU보다 부드럽고 NLP에서 성능이 좋다. |
 | <a id="term-byte-pair-encoding"></a>**BPE (Byte Pair Encoding)** | 토큰화 알고리즘. 빈번한 문자 쌍을 반복적으로 병합하여 어휘를 구축. GPT 계열에서 사용. |
 
 ### LLM Serving 용어 (Part 2)
@@ -115,7 +115,7 @@ tags:
 | <a id="term-quantization-양자화"></a>**Quantization (양자화)** | 모델 가중치의 정밀도를 줄이는 것 (FP16→INT8→INT4). 크기↓ 속도↑ 품질 약간↓. |
 | <a id="term-flashattention"></a>**FlashAttention** | Attention 연산을 블록 단위로 GPU SRAM에서 처리하여 메모리 O(N²)→O(N)으로 줄이는 기법. |
 | <a id="term-pagedattention"></a>**PagedAttention** | KV Cache를 OS 가상 메모리처럼 페이지 단위로 관리하여 메모리 단편화를 해결하는 기법 (vLLM). |
-| <a id="term-speculative-decoding"></a>**Speculative Decoding** | 작은 모델이 빠르게 여러 토큰을 추측 → 큰 모델이 한번에 검증. 품질 유지하면서 2-3배 속도↑. |
+| <a id="term-speculative-decoding"></a>**Speculative Decoding** | 작은 모델이 빠르게 여러 토큰을 추측 → 큰 모델이 한 번에 검증. 품질 유지하면서 2-3배 속도↑. |
 | <a id="term-tp"></a>**Tensor Parallelism (TP)** | 하나의 레이어를 여러 GPU에 나눠서 병렬 연산. 하나의 큰 행렬곱을 분할. |
 | <a id="term-pp"></a>**Pipeline Parallelism (PP)** | 모델의 레이어(블록)를 여러 GPU에 순차 배치. GPU A가 Block 1-6, GPU B가 Block 7-12 담당. |
 | <a id="term-vllm"></a>**vLLM** | UC Berkeley에서 개발한 LLM 서빙 프레임워크. PagedAttention + Continuous Batching 자동 적용. |
@@ -160,7 +160,7 @@ Transformer = "다음에 올 단어를 예측하는 기계". 2017년에 나왔�
 
 ---
 
-## 2. 전체 아키텍처 — 문장이 거치는 전체 경로
+## 2. 전체 아키텍처 - 문장이 거치는 전체 경로
 
 Transformer는 크게 세 단계로 구성된다. 입력 텍스트를 숫자로 바꾸는 **Embedding**, 그 숫자들을 반복적으로 정제하는 **Transformer Block**, 그리고 최종 벡터에서 다음 단어를 고르는 **Output**이다. 각 단계는 독립적으로 이해할 수 있지만, 실제로는 파이프라인처럼 순서대로 흘러간다.
 
@@ -201,13 +201,13 @@ graph TD
 "floor" (확률 0.076)       ← 다음 단어 예측 완료!
 ```
 
-한 마디로: **텍스트 → 숫자 행렬 → 12번 다듬기 → 다음 단어 확률**. 이것이 전부다.
+한마디로: **텍스트 → 숫자 행렬 → 12번 다듬기 → 다음 단어 확률**. 이것이 전부다.
 
 그리고 이 과정은 **한 토큰을 예측할 때마다 처음부터 끝까지 반복**된다. "floor"를 예측한 뒤에는 "The cat sat on the floor"를 다시 입력으로 넣어서 그 다음 토큰("." 등)을 예측한다. 이걸 Auto-Regressive 생성이라 부르고, Part 2에서 이 반복이 서빙 성능에 어떤 영향을 미치는지 다룬다.
 
 ---
 
-## 3. [Embedding](#term-embedding) — "The cat sat on the"를 숫자로 바꾸기
+## 3. [Embedding](#term-embedding) - "The cat sat on the"를 숫자로 바꾸기
 
 **하는 일**: 텍스트 문자열을 모델이 처리할 수 있는 숫자 행렬로 변환.
 
@@ -258,7 +258,7 @@ graph LR
 
 > **실제 확인 (GPT-2)**: "The" (ID=464)의 임베딩 벡터 처음 5개 값은 `[-0.069, -0.020, 0.064, -0.062, -0.114]`이고, 벡터 전체의 크기(norm)는 2.720이다. [Token](#term-token) [Embedding](#term-embedding) 행렬은 (50,257 × 768), Position [Embedding](#term-embedding) 행렬은 (1,024 × 768) 크기이다.
 
-### "5 × 768" — 직관적으로 이해하기
+### "5 × 768" - 직관적으로 이해하기
 
 컴퓨터는 "cat"이라는 글자를 이해하지 못한다. 그래서 각 단어를 **숫자 목록으로** 바꿔야 하는데, 숫자 1개로는 단어의 의미를 충분히 담을 수 없으므로 **768개를 한 세트로** 써서 하나의 단어를 표현하는 것이다.
 
@@ -278,7 +278,7 @@ graph LR
 
 ---
 
-## 4. Transformer Block — 이해력을 높이는 반복 구조
+## 4. Transformer Block - 이해력을 높이는 반복 구조
 
 **하는 일**: [Embedding](#term-embedding) 결과(5×768)를 입력받아서, 같은 크기(5×768)의 더 정교한 표현을 출력. 이걸 12번 반복.
 
@@ -318,11 +318,11 @@ Block 12 출력: 5×768 (12번의 처리를 거친 최종 표현)
 - Block 5-8: "cat이 sat의 주어", "on the 뒤에 장소 관련 단어 올 확률 높음"
 - Block 9-12: "The cat sat on the ___" → 문맥상 "floor, chair, bed" 같은 단어가 와야 함
 
-한 번으로는 부족하다. 마치 책을 12번 정독하면 이해가 깊어지는 것처럼, 블록을 반복할수록 더 깊은 맥락을 포착.
+한 번으로는 부족하다. 마치 책을 12번 정독하면 이해가 깊어지는 것처럼, 블록을 반복할수록 더 깊은 맥락을 포착한다.
 
 ---
 
-## 5. [Self-Attention](#term-self-attention) — "다른 단어를 얼마나 참고할까?"
+## 5. [Self-Attention](#term-self-attention) - "다른 단어를 얼마나 참고할까?"
 
 **하는 일**: 각 토큰이 다른 토큰들을 "참고"해서, 맥락 정보를 자기 벡터에 반영. Transformer의 핵심 메커니즘.
 
@@ -375,7 +375,7 @@ K = 입력 × W_K = 5×768
 V = 입력 × W_V = 5×768
 ```
 
-Q와 K를 비교해서 "누가 누구와 관련있나" 판단하고, 관련있는 놈의 V를 가져오는 구조다.
+Q와 K를 비교해서 "누가 누구와 관련 있나" 판단하고, 관련 있는 놈의 V를 가져오는 구조다.
 
 **② 12 Head 분할** — 다양한 관점으로 동시에 보기
 
@@ -385,7 +385,7 @@ K (5×768) → 12개로 나눔 → 각 Head: K (5×64)
 V (5×768) → 12개로 나눔 → 각 Head: V (5×64)
 ```
 
-왜 나누냐? 한 덩어리(768d)로 한 가지 관계만 포착하는 것보다, 12개로 나눠서 **12가지 다른 관계**를 동시에 포착하는 게 훨씬 강력. 
+왜 나눌까? 한 덩어리(768d)로 한 가지 관계만 포착하는 것보다, 12개로 나눠서 **12가지 다른 관계**를 동시에 포착하는 게 훨씬 강력하다. 
 - Head 1: 주어-동사 관계 ("cat" ↔ "sat")
 - Head 2: 위치 근접성 (바로 옆 단어)
 - Head 3: 관사-명사 ("The" ↔ "cat")
@@ -430,11 +430,11 @@ Softmax: 각 행을 확률(합=1)로 변환
 
 ### 없으면 어떻게 되나:
 
-[Self-Attention](#term-self-attention) 없이는 각 단어가 **다른 단어를 전혀 못 본채** 독립적으로 처리된다. "The cat sat on the ___"에서 "the" 혼자만의 정보로는 다음 단어를 예측할 수 없어. "sat"과 "cat"이라는 맥락을 가져와야 "floor"를 예측할 수 있다.
+[Self-Attention](#term-self-attention) 없이는 각 단어가 **다른 단어를 전혀 못 본 채** 독립적으로 처리된다. "The cat sat on the ___"에서 "the" 혼자만의 정보로는 다음 단어를 예측할 수 없다. "sat"과 "cat"이라는 맥락을 가져와야 "floor"를 예측할 수 있다.
 
 ---
 
-## 6. MLP — "수집된 맥락에 지식 적용"
+## 6. MLP - "수집된 맥락에 지식 적용"
 
 **하는 일**: [Self-Attention](#term-self-attention)이 맥락을 모아줬으면, MLP는 그 맥락을 바탕으로 각 토큰의 표현을 변환. 모델의 "지식"이 저장된 곳.
 
@@ -468,7 +468,7 @@ Attention 출력에서 마지막 "the"의 벡터: 768d
 
 ### 왜 4배로 확장했다 줄이나:
 
-768d 공간은 좁아. 거기선 복잡한 패턴 분리가 어려움. 3072d로 넓히면 "이건 장소", "이건 감정", "이건 시간" 같은 다양한 패턴을 명확히 분리할 수 있다. 분리한 다음에 유용한 것만 768d로 다시 압축.
+768d 공간은 좁다. 거기선 복잡한 패턴 분리가 어렵다. 3072d로 넓히면 "이건 장소", "이건 감정", "이건 시간" 같은 다양한 패턴을 명확히 분리할 수 있다. 분리한 다음에 유용한 것만 768d로 다시 압축.
 
 ### MLP에 "지식"이 저장됨:
 
@@ -478,17 +478,17 @@ Attention 출력에서 마지막 "the"의 벡터: 768d
 
 ---
 
-## 7. Output — "floor"를 골라내기
+## 7. Output - "floor"를 골라내기
 
 **하는 일**: 12개 Block을 거친 마지막 토큰("the")의 768d 벡터 → 50,257개 어휘에 대한 확률 → 다음 단어 결정.
 
 ```mermaid
 graph LR
     Last["'the'의 최종 벡터<br/>(768d)"] --> Linear["Linear<br/>768 → 50,257"]
-    Linear --> [Logits](#term-logits)["Logits<br/>(원시 점수)"]
-    Logits --> Temp["÷ [Temperature](#term-temperature)"]
+    Linear --> Logits["Logits<br/>(원시 점수)"]
+    Logits --> Temp["÷ Temperature"]
     Temp --> Soft["Softmax<br/>(확률로 변환)"]
-    Soft --> Sample["Sampling<br/>(Top-k / [Top-p](#term-top-p))"]
+    Soft --> Sample["Sampling<br/>(Top-k / Top-p)"]
     Sample --> Token["'floor' "]
 ```
 
@@ -561,7 +561,7 @@ Block 12 출력 중 마지막 토큰 "the"의 벡터: 768d
 → 12개 블록을 거치면서 값이 폭발/소실되는 걸 방지
 ```
 
-Block이 12개나 쌓여있으면 값이 기하급수적으로 커지거나 0에 수렴할 수 있다. 매 단계마다 범위를 리셋해주는 역할.
+Block이 12개나 쌓여 있으면 값이 기하급수적으로 커지거나 0에 수렴할 수 있다. 매 단계마다 범위를 리셋해주는 역할.
 
 ### [Residual Connection](#term-residual-connection)
 
@@ -576,7 +576,7 @@ Block이 12개나 쌓여있으면 값이 기하급수적으로 커지거나 0에
 ### [Dropout](#term-dropout) (학습 시만)
 
 - 뉴런의 10%를 랜덤으로 비활성화 → 특정 뉴런에 과의존하는 것 방지
-- 추론(우리가 모델 쓸 때)에는 꺼져있다.
+- 추론(우리가 모델 쓸 때)에는 꺼져 있다.
 
 ---
 
@@ -759,7 +759,7 @@ T=0.3이면 "the" 98.7%로 거의 확정. T=2.0이면 "the" 41%까지 내려가�
 | Head 수 | 12 / block | 12가지 관점으로 동시에 관계 파악 |
 | Head 차원 | 64 | 768 ÷ 12 = 64 |
 | MLP 확장 | 3072 | 768 × 4 = 3072 |
-| 최대 길이 | 1024 | 한번에 최대 1024 토큰 처리 |
+| 최대 길이 | 1024 | 한 번에 최대 1024 토큰 처리 |
 | 파라미터 | 124M | 1억 2400만 개의 학습된 숫자 |
 
 ### 우리 문장의 전체 여정 (최종 요약)
@@ -782,7 +782,7 @@ sequenceDiagram
     
     B->>O: 마지막 "the"의 768d 벡터
     O->>O: 768d → 50,257개 점수 → 확률
-    Note over O: " floor"=7.6%, " floor"=7.6%...
+    Note over O: " floor"=7.6%, " bed"=6.5%...
     O-->>T: "floor" 선택! → 입력에 추가 → 반복
 ```
 
@@ -808,7 +808,7 @@ graph LR
     C["Code<br/>(실행 환경: PyTorch)"] --- M
 ```
 
-### Training vs Serving — 핵심 차이
+### Training vs Serving - 핵심 차이
 
 | | Training | Serving |
 |---|---|---|
@@ -857,7 +857,7 @@ graph TD
 - 리소스 경합 없음 → 최고 성능
 - 모델별 독립 스케일링
 - 격리된 로그/메트릭 → 디버깅 쉬움
-- 하나 죽어도 나머지 영향 없다.
+- 하나 죽어도 나머지에 영향 없다.
 - 모델별 맞춤 하드웨어 선택 가능
 
 #### Multi-Model이 필요한 경우
@@ -880,14 +880,14 @@ graph LR
 
 ## 12. LLM 서빙의 특수성 (Ch.2)
 
-### 전통 ML vs LLM — 구조적 차이
+### 전통 ML vs LLM - 구조적 차이
 
 | | 전통 ML | LLM |
 |---|---|---|
 | 상태 | Stateless | **Stateful** ([KV Cache](#term-kv-cache)) |
 | 연산량 | 고정 | **가변** (출력 길이 모름) |
 | 메모리 | 고정 | **동적 증가** |
-| 위치 | 백그라운드 | **사용자 직접 대면** |
+| 위치 | 백그라운드 | **사용자와 직접 맞닿음** |
 | 비용 | 저렴 (CPU 가능) | **GPU 필수, 10배+ 비용** |
 | 패턴 | 단일 Forward | **[Auto-Regressive](#term-auto-regressive) (반복 Forward)** |
 
@@ -911,7 +911,7 @@ sequenceDiagram
 ```
 
 매 스텝마다 모델을 [Forward Pass](#term-forward-pass) 한다는 뜻이다.  
-→ 이게 서빙에서 왜 문제가 되냐?
+→ 이게 서빙에서 왜 문제가 되나?
 
 | 특성 | 서빙 영향 |
 |------|-----------|
@@ -975,7 +975,7 @@ graph TD
 
 Auto-Regressive 생성에서 매 토큰마다 Attention을 계산하려면, 이전 토큰들의 Key와 Value가 필요하다. KV Cache가 없으면 새 토큰 하나를 생성할 때마다 이전 토큰 전체를 처음부터 다시 계산해야 한다. 5번째 토큰을 만들 때 1~4번째를 다시 계산하고, 6번째를 만들 때 1~5번째를 다시 계산하는 식이다. 이러면 출력 길이 n에 대해 총 연산량이 O(n²)이 된다.
 
-KV Cache는 이전 토큰들의 K, V 벡터를 메모리에 저장해두고, 새 토큰은 자기 Q만 계산해서 저장된 K, V와 Attention을 수행한다. 재계산이 없으니 각 스텝이 O(1)이고, 전체는 O(n)이 된다. 대신 그 대가로 **메모리를 계속 먹는다**. 토큰이 생성될수록 Cache가 커지고, 동시 요청이 많으면 수십~수백 GB의 GPU 메모리를 KV Cache가 잡아먹는다. 이 메모리 관리 문제를 해결하는 게 뒤에 나올 PagedAttention이다.
+KV Cache는 이전 토큰들의 K, V 벡터를 메모리에 저장해두고, 새 토큰은 자기 Q만 계산해서 저장된 K, V와 Attention을 수행한다. 재계산이 없으니 각 스텝이 O(1)이고, 전체는 O(n)이 된다. 그 대가로 **메모리를 계속 먹는다**. 토큰이 생성될수록 Cache가 커지고, 동시 요청이 많으면 수십~수백 GB의 GPU 메모리를 KV Cache가 잡아먹는다. 이 메모리 관리 문제를 해결하는 게 뒤에 나올 PagedAttention이다.
 
 [KV Cache](#term-kv-cache) 없이 → 매 토큰 생성 시 **이전 토큰 전부 다시 계산** → O(n²)  
 [KV Cache](#term-kv-cache) 있으면 → 이전 결과 재활용 → **O(n)**
@@ -1106,10 +1106,7 @@ for out in outputs:
 
 ---
 
-*이후 §13~§22 ([Batch](#term-batch)ing, [Quantization](#term-quantization-양자화), [FlashAttention](#term-flashattention), [PagedAttention](#term-pagedattention) 등)은 기존 내용 유지*
-
----
-## 13. [Batch](#term-batch)ing — 요청을 묶어서 처리하기
+## 13. [Batch](#term-batch)ing - 요청을 묶어서 처리하기
 
 Decode 단계에서 GPU가 놀고 있다면, 그 빈 연산 자원에 다른 요청을 끼워 넣으면 된다. 이게 Batching의 핵심 동기다. 하나의 요청만 처리하면 GPU 활용률이 10~20%에 머무는데, 여러 요청을 묶으면 같은 GPU로 더 많은 토큰을 처리할 수 있다. 문제는 LLM 요청마다 출력 길이가 다르다는 점이다.
 
@@ -1220,7 +1217,7 @@ graph LR
 | INT8 | 7 GB | 1.5-2x↑ | 거의 없음 |
 | INT4 | 3.5 GB | 2-3x↑ | 약간 |
 
-실무에서는 **INT4 (W4A16)** 조합이 가성비 최고. GPTQ, AWQ, GGUF 등 방식 있다.
+실무에서는 **INT4 (W4A16)** 조합이 가성비 최고. GPTQ, AWQ, GGUF 등의 방식이 있다.
 
 ### 14-2. [FlashAttention](#term-flashattention)
 
@@ -1297,7 +1294,7 @@ graph LR
 | 크기 | 작음 (1B) | 큼 (70B) |
 | 속도 | 빠름 | 느림 |
 | 역할 | 추측 | 검증 |
-| 최종 품질 | Target과 **동일** (수학적 보장) |
+| 최종 품질 | Target과 **동일** (수학적 보장) | — |
 
 ### 14-5. [Prefill](#term-prefill)-[Decode](#term-decode) 분리
 
@@ -1352,7 +1349,7 @@ graph TD
 |---|---|---|---|---|
 | 핵심 | 범용, 쉬움 | NVIDIA 최적 | 유연한 프로그래밍 | CPU/Mac |
 | [PagedAttention](#term-pagedattention) | O | O | O | X |
-| Continuous [Batch](#term-batch) | O | O | O | X |
+| Continuous Batching | O | O | O | X |
 | 양자화 | AWQ, GPTQ | FP8, INT4 | AWQ, GPTQ | GGUF |
 | Multi-GPU | TP, PP | TP, PP | TP | X |
 | 대상 | 대부분 팀 | 최대 성능 | 연구/커스텀 | 개인/Edge |
@@ -1473,7 +1470,7 @@ graph TD
 | # | 질문 | 답 |
 |---|------|-----|
 | 1 | Training vs Serving 차이? | Forward만, 지연/비용 최적화 |
-| 2 | Single vs Multi-Model 선택 기준? | 기본은 Single, 모델 수백+ 이면 Multi |
+| 2 | Single vs Multi-Model 선택 기준? | 기본은 Single, 모델 수백+이면 Multi |
 | 3 | LLM이 전통 ML과 다른 점? | Stateful, 가변 출력, 메모리 증가 |
 | 4 | [Prefill](#term-prefill) vs [Decode](#term-decode)? | [Compute-bound](#term-compute-bound) vs [Memory-bound](#term-memory-bound) |
 | 5 | [KV Cache](#term-kv-cache) 역할? | 이전 K,V 재계산 방지 |

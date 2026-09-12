@@ -1,6 +1,6 @@
 ---
 id: overview
-title: Claude Code Deep Dive — Agentic Coding의 모든 것
+title: Claude Code Deep Dive - Agentic Coding의 모든 것
 sidebar_position: 1
 sidebar_label: Overview
 tags:
@@ -45,7 +45,7 @@ tags:
 
 ---
 
-## 2. Agentic Loop — 핵심 동작 원리
+## 2. Agentic Loop - 핵심 동작 원리
 
 Claude Code의 심장은 **3단계 루프**입니다:
 
@@ -401,7 +401,7 @@ claude -p "PR diff 리뷰" --allowed-tools "Read,Grep,Glob"
 
 ---
 
-## 9. Quick Start — 첫 세션 운영
+## 9. Quick Start - 첫 세션 운영
 
 ### 명령 기본형
 
@@ -415,7 +415,7 @@ claude --resume                     # 세션 선택해 재개
 cat data.csv | claude -p "요약"     # 파이프 입력
 ```
 
-### 프롬프트 작성 4원칙 — Delegate, Don't Dictate
+### 프롬프트 작성 4원칙 - Delegate, Don't Dictate
 
 | 원칙 | 설명 |
 |------|------|
@@ -522,7 +522,7 @@ claude "이 Dockerfile을 멀티스테이지로 최적화하고 이미지 크기
 
 ---
 
-## 11. 인터페이스 — 터미널 밖의 Claude Code
+## 11. 인터페이스 - 터미널 밖의 Claude Code
 
 동일 엔진이 6가지 인터페이스에서 동작합니다:
 
@@ -584,7 +584,7 @@ claude --remote "작업"   # 로컬 세션을 클라우드로 보내기
 - `rules` 경로 스코프로 디렉터리별 규칙 분리
 - Compaction 이후에도 영속되는 유일한 지시 수단
 
-### Skills — 반복 절차의 패키징
+### Skills - 반복 절차의 패키징
 
 동일한 다단계 지시를 두 번 타이핑했다면, 그것은 Skill입니다.
 
@@ -603,7 +603,7 @@ claude --remote "작업"   # 로컬 세션을 클라우드로 보내기
 | **Skill** | `.claude/skills/` | 작업 매칭 시에만 로드되는 절차 |
 | **Hook** | settings.json | 절대 건너뛸 수 없는 코드 (아래 참조) |
 
-### Hooks — 건너뛸 수 없는 규칙
+### Hooks - 건너뛸 수 없는 규칙
 
 > CLAUDE.md = 요청(request) — Claude가 보통 따르지만 건너뛸 수 있음  
 > Hook = 보장(guarantee) — 루프의 고정된 지점에서 실행되는 결정론적 코드
@@ -666,7 +666,7 @@ claude --remote "작업"   # 로컬 세션을 클라우드로 보내기
 # 명령어 뒤의 텍스트가 요약의 방향을 정하는 "핸들"
 ```
 
-### /goal — 완료 조건 설정
+### /goal - 완료 조건 설정
 
 ```bash
 /goal all tests in src/billing pass, and the type checker reports zero errors
@@ -674,7 +674,7 @@ claude --remote "작업"   # 로컬 세션을 클라우드로 보내기
 /goal clear    # 목표 조기 해제
 ```
 
-### /loop — 간격 실행
+### /loop - 간격 실행
 
 ```bash
 /loop 5m check CI status and report failures
@@ -685,7 +685,7 @@ claude --remote "작업"   # 로컬 세션을 클라우드로 보내기
 
 ---
 
-## 14. Workflow Patterns — 반복 가능한 실무 패턴 10선
+## 14. Workflow Patterns - 반복 가능한 실무 패턴 10선
 
 ### Pattern 1: Explore-Plan-Code (EPC)
 
@@ -774,7 +774,7 @@ steps:
 # → 턴을 넘겨도 조건 충족까지 계속 작업, Fable 5와 조합 시 장시간 자율 작업
 ```
 
-### 패턴 조합 예시 — 신규 기능의 전체 여정
+### 패턴 조합 예시 - 신규 기능의 전체 여정
 
 ```
 1. EPC + Plan → 기능 설계

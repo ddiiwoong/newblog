@@ -1,6 +1,6 @@
 ---
 id: cli-reference
-title: Claude Code Deep Dive — CLI Reference, Headless, 세션제어, 자동화 파이프라인
+title: Claude Code Deep Dive - CLI Reference, Headless, 세션제어, 자동화 파이프라인
 sidebar_position: 6
 sidebar_label: CLI & Automation
 tags:
@@ -577,7 +577,7 @@ on: { pull_request: { types: [opened, synchronize] } }
 
 ```
 
-### 보충: 관리형 대안 — Managed Code Review
+### 보충: 관리형 대안 - Managed Code Review
 
 > 📕 출처: Anthropic 공식 교육 과정 「Claude Code in Action」 Lesson NEW-07 (GitHub Actions and Code Review) — References [3]
 

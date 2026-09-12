@@ -1,6 +1,6 @@
 ---
 id: settings
-title: Claude Code Deep Dive — Settings, Permissions, Hooks, MCP, Commands
+title: Claude Code Deep Dive - Settings, Permissions, Hooks, MCP, Commands
 sidebar_position: 5
 sidebar_label: Settings & Hooks
 tags:
@@ -267,7 +267,7 @@ graph TD
 
 > ⚠️ **Auto Mode 분류기의 한계** (출처: 「Claude Code in Action」 Lesson NEW-04): 분류기는 **의도**(intent)를 검사하지, **정확성**(correctness)을 검사하지 않습니다. Claude가 인증을 리팩토링하면서 깨진 인증을 쓰면 — 분류기가 통과시킵니다. 깨진 것은 위험한 것이 아니기 때문입니다. 해결: **Auto Mode + Stop Hook** 조합 (의도 검사 + 정확성 확인).
 
-### /permissions — 대화형 관리
+### /permissions - 대화형 관리
 
 ```bash
 > /permissions
@@ -294,7 +294,7 @@ graph TD
 | 강제 | Claude가 보통 따름 | 결정론적 코드, 건너뛸 수 없음 |
 | 실행 | Claude 판단 하에 | 루프의 고정된 지점에서 자동 |
 
-### 30 이벤트 — 3 케이던스
+### 30 이벤트 - 3 케이던스
 
 | 케이던스 | 이벤트 예시 | 설명 |
 | --- | --- | --- |
@@ -519,7 +519,7 @@ SessionStart에서 exit 0 + stdout 텍스트 → 컨텍스트에 자동 추가�
 
 ---
 
-### 보충: 하네스 엔지니어링 — Settings를 "시스템"으로 만드는 철학
+### 보충: 하네스 엔지니어링 - Settings를 "시스템"으로 만드는 철학
 
 > 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 6 (Harness Engineering) — References [4]
 
@@ -696,7 +696,7 @@ MCP 서버가 많을 때 모든 도구를 컨텍스트에 로드하면 낭비입
 
 ---
 
-### 보충: MCP 고급 기능 — 컨텍스트 절약과 실시간 연동
+### 보충: MCP 고급 기능 - 컨텍스트 절약과 실시간 연동
 
 > 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 7 (MCP) — References [4]
 
@@ -854,7 +854,7 @@ CLAUDE.md                  ← 프로젝트 지침
 
 ---
 
-### 보충: 엔터프라이즈 운영 — 설정이 뚫리는 3가지 지점
+### 보충: 엔터프라이즈 운영 - 설정이 뚫리는 3가지 지점
 
 > 📕 출처: AWS Skill Builder 「Claude Code on Amazon Bedrock」 Module 9 (Enterprise) — References [4]
 

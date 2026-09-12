@@ -1,6 +1,6 @@
 ---
 id: admin-setup
-title: Claude Code Deep Dive — 개인의 도구를 조직의 플랫폼으로
+title: Claude Code Deep Dive - 개인의 도구를 조직의 플랫폼으로
 sidebar_position: 3
 sidebar_label: Admin Setup
 tags:
@@ -130,7 +130,7 @@ GPG 서명 검증은 "이 바이너리가 Anthropic이 빌드한 진짜 파일�
 | **감사 로그** | Artifactory 접근 로그로 "누가 어떤 버전을 언제 다운로드했는지" 추적할 수 있습니다. |
 | **에어갭 대응** | 인터넷 단절 환경에서는 정기적으로 오프라인 번들을 전달합니다: `curl -fsSL [https://claude.ai/install.sh](https://claude.ai/install.sh) |
 
-### 4링 롤아웃 — 왜 이 순서인가
+### 4링 롤아웃 - 왜 이 순서인가
 
 각 링의 규모와 역할이 서로 다른 이유가 있습니다:
 
@@ -286,7 +286,7 @@ aws secretsmanager get-secret-value \
 
 ```
 
-### PrivateLink — 왜 필요하고 어떻게 격리하는가
+### PrivateLink - 왜 필요하고 어떻게 격리하는가
 
 PrivateLink는 Bedrock 호출 트래픽이 **인터넷을 거치지 않고 AWS 내부 네트워크만으로** 전달되게 합니다.
 
@@ -656,7 +656,7 @@ managed settings로 Auto Mode를 허용한 뒤, 무인 실행 결과를 어떻�
 | 2. 테스트를 게이트로 | Stop Hook으로 테스트 실행 → 실패 시 턴 종료 거부 |
 | 3. Cold Second Opinion | 별도 sub-agent로 리뷰 (작성에 참여하지 않은 신선한 시선) |
 
-### Auto Mode 조직 구성 — 분류기에게 신뢰 경계를 알려주기
+### Auto Mode 조직 구성 - 분류기에게 신뢰 경계를 알려주기
 
 Auto Mode의 분류기는 "이 행동이 안전한가?"를 판단하지만, **조직의 신뢰 경계**를 모릅니다. managed settings로 이를 알려줍니다:
 
@@ -688,7 +688,7 @@ claude auto-mode test "aws iam create-user x"   # 판정 미리보기
 
 ```
 
-### 감사 훅 — 누가 무엇을 실행했는가
+### 감사 훅 - 누가 무엇을 실행했는가
 
 managed hooks로 모든 도구 호출을 중앙 로그에 기록할 수 있습니다:
 
@@ -728,7 +728,7 @@ claude
 # Provider: Bedrock (env 강제)
 
 
-### Auto Mode 조직 구성 — 분류기에게 신뢰 경계를 알려주기
+### Auto Mode 조직 구성 - 분류기에게 신뢰 경계를 알려주기
 
 Auto Mode의 분류기는 "이 행동이 안전한가?"를 판단하지만, **조직의 신뢰 경계**를 모릅니다. managed settings로 이를 알려줍니다:
 
@@ -760,7 +760,7 @@ claude auto-mode test "aws iam create-user x"   # 판정 미리보기
 
 ```
 
-### 감사 훅 — 누가 무엇을 실행했는가
+### 감사 훅 - 누가 무엇을 실행했는가
 
 managed hooks로 모든 도구 호출을 중앙 로그에 기록할 수 있습니다:
 
@@ -849,7 +849,7 @@ aws budgets create-budget \
 
 ```
 
-### SIEM 연계 — 보안 관점 활용
+### SIEM 연계 - 보안 관점 활용
 
 OTel Collector에서 Splunk, OpenSearch 등 SIEM으로 분기하면 보안 관점 탐지가 가능합니다:
 
@@ -860,7 +860,7 @@ OTel Collector에서 Splunk, OpenSearch 등 SIEM으로 분기하면 보안 관�
 | 민감 경로 | `.env`, 키 파일 접근 시도 | DLP 훅 로그와 조인 |
 | 신규 목적지 | 허용 밖 도메인/MCP 시도 | deniedMcpServers 긴급 배포 |
 
-### 비용 귀속 — 3단 절단
+### 비용 귀속 - 3단 절단
 
 OTel의 사용자 차원과 클라우드 호출 신원을 결합하면 비용을 정확히 귀속시킬 수 있습니다:
 
@@ -883,7 +883,7 @@ OTel의 사용자 차원과 클라우드 호출 신원을 결합하면 비용을
 | 5 | **배치 시간대** | 무인 작업은 야간 예약으로 피크 회피 |
 | 6 | **한도 계층** | 그룹 기본 + 개인 예외의 지출 캡 |
 
-### 분기 운영 리뷰 — 숫자로 도는 회의
+### 분기 운영 리뷰 - 숫자로 도는 회의
 
 | 주제 | 메트릭 | 의사결정 |
 | --- | --- | --- |
@@ -951,7 +951,7 @@ aws cloudtrail put-event-selectors \
 | 데이터 보호 | 학습 미사용, ZDR, 암호화 전송 | Part 7 |
 | 가용성 | 게이트웨이 수평 확장, 버전 하한 | Part 1, 3 |
 
-### 그룹 매핑 전략 — 한 그룹 체계로 두 층을 움직인다
+### 그룹 매핑 전략 - 한 그룹 체계로 두 층을 움직인다
 
 IdP 그룹을 단일 원천(Single Source of Groups)으로 삼아, 두 층에서 동시에 매핑합니다:
 
@@ -963,7 +963,7 @@ IdP 그룹을 단일 원천(Single Source of Groups)으로 삼아, 두 층에서
 
 > 그룹 변경이 곧 권한 변경 — 별도 작업 없이 IdP 하나만 수정하면 양 층이 동시에 반영됩니다.
 
-### 세션과 오프보딩 — 떠나는 순간 접근도 끝난다
+### 세션과 오프보딩 - 떠나는 순간 접근도 끝난다
 
 SSO 구조에서는 IdP 비활성화가 곧 접근 종료입니다:
 
@@ -974,7 +974,7 @@ SSO 구조에서는 IdP 비활성화가 곧 접근 종료입니다:
 | **잔여 정리** | setup-token 등 장기 토큰 발급 대장 기반 회수 | 미회수 토큰 |
 | **증적** | 비활성 시각과 마지막 호출 시각의 대조 리포트 | — |
 
-### CloudTrail 감사 — 무엇이 기록되는가
+### CloudTrail 감사 - 무엇이 기록되는가
 
 Bedrock의 `InvokeModel`은 **데이터 이벤트**이므로 트레일에 명시적으로 활성화해야 합니다:
 
@@ -1004,7 +1004,7 @@ aws cloudtrail put-event-selectors \
 | 데이터 보호 | 학습 미사용, ZDR, 암호화 전송 |
 | 가용성 | 게이트웨이 수평 확장, 버전 하한 |
 
-### 외부 감사 대응 — 미리 싸두는 증적 패키지
+### 외부 감사 대응 - 미리 싸두는 증적 패키지
 
 | 패키지 | 내용 |
 | --- | --- |
@@ -1073,7 +1073,7 @@ curl -v https://api.anthropic.com/     # 네트워크 경로 확인
 | **컨텍스트 비대** | `/context` 명령으로 점유 확인 | `/clear` 또는 `/compact` 안내 |
 | **쿼터 스로틀** | 429 응답 비율 관측 | 리전 TPM 한도 증설 요청 |
 
-### 진단 수집 — 문의 접수 시 표준 세트
+### 진단 수집 - 문의 접수 시 표준 세트
 
 ```bash
 # 1차 자가 진단

@@ -21,7 +21,7 @@ tags:
   - EFA
   - FSx for Lustre
 ---
-해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
 앞의 세 편에서 분산 학습의 두 인프라 병목을 다뤘다. [네트워크(EFA)](https://ddii.dev/aws/efa-hands-on/)로 노드 간 통신을 빠르게 하고 [스토리지(FSx/EFS/S3)](https://ddii.dev/aws/distributed-training-storage/)로 데이터 공급을 풀었다. 그런데 막상 학습을 돌리면 이런 상황을 마주한다.
 
@@ -50,7 +50,7 @@ tags:
 * `dcgm-exporter` - 위 두 개가 노드에 붙어 그때그때 보는 **단발 진단**이라면, `dcgm-exporter`는 DCGM 지표를 Prometheus로 내보내 Grafana에 시계열로 쌓는 **지속·전체(fleet) 모니터링**이다. 노드가 수십·수백 대면 SSH로 하나씩 `dcgmi`를 보기 어렵다. dcgm-exporter를 각 노드(또는 Kubernetes DaemonSet)로 띄워 두면 모든 GPU의 SM active·메모리·전력·XID 에러를 한 대시보드에서 보고 스트래글러(유독 느린 노드)를 한눈에 찾을 수 있다. 학습 중 GPU 활용률이 언제 떨어졌는지 사후에 되짚을 때도 유용하다.
 * 핵심 질문: **GPU SM 활용률이 꾸준히 높은가, 아니면 주기적으로 0으로 떨어지는가?** 톱니 모양으로 떨어지면 매 스텝 뭔가를 기다린다는 신호다.
 
-> **`nvidia-smi`의** **`utilization.gpu`는 "지난 구간에 커널이 하나라도 돈 시간 비율"일 뿐 진짜 계산 효율이 아니다.** 작은 커널이 띄엄띄엄 돌거나 통신을 기다리며 spin만 해도 100%로 찍힌다. 그래서 한 단계 더 들어가려면 다음을 봐야한다.
+> **`nvidia-smi`의** **`utilization.gpu`는 "지난 구간에 커널이 하나라도 돈 시간 비율"일 뿐 진짜 계산 효율이 아니다.** 작은 커널이 띄엄띄엄 돌거나 통신을 기다리며 spin만 해도 100%로 찍힌다. 그래서 한 단계 더 들어가려면 다음을 봐야 한다.
 >
 > * **SM active / Tensor active** (DCGM 필드 `DCGM_FI_PROF_SM_ACTIVE`, `DCGM_FI_PROF_PIPE_TENSOR_ACTIVE`): SM과 텐서코어가 실제로 얼마나 바쁜지.
 >
@@ -68,7 +68,7 @@ tags:
 
 이 한 장에서 확인할 수 있는 것:
 
-* **GPU Util 100% ≠ 다 쓴 것.** 왼쪽 위 패널에서 GPU Util과 SM Active는 100%까지 올라가지만 **SM Occupancy는 60% 대에 그친다.** SM Occupancy는 SM에 실제로 올라간 스레드가 이론상 최대치의 몇 %인지를 나타내는데, 이게 60%면 GPU가 돌고는 있어도 계산 자원을 다 채우지는 못했다는 뜻이다. 앞에서 짚은 대로 `utilization.gpu`가 100%라고 해서 GPU를 다 쓴 게 아니다.
+* **GPU Util 100% ≠ 다 쓴 것.** 왼쪽 위 패널에서 GPU Util과 SM Active는 100%까지 올라가지만 **SM Occupancy는 60%대에 그친다.** SM Occupancy는 SM에 실제로 올라간 스레드가 이론상 최대치의 몇 %인지를 나타내는데, 이게 60%면 GPU가 돌고는 있어도 계산 자원을 다 채우지는 못했다는 뜻이다. 앞에서 짚은 대로 `utilization.gpu`가 100%라고 해서 GPU를 다 쓴 게 아니다.
 * **어떤 연산 파이프가 도는가.** FP32가 약 60%로 활동하고 **Tensor는 거의 0**이다. fp32로 학습하니 텐서코어를 안 쓰는 것 - mixed precision(AMP)으로 바꾸면 Tensor가 올라오고 FP32가 내려갈 자리다. 즉 텐서코어를 쓰고 있는지까지 지표로 판별된다.
 * **열(Thermal) 스로틀링이 실제로 잡혔다.** 오른쪽 아래 스로틀링 패널에서 **Thermal Violation이 지속 부하 중 올라왔다.** T4가 열 한계에 걸려 클럭을 낮춘 것으로, 멀티노드였다면 이 노드가 스트래글러가 됐을 상황이다. Power Violation은 0이라 전력이 아니라 온도가 원인임도 구분된다.
 * **에러는 깨끗하다.** XID·ECC 패널이 모두 0 - 하드웨어 이상은 없다는 뜻. 학습이 이유 없이 느려지거나 죽으면 여기부터 본다.
@@ -82,7 +82,7 @@ tags:
 * **한 노드에 GPU가 여러 개**: 추가 설정이 거의 없다. dcgm-exporter는 노드의 모든 GPU를 자동으로 내보내고 각 시계열에 `gpu="0"`, `gpu="1"`, `UUID` 라벨을 붙인다. Grafana에서는 `by (gpu)`로 집계하거나 `$gpu` 템플릿 변수로 나눠 보면 된다. (MIG를 켜면 GPU instance 라벨이 더 붙는다.)
 * **노드가 여러 대**: 노드마다 dcgm-exporter를 하나씩 띄우고, 중앙 Prometheus가 이들을 자동으로 찾아 수집하게 한다.
   * **Kubernetes(EKS)**: **NVIDIA GPU Operator**가 dcgm-exporter를 **DaemonSet**(GPU 노드당 1 파드)으로 배포하고, Prometheus는 `ServiceMonitor`로 전 노드를 자동 수집한다. 가장 표준적인 방식.
-  * **비-K8s(ParallelCluster·Slurm·순수 EC2)**: 각 노드에 dcgm-exporter를 systemd 서비스나 컨테이너로 올리고, Prometheus는 static 타깃 대신 **`ec2_sd_config`(태그로 GPU 노드 자동 발견)** 로 수집한다. 오토스케일로 노드가 늘고 줄어도 자동 반영된다.
+  * **비-K8s(ParallelCluster·Slurm·순수 EC2)**: 각 노드에 dcgm-exporter를 systemd 서비스나 컨테이너로 올리고, Prometheus는 static 타깃 대신 **`ec2_sd_config`(태그로 GPU 노드 자동 발견)로** 수집한다. 오토스케일로 노드가 늘고 줄어도 자동 반영된다.
 * **스트래글러 찾기**: dcgm-exporter의 `Hostname` 라벨(과 Prometheus의 `instance` 라벨)로 노드를 구분한다. 노드별 SM active를 나란히 비교하면 느린 노드가 드러난다.
 
   ```promql
@@ -94,7 +94,7 @@ tags:
 
   Grafana 테이블·히트맵으로 노드별 정렬하면 한눈에 보인다.
 
-* **규모 주의**: 수십~~수백 GPU에서는 이 데모의 2초 scrape가 과하다. 10~~15초로 늘리고, 저장이 단일 Prometheus 한계를 넘으면 **remote-write → Thanos/Mimir**, AWS라면 **AMP(Amazon Managed Prometheus) + AMG(Managed Grafana)** 로 수집·저장만 확장한다. exporter 구성은 그대로 둔다.
+* **규모 주의**: 수십\~수백 GPU에서는 이 데모의 2초 scrape가 과하다. 10\~15초로 늘리고, 저장이 단일 Prometheus 한계를 넘으면 **remote-write → Thanos/Mimir**, AWS라면 **AMP(Amazon Managed Prometheus) + AMG(Managed Grafana)로** 수집·저장만 확장한다. exporter 구성은 그대로 둔다.
 
 > EKS에서 GPU Operator로 DaemonSet을 띄워 멀티노드로 수집하는 실습은 5편(오케스트레이션)에서 다룬다.
 
@@ -123,7 +123,7 @@ PyTorch에서 이 역할을 하는 것이 **DDP**(DistributedDataParallel)다. D
 
 * **묶음 크기**(`bucket_cap_mb`): 앞서 말한 버킷을 얼마나 크게 잡을지 정한다. 너무 작으면 통신 횟수가 늘어 오버헤드가 커지고, 너무 크면 계산과 겹칠 여지가 줄어든다. 그 사이에서 균형을 맞춘다.
 * **`gradient_as_bucket_view=True`**: 그래디언트를 버킷에 복사하지 않고 원본을 그대로 참조하게 하는 옵션. 불필요한 복사가 사라져 메모리와 시간을 아낀다.
-* **FSDP / ZeRO**: 모델이 커서 GPU 한 장에 다 올라가지 않을 때, 모델을 여러 GPU에 나눠 싣는 방식이다. 대신 연산할 때마다 흩어진 조각을 다시 모으고 나누는 통신이 더해져, 일반 DDP보다 통신량이 많다. 큰 모델을 학습한다면 이 추가 통신 비용을 감안해야 한다.
+* **FSDP / ZeRO**: 모델이 커서 GPU 한 장에 다 올라가지 않을 때, 모델을 여러 GPU에 나눠 싣는 방식이다. 대신 연산할 때마다 흩어진 조각을 다시 모으고 나누는 통신이 더해져, 일반 DDP보다 통신량이 많다. 큰 모델을 학습한다면 이 추가 통신 비용을 고려해야 한다.
 
 ### 데이터(스토리지+로더) 의심
 
@@ -136,9 +136,9 @@ PyTorch에서 이 역할을 하는 것이 **DDP**(DistributedDataParallel)다. D
 
 #### 직접 재현 - 데이터 병목일 때만 worker가 약이다 {#data-bottleneck-workers}
 
-단일 GPU 노드(`g4dn.xlarge`, T4 1장, vCPU 4개)에서 resnet18 학습 루프를 돌리며 `num_workers`를 바꿔 GPU 활용률과 스텝 처리량을 측정했다. 합성 이미지라 절대치보다 **변화 방향**(Pattern)이 핵심이다. 그런데 결과가 전처리 무게에 따라 정반대로 나타났다.
+단일 GPU 노드(`g4dn.xlarge`, T4 1장, vCPU 4개)에서 resnet18 학습 루프를 돌리며 `num_workers`를 바꿔 GPU 활용률과 스텝 처리량을 측정했다. 합성 이미지라 절대치보다 **변화 방향**이 핵심이다. 그런데 결과가 전처리 무게에 따라 정반대로 나타났다.
 
-**케이스 A - 가벼운 전처리(Resize만).** GPU가 이미 계산으로 인한 사용율이 높은 상태이다.
+**케이스 A - 가벼운 전처리(Resize만).** GPU가 이미 계산만으로 활용률이 높은 상태다.
 
 | num\_workers | 스텝 처리량      | GPU 활용률 |
 | :----------- | :---------- | :------ |
@@ -185,7 +185,7 @@ GPU 0     100     0.576
 
 worker=0에서는 GPUTL·SMACT가 **거의 0에 머문다.** GPU가 데이터를 기다리며 유휴 상태로 있는 것이 초 단위로 그대로 보인다. worker=3에서는 SM active가 0.3\~0.6 구간에서 오르내리며 GPU가 실제로 계산한다. (참고로 SM active는 SM이 얼마나 바쁜지 나타내는 값이고, Tensor active는 fp32 학습이라 거의 0으로 이 워크로드에선 의미가 없다.)
 
-PyTorch Profiler로도 같은 결론이 나온다. 케이스 B에서 `enumerate(DataLoader)` 대기가 스텝당 **890ms(`num_workers=0`) → 451ms(`num_workers=3`)** 로 절반이 됐다. `key_averages()` 상위에 `enumerate(DataLoader)`가 CPU 시간의 85\~93%를 차지하면 데이터가 범인이라는 명확한 신호다.
+PyTorch Profiler로도 같은 결론이 나온다. 케이스 B에서 `enumerate(DataLoader)` 대기가 스텝당 **890ms(`num_workers=0`) → 451ms(`num_workers=3`)로** 절반이 됐다. `key_averages()` 상위에 `enumerate(DataLoader)`가 CPU 시간의 85\~93%를 차지하면 데이터가 범인이라는 명확한 신호다.
 
 같은 상황을 `nsys`로 떠서 GUI 타임라인으로 보면 병목이 시각적으로 드러난다. 아래는 heavy-aug + `num_workers=2`로 20초 프로파일한 화면이다(`nsys profile -t cuda,cudnn,cublas,osrt ...`).
 
@@ -232,11 +232,11 @@ graph TD
 | **컴퓨트**          | 케이스 A(가벼운 전처리)에서 GPU가 이미 94%                                               | worker를 늘려도 개선 없음 → 데이터가 병목이 아님                    |
 | **통신**(NCCL/EFA) | [2편](https://ddii.dev/aws/efa-hands-on/)의 `all_reduce_perf` 실측 참조          | EFA 2.37 vs TCP 0.77 GB/s (\~3배)                   |
 
-직접 더 해보면 좋은 확장은 두 가지다. ① **baseline·데이터·통신을 한 리그에서 나란히** 돌려 스텝 시간을 대조하는 통합 실험, ② **멀티노드 스트래글러**를 실제로 재현해 노드별 지표가 갈리는 모습 확인. 통신 병목을 직접 만들어보려면 NCCL을 TCP로 강등하면 된다(`NCCL_NET=Socket` + `NCCL_SOCKET_IFNAME=<eth>`, 또는 `NCCL_NET_PLUGIN=none`).
+직접 더 해보면 좋은 확장은 두 가지다. ① **baseline·데이터·통신을 한 자리에서 나란히** 돌려 스텝 시간을 대조하는 통합 실험, ② **멀티노드 스트래글러**를 실제로 재현해 노드별 지표가 갈리는 모습 확인. 통신 병목을 직접 만들어보려면 NCCL을 TCP로 강등하면 된다(`NCCL_NET=Socket` + `NCCL_SOCKET_IFNAME=<eth>`, 또는 `NCCL_NET_PLUGIN=none`).
 
 ## 마무리
 
-분산 학습 튜닝의 첫걸음은 어디가 느린지 추측하지 말고 직접 측정하는 것이다. GPU 활용률에서 시작해 통신과 데이터로 좁혀가는 이 워크플로 정도만 이해해도 앞선 글들에서 사용한 인프라(EFA·FSx)가 제대로 활용을 잘 되고 있는지 알 수 있다. 
+분산 학습 튜닝의 첫걸음은 어디가 느린지 추측하지 말고 직접 측정하는 것이다. GPU 활용률에서 시작해 통신과 데이터로 좁혀가는 이 워크플로 정도만 이해해도 앞선 글들에서 사용한 인프라(EFA·FSx)가 제대로 활용되고 있는지 알 수 있다. 
 
 시리즈 흐름:
 

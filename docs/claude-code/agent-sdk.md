@@ -1,6 +1,6 @@
 ---
 id: agent-sdk
-title: "Claude Code Deep Dive — Agent SDK: 커스텀 도구, 구조화 출력, 프로덕션 호스팅"
+title: "Claude Code Deep Dive - Agent SDK: 커스텀 도구, 구조화 출력, 프로덕션 호스팅"
 sidebar_position: 7
 sidebar_label: Agent SDK
 tags:
@@ -759,7 +759,7 @@ ANTHROPIC_MODEL=apac.anthropic.claude-sonnet-5-v1:0
 | **상태** | 세션 외부 미러, 재시도 멱등성, TTL |
 | **관측** | OTel 배선, 비용 절단, 실패율 알람 |
 
-### 보충: 서버리스 멀티 에이전트 — Orchestrator-Worker on Lambda
+### 보충: 서버리스 멀티 에이전트 - Orchestrator-Worker on Lambda
 
 > 📕 출처: AWS 기술 블로그 「Amazon Bedrock과 Claude Agent SDK로 서버리스 멀티 에이전트 구현하기」 (Jesam Kim, 2026.03) — References [13]
 
