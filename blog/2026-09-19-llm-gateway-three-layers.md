@@ -1,9 +1,9 @@
 ---
 layout: single
-title: "LLM 게이트웨이 계층 세 갈래를 AWS에서 재보기"
+title: "LLM 게이트웨이 세 갈래를 AWS에서 측정하기 - vllm-router · Agent Router · llm-d"
 comments: true
 classes: wide
-description: "vllm-router, Agent Router(구 Envoy AI Gateway), llm-d를 같은 GPU와 모델에 올려 프리픽스 캐시 라우팅 효과를 측정하고, 이상적 파티셔닝 대비 남은 이득과 설치 과정에서 부딪힌 호환성 벽을 기록"
+description: "vllm-router, Agent Router(구 Envoy AI Gateway), llm-d를 같은 GPU와 모델에 올려 프리픽스 캐시 라우팅 효과를 측정하고, 이상적 파티셔닝 대비 남은 이득과 설치 과정에서 부딪힌 호환성 제약사항을 기록"
 authors: jinwoong
 toc: true
 toc_label: Table of Contents
@@ -24,7 +24,7 @@ tags:
 
 > 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
-# LLM 게이트웨이 계층 세 갈래를 AWS에서 재보기
+# LLM 게이트웨이 세 갈래를 AWS에서 측정하기 - vllm-router · Agent Router · llm-d
 
 > 측정 환경: AWS EC2 g6.12xlarge (NVIDIA L4 24GB × 4, NVLink 없음) · K3s v1.36.4 · vLLM 0.11.0 · Qwen3-0.6B-FP8 × 2 (각 GPU 1장) · vllm-router 0.1.15 · Envoy Gateway v1.9.1 · Agent Router (Envoy AI Gateway) v1.1.0 · GAIE v1.0.1
 
