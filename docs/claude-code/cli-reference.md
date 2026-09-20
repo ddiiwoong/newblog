@@ -12,7 +12,7 @@ tags:
   - CI/CD
 ---
 
-> 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
 ## 들어가며
 
@@ -1181,9 +1181,9 @@ bash scripts/daily-summary.sh
 | # | 출처 | 상세 |
 | --- | --- | --- |
 | [1] | **Claude Code Deep Dive Workshop — Chapter 5: CLI Reference** | AWS Korea, 2026.07. Choi WooHyung PSA |
-| [2] | **Anthropic 공식 교육 — *****Claude Code in Action*****: Routines & Headless** | Anthropic Skilljar 과정 |
-| [3] | **Anthropic 공식 교육 — *****Claude Code in Action*****: GitHub Actions and Code Review** | Anthropic Skilljar 과정 |
-| [4] | **Anthropic 공식 교육 — *****Claude Code in Action*****: Verifying Unsupervised Runs** | Anthropic Skilljar 과정 |
+| [2] | **Anthropic 공식 교육 — _Claude Code in Action_: Routines & Headless** | Anthropic Skilljar 과정 |
+| [3] | **Anthropic 공식 교육 — _Claude Code in Action_: GitHub Actions and Code Review** | Anthropic Skilljar 과정 |
+| [4] | **Anthropic 공식 교육 — _Claude Code in Action_: Verifying Unsupervised Runs** | Anthropic Skilljar 과정 |
 | [5] | **AWS Bedrock Online Program — *****Claude Code on Bedrock*****: Automation and Scaling** | AWS |
 
 ### 2차 출처 (교차 검증)

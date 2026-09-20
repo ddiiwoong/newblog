@@ -8,7 +8,7 @@ authors: jinwoong
 toc: true
 toc_label: Table of Contents
 slug: aws/distributed-training-orchestration
-date: 2026-07-14
+date: 2026-07-17
 categories:
   - AWS
 tags:

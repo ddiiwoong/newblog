@@ -21,7 +21,7 @@ tags:
   - EFA
   - FSx for Lustre
 ---
-해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
 앞의 세 편에서 분산 학습의 두 인프라 병목을 다뤘다. [네트워크(EFA)](https://ddii.dev/aws/efa-hands-on/)로 노드 간 통신을 빠르게 하고 [스토리지(FSx/EFS/S3)](https://ddii.dev/aws/distributed-training-storage/)로 데이터 공급을 풀었다. 그런데 막상 학습을 돌리면 이런 상황을 마주한다.
 

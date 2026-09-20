@@ -12,7 +12,7 @@ tags:
   - Governance
 ---
 
-> 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
 ## 들어가며
 
@@ -209,7 +209,7 @@ flowchart LR
 | `claude CLI` | 개발자 클라이언트 | 정책이 실제로 적용되는지 확인하는 유일한 방법 |
 | Keycloak | OIDC IdP | 그룹 클레임으로 RBAC 차등을 만든다 |
 | PostgreSQL | 게이트웨이 필수 저장소 | 디바이스 코드 랑데부가 여기 있어 없으면 사인인이 성립하지 않는다 |
-| OTel Collector | OTLP 수신 → Prometheus·Loki 분배 | 게이트웨이는 OTLP/HTTP 만 중계한다 |
+| OTel Collector | OTLP 수신 → Prometheus·Loki 분배 | 게이트웨이는 OTLP/HTTP만 중계한다 |
 | Prometheus · Loki | 메트릭 · 이벤트 저장 | 메트릭과 로그가 별개 시그널이라 목적지도 둘 |
 | Grafana | 대시보드 | 인당·그룹별 귀속을 눈으로 확인 |
 | Amazon Bedrock | 업스트림 | 추론이 실제로 나가는지 확인 |
@@ -956,7 +956,7 @@ claude_code_session_count_total{
 | 식별된 개발자 | `stat` | `count(count by (user_email) (max_over_time(claude_code_session_count_total{identity_source="gateway-oidc"}[$__range])))` | `user_email`은 게이트웨이 세션에만 채워진다 |
 | 총 토큰 | `stat` | `sum(max_over_time(claude_code_token_usage_tokens_total{user_email=~"$user"}[$__range]))` | type 4종 전체 합 |
 | 추정 비용 | `stat` | `sum(max_over_time(claude_code_cost_usage_USD_total{user_email=~"$user"}[$__range]))` | 게이트웨이의 `spend_limits`와는 별개 계량 |
-| 세션 신원 (user.id 는 IdP subject) | `table` | `max_over_time(claude_code_session_count_total{identity_source="gateway-oidc", user_email=~"$user"}[$__range])` | 라벨을 그대로 표로 펼친다. instant + format=table |
+| 세션 신원 (user.id는 IdP subject) | `table` | `max_over_time(claude_code_session_count_total{identity_source="gateway-oidc", user_email=~"$user"}[$__range])` | 라벨을 그대로 표로 펼친다. instant + format=table |
 | 모델별 토큰 총량 | `barchart` | `sum by (model) (max_over_time(claude_code_token_usage_tokens_total{user_email=~"$user"}[$__range]))` | 어느 모델이 토큰을 많이 쓰는가 |
 | 모델별 추정 비용 | `piechart` | `sum by (model) (max_over_time(claude_code_cost_usage_USD_total{user_email=~"$user"}[$__range]))` | 어느 모델이 비용을 많이 쓰는가 (순서가 토큰과 다르다) |
 | 토큰 상세 (모델 × 종류) | `table` | `sum by (model, type) (max_over_time(claude_code_token_usage_tokens_total{user_email=~"$user"}[$__range]))` | `cacheCreation`을 분리해야 첫 요청 과대 계상을 피한다 |

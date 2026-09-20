@@ -12,7 +12,7 @@ tags:
   - Monitoring
 ---
 
-> 해당 포스팅은 현재 재직중인 회사에 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 
 ## 들어가며
 
@@ -714,7 +714,7 @@ managed hooks로 모든 도구 호출을 중앙 로그에 기록할 수 있습�
 
 | 영역 | 패턴 | 예시 |
 | --- | --- | --- |
-| **managed deny** (최소, 불변) | 논쟁 없는 위험만 | `rm -rf`, `.env 읽기`, `curl |
+| **managed deny** (최소, 불변) | 논쟁 없는 위험만 | `rm -rf`, `.env 읽기`, `curl \| bash` |
 | **명시 allow** (넉넉히) | 생산성 도구 | 빌드, 테스트, 린트, git 조회 |
 | **ask (회색지대)** | 사람 확인 | git push, 배포 명령 |
 | **auto 분류기** | 나머지 | 신뢰 경계 설정으로 보완 |
@@ -726,70 +726,7 @@ claude
 > /status
 # Enterprise managed settings (file)  ← 괄호 안 소스 확인
 # Provider: Bedrock (env 강제)
-
-
-### Auto Mode 조직 구성 - 분류기에게 신뢰 경계를 알려주기
-
-Auto Mode의 분류기는 "이 행동이 안전한가?"를 판단하지만, **조직의 신뢰 경계**를 모릅니다. managed settings로 이를 알려줍니다:
-
-```json
-// managed-settings.json 발췌
-{
-  "autoMode": {
-    "trustedRepositories": ["github.corp.example/*"],
-    "trustedBuckets": ["s3://corp-data-*"],
-    "trustedDomains": ["*.corp.example"],
-    "blockOverrides": ["Bash(aws iam *:*)"],
-    "allowOverrides": ["Bash(kubectl get:*)"]
-  }
-}
-
 ```
-
-| 키 | 효과 |
-| --- | --- |
-| `trustedRepositories` | 이 저장소의 코드를 신뢰 → 분류기가 더 관대하게 판정 |
-| `trustedDomains` | 이 도메인으로의 네트워크 요청을 안전으로 분류 |
-| `blockOverrides` | 분류기 판정과 무관하게 **무조건 차단** (IAM 변조 등) |
-| `allowOverrides` | 분류기 판정과 무관하게 **무조건 허용** (읽기 명령 등) |
-
-```bash
-# 배포 전 시뮬레이션
-claude auto-mode show              # 유효 구성 확인
-claude auto-mode test "aws iam create-user x"   # 판정 미리보기
-
-```
-
-### 감사 훅 - 누가 무엇을 실행했는가
-
-managed hooks로 모든 도구 호출을 중앙 로그에 기록할 수 있습니다:
-
-```json
-// managed-settings.json 발췌
-{
-  "allowManagedHooksOnly": true,
-  "hooks": {
-    "PostToolUse": [{
-      "type": "command",
-      "command": "./scripts/audit-log.sh"
-    }]
-  }
-}
-
-```
-
-> `allowManagedHooksOnly: true`이면 사용자가 자체 훅을 추가할 수 없으므로, 감사 훅이 우회되지 않습니다.
-
-### 권한 패턴 설계 전략
-
-> **deny는 좁고 단단하게, allow는 넓고 명시적으로**
-
-| 영역 | 패턴 | 예시 |
-| --- | --- | --- |
-| **managed deny** (최소, 불변) | 논쟁 없는 위험만 | `rm -rf`, `.env 읽기`, `curl \| bash` |
-| **명시 allow** (넉넉히) | 생산성 도구 | 빌드, 테스트, 린트, git 조회 |
-| **ask (회색지대)** | 사람 확인 | git push, 배포 명령 |
-| **auto 분류기** | 나머지 | 신뢰 경계 설정으로 보완 |
 
 ---
 
