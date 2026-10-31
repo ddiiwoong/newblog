@@ -520,6 +520,9 @@ ENTRYPOINT ["python", "/app/experiment.py"]
 
 **`experiment.py`**
 
+<details>
+<summary><code>experiment.py</code> 전체 보기 (약 380줄)</summary>
+
 ```python
 """Point-in-time Seoul bike demand experiment for local arm64 Kubernetes."""
 import argparse
@@ -899,6 +902,8 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+</details>
 
 ### 10.3 Kubernetes 자원과 Job 순서
 
@@ -1642,7 +1647,6 @@ print(json.dumps({
 
 책의 4~5장을 소득 분류 대신 서울 공공자전거로 바꿔 읽은 이유는 하나였다. 시각이 분명한 데이터라야 "이 값을 예측 시점에 정말 쓸 수 있었나"를 끝까지 따질 수 있기 때문이다. 그 질문을 붙잡고 가니 도구를 설치했다는 사실보다, **Feast의 시점 조회·MLflow의 모델 계보·KFP의 실행 순서가 서로의 계약을 지키는지**가 실습의 본론이 됐다. 무작위 평가(67.88대)와 미래 평가(90.84대)의 간극, 날씨 피처가 오히려 검증을 낮춘 결과, 운행 중단 247시간의 오차는 모두 그 계약을 확인하는 과정에서 드러난 신호였다.
 
-다음 글에서는 이 배치 파이프라인 위에 실시간 추론 API와 HPA 부하 실험을 얹어, "정보가 언제 도착하는가"라는 질문을 운영 관점에서 이어 볼 생각이다.
 
 ## 12. 참고 자료
 
