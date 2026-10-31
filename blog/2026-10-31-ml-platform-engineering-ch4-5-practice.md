@@ -1,9 +1,9 @@
 ---
 layout: single
-title: "MLflow·Feast·Kubeflow를 잇기 - 소득 분류 배치 추론까지"
+title: "한국 데이터로 다시 만든 MLOps 4~5장: 서울 공공자전거 Feast·MLflow·KFP 실험"
 comments: true
 classes: wide
-description: "Machine Learning Platform Engineering 4~5장의 실험 추적, 모델 등록, 시점 피처 조회, 배치 추론 파이프라인을 스터디 실행 기록과 함께 정리한다."
+description: "서울 공공자전거 시간별 대여 데이터를 직접 수집해 Rancher Desktop Kubernetes에서 Feast 시점 조회, MLflow 모델 등록, KFP 배치 추론을 실행하고 검증한 기록."
 authors: jinwoong
 toc: true
 toc_label: Table of Contents
@@ -20,1188 +20,1618 @@ tags:
   - MinIO
 ---
 
-# MLflow·Feast·Kubeflow를 잇기 - 소득 분류 배치 추론까지
+# 한국 데이터로 다시 만든 MLOps 4~5장: 서울 공공자전거 Feast·MLflow·KFP 실험
 
 > 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >
-> **읽은 자료:** *Machine Learning Platform Engineering* 4~5장(pp. 97–148). 스터디에서 참고한 내용과 실행 결과도 반영했다.  
-> **검증 환경:** Ubuntu 기반 로컬 K3s 스터디 서버, MLflow 3.0.0, Feast 0.40.1, KFP 2.4.0, MinIO·Redis. 아래 결과는 스터디 실행 기록에서 확인한 값이며, 이 글을 쓰면서 새로 실행한 결과는 아니다.
+> **읽은 자료:** *Machine Learning Platform Engineering* 4~5장과 스터디 자료. **실습 데이터:** UCI *Seoul Bike Sharing Demand*의 서울 시간별 공공자전거 대여량. **검증 환경:** 2026년 10월 31일 Mac M3 Pro의 Rancher Desktop Kubernetes. 이 글의 Job·KFP 상태와 지표는 그날 실행해 남긴 기록을 바탕으로 한다. 이번 글을 고치면서 실험을 새로 돌려 수치를 만든 것은 아니다.
 
-4장의 실험은 MLflow에 남기고, 같은 모델이 쓸 피처는 Feast에 등록했다. 5장에서는 MinIO에서 대상자를 읽어 Feast로 피처를 가져오고, MLflow 모델로 추론한 뒤 결과를 다시 MinIO에 쓰는 네 단계 파이프라인을 실행했다. 스터디 기록에서는 네 작업이 모두 성공했고, 결과 파일은 **30,162행 × 91열**, 결측값은 **0건**이었다. 파이프라인의 예측값을 같은 등록 모델의 직접 추론과 비교했을 때 최대 차이는 **0.0**이었다.
+책의 소득 분류 데이터를 그대로 따라가는 대신, **서울 공공자전거의 다음 한 시간 대여량**을 예측하는 실험으로 4~5장을 다시 읽었다. 이 데이터에는 매 시간의 관측 시각이 있다. 덕분에 Feast가 예측 시각에 맞는 피처 행을 돌려주는지, MLflow에 등록한 모델을 KFP가 다시 찾는지, 무작위 평가 점수가 미래 구간에서도 유지되는지를 한 흐름에서 확인할 수 있다.
 
-막힌 지점도 남았다. 책의 MLflow 2.6.0 예제를 실습 환경의 3.0.0으로 실행하면서 모델 아티팩트 경로가 달라졌고, 실험에서 높은 AUC가 나온 XGBoost 모델은 5장 추론 코드의 `predict_proba` 인터페이스와 맞지 않았다. Feast에 저장한 `localhost` 주소는 Kubernetes Pod에서 통하지 않았으며, KFP 사용자 네임스페이스의 아티팩트 Secret이 없어 실행이 한동안 멈췄다. 이 글은 성공한 명령만 나열하는 대신 **어느 연결이 왜 끊겼고 무엇을 확인해 해결했는지** 따라간다.
+실험은 세 질문을 중심으로 진행했다. **Feast:** 예측 시각에 맞춰 만든 대여량·날씨 피처를 조회할 수 있는가? **MLflow:** 어떤 데이터와 피처로 선택한 모델인지 다시 찾을 수 있는가? **KFP:** 등록된 모델을 재학습하지 않고 배치 추론에 다시 쓸 수 있는가? 마지막에는 전체 소스와 제출 코드를 파일별로 본문에 실었다. 경로 링크를 열지 않아도 코드를 확인할 수 있도록 했다.
 
 <!--truncate-->
 
 ***
 
-## 1. 4~5장에서 연결하는 것
+## 1. 왜 이 데이터를 선택했나
 
-1~2장에서는 모델의 정답·평가·리니지를, 3장에서는 컨테이너와 Kubernetes의 배포 경로를 봤다. 4장은 **실험 결과와 피처를 다시 찾을 수 있게 만드는 장**, 5장은 **그 자산을 반복 가능한 배치 작업으로 묶는 장**이다.
+[UCI의 Seoul Bike Sharing Demand](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand)를 골랐다. 4장의 Feast를 공부하려면 `언제` 측정했고 `언제` 사용할 수 있었는지가 분명한 데이터가 더 적합하다. 서울 자전거 자료에는 1년치의 **시간별 대여량과 날씨**, 날짜, 시각, 공휴일, 운행 여부가 함께 있다. 결과도 대여 **대수**라는 실제 숫자여서 MAE를 곧바로 해석할 수 있다. UCI 데이터 카드의 공개 라이선스 표시는 CC BY 4.0이다.
 
-| 구성요소 | 보관하거나 수행하는 것 | 이번 실습에서 확인한 경계 |
+> 데이터 출처: *Seoul Bike Sharing Demand* [Dataset]. (2020). UCI Machine Learning Repository. [DOI: 10.24432/C5F62R](https://doi.org/10.24432/C5F62R). 원본에서 `t-1`, `t-24`, `t-168` 시차 피처를 새로 만들어 사용했다. 라이선스는 CC BY 4.0이다.
+
+데이터를 고른 기준은 네 가지였다.
+
+| 기준 | 확인한 내용 | 이 실험에서 얻는 것 |
 | --- | --- | --- |
-| MLflow Tracking | 실행 ID, 파라미터, 지표, 입력 데이터의 메타데이터 | 어느 실행에서 어떤 AUC가 나왔는가 |
-| MLflow Model Registry | 추론에 사용할 등록 모델과 버전 | KFP가 불러올 모델 버전은 무엇인가 |
-| MinIO | 데이터셋, 모델·플롯 아티팩트, 파이프라인 결과 | 파일 자체가 저장되고 다시 읽히는가 |
-| Feast Registry | 엔티티, 피처 뷰, 소스와 시점 규칙 | 피처 이름이 어느 데이터를 가리키는가 |
-| Redis | 구체화한 온라인 피처 값 | 현재 사용자 피처를 조회할 수 있는가 |
-| Kubeflow Pipelines(KFP) | 네 컴포넌트의 순서와 실행 상태 | 중간 결과가 다음 작업으로 전달되는가 |
+| 지역 | 서울 공공자전거 대여 기록 | **한국의 실제 수요**를 본다 |
+| 시점 | 2017-12-01 00시부터 2018-11-30 23시까지 **8,760개 연속 시간** | 예측 시점보다 늦게 나온 값을 제외하는 규칙을 실습할 수 있다 |
+| 평가 | 매 시간의 실제 대여 대수가 있음 | 하루 전 값을 쓰는 기준선과 모델의 MAE·RMSE를 재계산할 수 있다 |
+| 크기 | CSV 약 0.6MB, 원본 8,760행 | Mac M 시리즈의 로컬 arm64 Kubernetes에서 Feast·MLflow·KFP를 돌릴 수 있다 |
 
-책의 그림 4.1은 플랫폼 전체에서 실험 추적·모델 등록·피처 스토어가 어디에 자리하는지 보여 주고, 그림 5.2는 배치 추론 때 이들이 어떻게 연결되는지 설명한다. 아래는 이번 소득 분류 사례에 맞춰 정보의 흐름을 새로 그린 것이다.
+다만 **한 도시의 1년치 집계 자료**다. 자전거 대여소별 수요나 여러 해의 추세를 예측하는 성능으로 일반화하면 안 된다. 이 글의 모델도 2018년 9~11월을 **이미 관측된 직전 시간의 대여량을 이용해 한 시간씩 전진하며** 평가한다. 3개월을 한 번에 미리 예보한 결과가 아니다.
+
+## 2. 예측 시각을 먼저 정했다
+
+목표는 `t`시가 시작할 때 `t`시의 대여 대수를 예측하는 것이다. 이때 데이터 파일에 `t`시의 온도와 대여 대수가 함께 있다고 해서 둘 다 입력으로 쓰면 안 된다. `t`시의 실제 대여 대수는 정답이고, `t`시 동안 측정한 날씨도 시간 시작 시점에는 모를 수 있다. 따라서 첫 모델에는 다음 값만 넣었다.
+
+| 입력 | 계산 방법 | `t`시 시작 시 사용 가능한가 |
+| --- | --- | --- |
+| 시각·요일·월·공휴일 | `t`의 달력 | 가능. 공휴일은 사전에 공지된 일정이라고 가정 |
+| `lag_1` | `t-1`시의 실제 대여량 | 직전 시간 집계가 마감됐다는 가정 아래 가능 |
+| `lag_24` | `t-24`시의 실제 대여량 | 가능 |
+| `lag_168` | `t-168`시의 실제 대여량 | 가능 |
+| `prev_temperature`, `prev_rainfall` | `t-1`시의 날씨 | 직전 관측이 들어왔다는 가정 아래 가능. **모델 후보 하나에만 사용** |
+| `t`시의 실제 대여량·측정 날씨 | 같은 행에 존재 | 예측 시점에는 사용 불가 |
+
+CSV의 `Date`와 `Hour`는 서울 현지 시각으로 합친 뒤 `Asia/Seoul`을 붙였다. Feast에는 UTC `event_timestamp`로 저장하고, 사람이 읽는 보고서에는 서울 시각을 함께 남겼다. **서울 2018-11-30 23시는 UTC 14시**다. 다운로드 ZIP의 SHA-256은 `139e9908…9e7baac4`, 내부 CSV의 SHA-256은 `373339b7…7b749c60`이었다. ZIP 해시가 달라지면 수집 Job은 중단한다. CSV를 `latin1`로 읽은 이유는 컬럼명에 있는 `°C`를 깨뜨리지 않기 위해서다.
+
+```python
+local_time = pd.to_datetime(
+    df["Date"] + " " + df["Hour"].astype(str).str.zfill(2),
+    format="%d/%m/%Y %H",
+).dt.tz_localize("Asia/Seoul")
+
+features["lag_1"] = df["Rented Bike Count"].shift(1)
+features["lag_24"] = df["Rented Bike Count"].shift(24)
+features["lag_168"] = df["Rented Bike Count"].shift(168)
+features["prev_temperature"] = df["Temperature(°C)"].shift(1)
+```
+
+일주일 전 값이 없는 처음 168행을 제거해 **8,592시간**을 실험 대상으로 삼았다. 수집 Job은 원본 8,760행의 중복 시각, 빠진 시간, 빈 셀도 검사했다. 이 규칙과 결과는 수집 명세에 남겼다.
+
+## 3. Rancher Desktop에서 어떤 자원이 돌았나
+
+Mac M3 Pro에서 Rancher Desktop VM을 **8 CPU·16GB 메모리**로 설정했고, Docker 엔진은 Moby, Kubernetes는 `rancher-desktop` 컨텍스트의 `v1.34.4+k3s1`을 사용했다. 실습 이미지는 `python:3.11-slim-bookworm` 기반으로 **`linux/arm64`로 빌드**했다. 모델은 CPU에서 학습하는 `HistGradientBoostingRegressor`다. [Rancher Desktop은 Mac에서 Linux VM으로 Kubernetes를 실행](https://docs.rancherdesktop.io/references/architecture/)한다. [MPS는 Apple의 Mac용 Metal GPU 경로](https://developer.apple.com/metal/pytorch/)인데, 이번 VM의 파드에는 그 장치가 노출되지 않아 컨테이너 학습에는 사용하지 않았다.
+
+이 로컬 환경에서는 Docker로 빌드한 이미지를 같은 Rancher Desktop 클러스터가 사용할 수 있어 `imagePullPolicy: Never`로 실행했다. 다른 노드나 원격 클러스터에서 그대로 실행하려면 접근 가능한 이미지 레지스트리에 푸시하고 이미지 주소를 바꿔야 한다.
+
+```bash
+rdctl list-settings                 # VM cpu=8, memoryInGB=16 확인
+kubectl config current-context     # rancher-desktop
+kubectl get nodes -o wide          # Ready 확인
+kubectl get node -o jsonpath='{.items[0].status.nodeInfo.architecture}'  # arm64
+kubectl top node                    # 실습 시작 전 메모리 약 4.6GiB 사용
+
+cd blog/machine-learning-platform-engineering/examples/seoul_bike_k8s
+docker build --platform linux/arm64 -t seoul-bike-ml:dev .
+kubectl apply -f k8s/base.yaml
+kubectl -n mlpe-seoul-bike rollout status deploy/mlflow
+kubectl -n mlpe-seoul-bike rollout status deploy/redis
+```
+
+`mlpe-seoul-bike` 네임스페이스를 새로 만들었다. **MLflow Deployment**는 SQLite 메타데이터와 모델 아티팩트를 2GiB PVC에 저장한다. 원본·피처 Parquet, Feast 레지스트리, 예측 결과는 별도의 1GiB PVC에 둔다. **Redis Deployment**는 온라인 피처 저장소다. MLflow·Redis는 `ClusterIP` 서비스로 연결했다. 비밀번호와 외부 NodePort 없이 로컬 실습 범위에서만 사용했다. 팀 단위 서버라면 인증·영속 Redis·공유 객체 저장소 설계가 추가로 필요하다.
+
+당시의 VM·클러스터 설정은 환경 기록에 별도로 남겼다.
 
 ```mermaid
 flowchart LR
-    DATA["소득 데이터"] --> EXP["탐색·학습 실행"]
-    EXP --> TRACK["MLflow: 실행·지표"]
-    EXP --> OBJ["MinIO: 데이터·모델 파일"]
-    TRACK --> REG["MLflow: 등록 모델"]
-    DATA --> OFF["MinIO: 과거 피처"]
-    OFF --> FEAST["Feast: 정의·시점 조회"]
-    FEAST --> ONLINE["Redis: 현재 피처"]
-    INPUT["배치 대상 사용자"] --> KFP["KFP: 네 단계 실행"]
-    FEAST --> KFP
-    REG --> KFP
-    OBJ --> KFP
-    KFP --> RESULT["MinIO: 추론 결과"]
+    U["UCI 서울 자전거 ZIP"] --> C["collect Job<br/>해시·시간 연속성 검사"]
+    C --> P[("실험 PVC<br/>원본·피처·결과")]
+    P --> F["features Job<br/>시차 피처·Feast 등록"]
+    F --> R[("Feast 레지스트리<br/>과거 시점 조회")]
+    R --> T["train Job<br/>시간 순서 검증"]
+    P --> T
+    T --> M[("MLflow<br/>실행·모델 레지스트리")]
+    M --> I["infer Job<br/>미래 구간 평가"]
+    R --> I
+    F --> O["online Job<br/>마지막 행 구체화"]
+    O --> D[("Redis<br/>온라인 피처")]
+    M --> K["KFP registered 단계<br/>모델·데이터 해시 확인"]
+    K --> B["KFP infer 단계<br/>같은 미래 구간 재평가"]
+    R --> B
 ```
 
-**실험, 모델, 피처, 파이프라인은 서로 다른 자산**이다. MLflow에서 실행이 끝났다고 Redis에 피처가 들어가지는 않는다. Feast에 피처 뷰를 등록했다고 배치 추론이 자동으로 시작되지도 않는다. 각 경계에서 무엇을 입력받고 무엇을 남기는지 확인해야 전체 흐름이 재현된다.
+이 그림에서 화살표는 **데이터 흐름**이다. 첫 실행의 Job 순서는 `run.sh`가 `collect → features → train → infer → online` 순으로 각 Job의 `Complete`를 기다리며 관리했다. 그다음 **KFP standalone**을 별도로 설치해, 등록된 모델 버전 1을 사용하는 배치 추론 DAG를 실행했다. 두 경로는 각각 아래에서 확인한다.
 
-이번 실습에서는 MinIO의 버킷도 용도별로 나눴다. 이름을 알아두면 어느 단계에서 파일이 사라졌는지 좁혀 보기 쉽다.
+## 4. Kubernetes Job 다섯 개를 순서대로 실행했다
 
-| 버킷 | 담긴 자료 | 쓰거나 읽는 주체 |
-| --- | --- | --- |
-| `mlflow-artifacts` | 플롯·모델 등 MLflow 아티팩트 | MLflow 실행 |
-| `mlflow-datasets` | 학습·평가·참조 데이터 파일 | 학습 노트북 |
-| `feature-data-sets` | 세 피처 그룹의 Parquet | Feast 오프라인 조회 |
-| `feature-registry` | 피처 정의와 파이프라인용 설정 | Feast 등록 Job·KFP |
-| `inference-datasets` | 대상자 목록과 최종 예측 파일 | KFP 읽기·쓰기 작업 |
-
-이 글에는 책의 예제, 스터디에서 실제 확인한 결과, 아직 검증하지 않은 개선안을 구분해서 적었다. 예를 들어 KFP 파이프라인의 성공과 출력 파일은 실행 기록으로 확인할 수 있다. 뒤에서 제안하는 새 인코더 설계와 모델 별칭 전환은 다음 개선 작업이다.
-
-## 2. 데이터부터 확인한다 - 4장 EDA
-
-책의 소득 분류 예제는 연소득이 5만 달러를 넘는지 예측한다. 스터디에서 사용한 데이터는 **30,162행, 9열**이다. 입력 여덟 열은 `Workclass`, `Education`, `Marital-Status`, `Occupation`, `Relationship`, `Race`, `Sex`, `Native_country`이고, `Target`이 정답이다. 이 예제의 입력은 모두 범주형이다.
-
-### 먼저 실습 경로를 만든다
-
-뒤의 코드는 모두 **K3s 서버의 `~/mlpe-study`**에서 실행한다고 가정한다. 공개 예제 두 저장소를 이 폴더에 내려받으면 데이터와 KFP 컴포넌트 파일의 위치를 추측할 필요가 없다. 커밋을 고정한 이유는 저장소의 기본 브랜치가 바뀌어도 같은 파일 구성을 확인하기 위해서다. 아래는 **새로 따라 해 보는 재현용 환경**이며, 스터디 당시의 무작위 분할과 정확히 같은 지표를 보장하지 않는다.
+재실행 명령은 다음 한 줄이다. 스크립트는 컨텍스트가 `rancher-desktop`인지 확인하고, 이미지를 arm64로 빌드한 뒤 YAML을 적용한다. 각 Job이 성공해야 다음 Job을 시작하며, 실패하면 해당 Job 로그를 출력한다.
+이미 같은 네임스페이스에 MLflow 기록이 있다면 재실행할 때 새 실행과 **새 모델 버전**이 쌓인다. 본문의 버전 1은 이 글을 쓸 때 처음 완료한 실행의 결과다.
 
 ```bash
-mkdir -p ~/mlpe-study
-cd ~/mlpe-study
-git clone https://github.com/practical-mlops/chapter-4.git
-git clone https://github.com/practical-mlops/chapter-5.git
-git -C chapter-4 checkout b67a8228336781c933dd68bb7dc520bd484c3371
-git -C chapter-5 checkout 332915b2f617e7fed8646b7c096653c87eed9d30
+cd blog/machine-learning-platform-engineering/examples/seoul_bike_k8s
+bash run.sh
 
-uv venv --python 3.11 .venv
-uv pip install --python .venv/bin/python \
-  'pandas==2.2.3' 'matplotlib==3.9.2' 'mlflow==3.0.0' \
-  'minio==7.1.16' 'xgboost==1.7.6' 'feast[redis]==0.40.1' \
-  'scikit-learn==1.5.2' 'pyarrow==18.1.0' 'sqlalchemy>=2.0,<2.1' \
-  's3fs==2024.10.0' 'boto3==1.35.36' \
-  'fsspec==2024.10.0' 'aiobotocore==2.15.2' \
-  'jupyterlab' 'ipykernel'
-
-# 이 글에서 사용하는 입력 파일이 실제로 있는지 확인
-ls chapter-4/data/income_data.csv chapter-4/feast/feature_data/*.parquet
-ls chapter-4/feast/data/entity_df.parquet
+kubectl -n mlpe-seoul-bike get jobs
+# collect    Complete   1/1   13s
+# features   Complete   1/1    7s
+# train      Complete   1/1   2m23s
+# infer      Complete   1/1   41s
+# online     Complete   1/1    7s
 ```
 
-이제 원본 CSV는 `~/mlpe-study/chapter-4/data/income_data.csv`, 피처 파일 세 개는 `~/mlpe-study/chapter-4/feast/feature_data/`, 배치 대상자 파일은 `~/mlpe-study/chapter-4/feast/data/entity_df.parquet`에 있다. **2~4절의 Python 블록은 `~/mlpe-study`에서 연 동일한 Jupyter 커널에서 위에서 아래로 순서대로 실행한다.** 중간 변수를 다시 만들지 않도록 순서를 지킨다. 기존 Jupyter를 사용한다면 커널에 이 환경을 등록한다.
-
-이후 명령을 따라가면 주요 파일은 다음 위치에 생긴다. 본문에서 `feast-local`처럼 짧게 쓴 경로도 모두 `~/mlpe-study`를 기준으로 한다.
-
-| 경로 | 역할 |
-| --- | --- |
-| `~/mlpe-study/load-minio-env.sh` | Kubernetes Secret에서 MinIO 접속값을 읽어오는 스크립트 |
-| `~/mlpe-study/column_list.pkl` | 학습 때 만든 입력 열의 이름과 순서 |
-| `~/mlpe-study/feast-local/` | 호스트에서 쓰는 Feast 정의와 설정 |
-| `~/mlpe-study/feast-cluster/` | KFP Pod에서 쓰는 Feast 설정과 등록 Job |
-| `~/mlpe-study/chapter-5-work/` | 컴포넌트 이미지 작업본과 컴파일한 파이프라인 YAML |
-
-```bash
-cd ~/mlpe-study
-.venv/bin/python -m ipykernel install --user --name mlpe-study \
-  --display-name "MLPE study (Python 3.11)"
-```
-
-처음에는 행 수보다 **정답 비율과 범주별 건수**를 함께 보는 것이 중요했다. 스터디 데이터에서 `Target`의 `<=50K`는 22,654건으로 약 75%다. 모든 사람을 이 범주로 분류해도 정확도 75%가 나오므로, 모델 정확도 82%만으로는 성능을 충분히 설명할 수 없다.
-
-```python
-from pathlib import Path
-import matplotlib.pyplot as plt
-import pandas as pd
-
-df = pd.read_csv("chapter-4/data/income_data.csv")
-print(df.shape)                         # (30162, 9)
-print(df["Target"].value_counts())
-print(df.select_dtypes("object").describe().loc[["unique", "top", "freq"]])
-
-# 각 범주의 건수(stack)와 고소득 비율(fill)을 같은 데이터로 비교
-plot_dir = Path("eda-plots")
-plot_dir.mkdir(exist_ok=True)
-for column in df.columns.drop("Target"):
-    counts = pd.crosstab(df[column], df["Target"])
-    ratios = counts.div(counts.sum(axis=1), axis=0)
-    fig, axes = plt.subplots(1, 2, figsize=(14, max(4, len(counts) * 0.35)))
-    counts.plot.barh(stacked=True, ax=axes[0], title=f"{column}: 건수")
-    ratios.plot.barh(stacked=True, ax=axes[1], title=f"{column}: 비율")
-    axes[1].set_xlim(0, 1)
-    fig.tight_layout()
-    fig.savefig(plot_dir / f"{column}.png", dpi=120)
-    plt.close(fig)
-```
-
-`Workclass`에서 `Private`은 22,286건이다. 이처럼 범주의 크기가 크게 다를 때는 **건수 그래프와 비율 그래프가 서로 다른 질문에 답한다.**
-
-- `position="stack"`은 각 범주에 사람이 몇 명 있는지 보여 준다.
-- `position="fill"`은 각 범주 안에서 `<=50K`와 `>50K`가 차지하는 비율을 보여 준다.
-
-자영업 범주의 고소득 비율이 커 보이더라도 표본 수가 작으면 결과 해석은 달라질 수 있다. 그래프를 저장할 때도 제목에 변수 이름을 넣고, 사용한 데이터 버전과 생성 코드를 함께 남겨야 나중에 같은 그림을 다시 만들 수 있다.
-
-### 분할과 인코딩도 실행 조건이다
-
-범주형 열은 더미 변수로 바꾸고 정답은 0/1로 인코딩한다. 스터디 코드에서는 여덟 범주형 열이 **90개의 숫자 열**이 됐다. `column_list.pkl`에는 그 열의 **이름과 순서**가 저장된다. 5장 추론 컴포넌트가 이 목록을 읽어 입력 열을 맞춘다.
-
-```python
-import pickle
-from sklearn.model_selection import train_test_split
-
-features = df.drop(columns="Target")
-encoded = pd.get_dummies(features, drop_first=True, dtype=float)
-column_list = encoded.columns.tolist()
-assert encoded.shape[1] == 90
-with open("column_list.pkl", "wb") as file:
-    pickle.dump(column_list, file)
-
-target = df["Target"].astype(str).str.strip().eq(">50K").astype(int)
-X_train, X_test, y_train, y_test = train_test_split(
-    encoded, target, test_size=0.2, stratify=target, random_state=42
-)
-print(X_train.shape, X_test.shape)
-print("고소득 비율:", y_train.mean(), y_test.mean())
-```
-
-원본 예제의 `train_test_split`에는 `random_state`가 없다. 실행할 때마다 학습·평가 행이 달라져 지표도 조금씩 바뀐다. 위 **재현용 코드**에는 `random_state=42`와 `stratify=target`을 넣어 세 모델을 같은 행과 클래스 비율에서 비교한다. 이 변경 때문에 아래 스터디 기록의 AUC 숫자와 새 실행의 숫자는 달라질 수 있다.
-
-소득 데이터에는 성별·인종 같은 열도 포함돼 있다. 이 글은 책의 도구 간 연결을 공부하기 위한 예제다. 실제 의사결정에 쓰려면 예측 품질뿐 아니라 집단별 오류와 데이터 사용 기준을 별도로 검토해야 한다.
-
-## 3. MLflow가 남기는 기록과 MinIO가 담는 파일
-
-책의 예제는 `mlflow==2.6.0`과 `mlflow ui` 명령을 쓴다. 스터디 실행 환경은 달랐다. **MLflow 3.0.0 서버**를 띄우고 SQLite를 백엔드 저장소로, MinIO를 아티팩트 저장소로 사용했다. 서버에 실험·실행·지표가 기록되고, 플롯·데이터셋·모델 파일은 객체 스토리지의 경로로 연결된다.
-
-서버를 시작할 때는 **메타데이터 저장 위치와 아티팩트 저장 위치**를 따로 지정한다. 이번 재현 예제에서는 MinIO를 로컬 19000 포트로 연결한다. 첫 번째 터미널은 계속 열어 둔다.
-
-```bash
-kubectl -n kubeflow port-forward svc/minio-service 19000:9000
-```
-
-다른 터미널에서 MinIO 접속값을 Kubernetes Secret에서 읽는 스크립트를 만든다. 스크립트에는 **값 대신 조회 명령만** 들어간다. 이후 새 터미널을 열 때마다 이 파일을 `source`하면 Feast와 MLflow가 같은 MinIO에 접근한다. 필요한 버킷을 만든 다음 MLflow 서버를 실행한다. `sqlite:///$PWD/mlflow.db`는 현재 디렉터리가 `~/mlpe-study`일 때 SQLite 파일을 그 안에 만든다.
-
-```bash
-cd ~/mlpe-study
-cat > load-minio-env.sh <<'SH'
-export MINIO_ACCESS_KEY="$(
-  kubectl -n kubeflow get secret mlpipeline-minio-artifact \
-    -o jsonpath='{.data.accesskey}' | base64 -d
-)"
-export MINIO_SECRET_KEY="$(
-  kubectl -n kubeflow get secret mlpipeline-minio-artifact \
-    -o jsonpath='{.data.secretkey}' | base64 -d
-)"
-export AWS_ACCESS_KEY_ID="$MINIO_ACCESS_KEY"
-export AWS_SECRET_ACCESS_KEY="$MINIO_SECRET_KEY"
-export MLFLOW_S3_ENDPOINT_URL="http://127.0.0.1:19000"
-export FEAST_S3_ENDPOINT_URL="$MLFLOW_S3_ENDPOINT_URL"
-export FEAST_DATA_ENDPOINT="$MLFLOW_S3_ENDPOINT_URL"
-export AWS_ENDPOINT_URL="$MLFLOW_S3_ENDPOINT_URL"
-SH
-source ./load-minio-env.sh
-
-.venv/bin/python - <<'PY'
-import os
-from minio import Minio
-
-client = Minio(
-    "127.0.0.1:19000",
-    access_key=os.environ["MINIO_ACCESS_KEY"],
-    secret_key=os.environ["MINIO_SECRET_KEY"],
-    secure=False,
-)
-for name in (
-    "mlflow-artifacts", "mlflow-datasets", "feature-data-sets",
-    "feature-registry", "inference-datasets"
-):
-    if not client.bucket_exists(name):
-        client.make_bucket(name)
-    print(name, "준비 완료")
-PY
-
-.venv/bin/mlflow server --host 0.0.0.0 --port 5000 \
-  --backend-store-uri "sqlite:///$PWD/mlflow.db" \
-  --default-artifact-root s3://mlflow-artifacts/chapter-4
-```
-
-노트북 커널에도 같은 MinIO 환경변수가 필요하다. 세 번째 터미널에서 Jupyter를 시작하고, **MLPE study (Python 3.11)** 커널을 선택한다. Jupyter 프로세스가 환경변수를 물려주므로 앞의 Python 셀에서 `MINIO_ACCESS_KEY`와 `MINIO_SECRET_KEY`를 읽을 수 있다. 원격 Mac 브라우저로 접속할 때는 Mac에서 `ssh -N -L 8888:127.0.0.1:8888 <K3s 서버 SSH 주소>`로 포트 포워딩한다. 노트북이 같은 호스트에서 실행된다면 추적 주소는 `http://127.0.0.1:5000`이다. KFP Pod에서는 **Pod가 도달할 수 있는 MLflow 주소**를 런타임 파라미터로 사용한다.
-
-```bash
-cd ~/mlpe-study
-source ./load-minio-env.sh
-.venv/bin/jupyter lab --no-browser --ip 127.0.0.1 --port 8888
-```
-
-실제 스터디에서도 MLflow 서버를 호스트에서 운영하고, 아티팩트를 MinIO에 저장했다. 위 서버는 KFP Pod에서도 닿도록 모든 호스트 인터페이스에서 요청을 받는다. 이 학습용 서버는 인증을 구성하지 않았으므로 접근 가능한 네트워크 범위를 실습 환경으로 제한한다.
-
-```mermaid
-flowchart LR
-    NB["학습 노트북"] -->|"실험·실행·지표"| MLF["MLflow Tracking Server"]
-    MLF --> META["SQLite: 실행 메타데이터"]
-    NB -->|"플롯·데이터셋 파일"| MINIO["MinIO: 객체"]
-    MLF -.->|"아티팩트 위치 기록"| MINIO
-    NB -->|"학습된 모델 등록"| REG["MLflow Model Registry"]
-```
-
-여기서 `mlflow.log_input()`과 MinIO 업로드는 구분해야 한다. `log_input()`은 데이터프레임의 스키마, 행 수, 출처 등 **데이터셋 메타데이터를 실행에 연결**한다. 원본 CSV 파일 자체를 객체 스토리지에 두는 작업은 별도로 진행했다. MLflow 화면에 데이터셋 항목이 보인다는 이유만으로 원본 데이터가 보존됐다고 판단하면 안 된다.
-
-EDA 그래프도 하나의 실행으로 기록했다. 위에서 만든 `eda-plots`를 `start_run` 안에서 아티팩트로 올리면, 해당 실행의 Artifacts에서 그래프를 찾을 수 있다. 같은 디렉터리에 예전 그림이 남아 있으면 함께 업로드되므로, 새 실행마다 비어 있는 출력 디렉터리를 만드는 편이 확인하기 쉽다.
-
-```python
-import mlflow
-
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
-mlflow.set_experiment("income-classifier")
-with mlflow.start_run(run_name="eda-income"):
-    mlflow.log_artifacts("eda-plots", artifact_path="eda-plots")
-    mlflow.log_param("source_file", "chapter-4/data/income_data.csv")
-    mlflow.log_metric("source_rows", len(df))
-```
-
-학습 실행에는 모델 설정만이 아니라 학습·평가·참조 데이터셋의 출처, 테스트 AUC와 정확도, 학습 모델을 **같은 run에 연결**했다. 이를 통해 “점수가 가장 높다”라는 결과뿐 아니라 **어느 입력에서 얻은 점수인가**를 되짚을 수 있다.
-
-```python
-from io import BytesIO
-import os
-from minio import Minio
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, roc_auc_score
-from sklearn.tree import DecisionTreeClassifier
-
-minio_client = Minio(
-    "127.0.0.1:19000",
-    access_key=os.environ["MINIO_ACCESS_KEY"],
-    secret_key=os.environ["MINIO_SECRET_KEY"],
-    secure=False,
-)
-
-def upload_csv(frame: pd.DataFrame, object_name: str) -> str:
-    data = frame.to_csv(index=False).encode("utf-8")
-    minio_client.put_object(
-        "mlflow-datasets", object_name, BytesIO(data), len(data),
-        content_type="text/csv",
-    )
-    return f"s3://mlflow-datasets/{object_name}"
-
-train_frame = X_train.reset_index(drop=True).copy()
-train_frame["Target"] = y_train.reset_index(drop=True)
-test_frame = X_test.reset_index(drop=True).copy()
-test_frame["Target"] = y_test.reset_index(drop=True)
-
-for run_name, estimator in (
-    ("decision-tree", DecisionTreeClassifier(random_state=42)),
-    ("random-forest", RandomForestClassifier(n_estimators=100, random_state=42)),
-):
-    with mlflow.start_run(run_name=run_name) as run:
-        for context, frame in (
-            ("training", train_frame),
-            ("testing", test_frame),
-            ("reference", features),
-        ):
-            object_name = f"income-classifier/{run.info.run_id}/{context}.csv"
-            source = upload_csv(frame, object_name)
-            dataset = mlflow.data.from_pandas(frame, source=source)
-            mlflow.log_input(dataset, context=context)
-
-        estimator.fit(X_train, y_train)
-        probabilities = estimator.predict_proba(X_test)[:, 1]
-        mlflow.log_metric("roc_auc_score_test", roc_auc_score(y_test, probabilities))
-        mlflow.log_metric("test_accuracy", accuracy_score(y_test, estimator.predict(X_test)))
-        mlflow.log_params(estimator.get_params())
-        mlflow.sklearn.log_model(estimator, name="income-classifier")
-        # 5장 추론 컴포넌트가 모델 실행 ID로 이 목록을 내려받는다.
-        mlflow.log_artifact("column_list.pkl")
-        print(run_name, run.info.run_id, roc_auc_score(y_test, probabilities))
-```
-
-이 코드는 앞 절에서 만든 `df`, `features`, `X_train` 등의 값을 그대로 이어받는 **재현용 셀**이다. 책의 원본 노트북과 달리 두 모델이 같은 고정 분할을 사용한다. 이 코드의 결과를 위 스터디 표의 숫자와 동일한 과거 실행으로 취급하지 않는다.
-
-## 4. 세 모델을 비교하니 모델 선택 기준이 달라졌다
-
-결정 트리, 랜덤 포레스트, XGBoost를 돌린 뒤 테스트 AUC를 비교했다. 스터디 화면에 남은 값은 다음과 같다. **실행마다 분할이 고정되지 않았으므로**, 이 작은 점수 차이를 모델 간 우열의 확정 근거로 읽지는 않는다.
-
-| 실행 | 기록된 테스트 AUC | 읽을 때 확인할 것 |
-| --- | ---: | --- |
-| 결정 트리 | 0.8200 | 단일 트리의 확률로 계산 |
-| 랜덤 포레스트 | 0.8571 | 5장 배치 추론 코드와 인터페이스가 맞는 후보 |
-| 원본 XGBoost 실행 | 0.7248 | 마지막 `binary:hinge`의 0/1 출력을 지표에 사용 |
-| 분리한 XGBoost `binary:logistic` 실행 | 0.8633 | 확률을 사용했고, 별도 run에서 기록 |
-
-ROC AUC는 양성과 음성을 **점수 순서로 얼마나 잘 구별하는지** 본다. `binary:logistic`은 확률을 반환하지만 `binary:hinge`는 0/1 클래스를 바로 반환한다. 후자의 AUC에 0/1 값을 넣으면 가능한 점수가 둘뿐이라 순위 정보가 크게 줄어든다. 원본 XGBoost 실행의 낮은 AUC만 보고 “XGBoost 모델이 약하다”고 결론 내리기 어려운 이유다.
-
-더 큰 문제는 **한 run 안에서 서로 다른 목적 함수로 `xgb.train()`을 두 번 호출한 것**이었다. 첫 학습의 자동 기록과 둘째 학습의 수동 지표가 한 실행에 섞였고, 자동 로깅에서는 이미 기록한 파라미터를 다른 값으로 바꾸려 한다는 경고가 나왔다. 스터디에서는 `binary:logistic`과 `binary:hinge`를 별도 run으로 나눠 두 모델의 설정·지표를 각각 확인했다.
-
-```python
-import xgboost as xgb
-
-mlflow.xgboost.autolog()
-dtrain = xgb.DMatrix(X_train, label=y_train)
-dtest = xgb.DMatrix(X_test, label=y_test)
-base_params = {
-    "colsample_bytree": 1,
-    "learning_rate": 1,
-    "max_depth": 10,
-    "subsample": 1,
-}
-
-for objective in ("binary:logistic", "binary:hinge"):
-    with mlflow.start_run(run_name=f"xgboost-{objective.split(':')[1]}"):
-        params = {**base_params, "objective": objective}
-        model = xgb.train(params, dtrain, num_boost_round=30)
-        scores = model.predict(dtest)
-        labels = (scores >= 0.5).astype(int)
-        auc = roc_auc_score(y_test, scores)
-        accuracy = accuracy_score(y_test, labels)
-        mlflow.log_metric("roc_auc_score_test", auc)
-        mlflow.log_metric("test_accuracy", accuracy)
-        print(objective, "AUC", auc, "accuracy", accuracy)
-```
-
-이 셀은 2절의 고정 분할을 이어받는다. `binary:logistic`에서는 확률을 임계값 0.5로 0/1로 바꿔 정확도를 구한다. `binary:hinge`의 점수는 이미 0/1이라 같은 식으로 계산해도 값이 바뀌지 않는다. 두 목적 함수의 AUC는 입력 점수가 확률인지 클래스인지 확인하며 읽어야 한다.
-
-### AUC 1등을 그대로 등록하지 않은 이유
-
-실행 목록에서 가장 높은 AUC는 분리한 XGBoost `binary:logistic`이었다. 하지만 책의 5장 추론 컴포넌트는 로드한 모델에 **`predict_proba()`를 호출**한다. `xgb.train()`으로 만든 XGBoost `Booster`는 그 메서드를 제공하지 않는다. 이 파이프라인을 고치지 않고 연결할 모델로는 **사이킷런 랜덤 포레스트**를 선택해야 했다.
-
-여기서 구분할 기준이 두 개다.
-
-1. **평가 기준:** 동일한 데이터와 지표로 어떤 모델이 업무 목표에 맞는가.
-2. **실행 계약:** 등록 모델이 파이프라인의 입력 열과 `predict_proba()` 호출을 처리할 수 있는가.
-
-스터디에서는 랜덤 포레스트 실행의 모델 종류를 확인한 뒤 `random-forest-classifier` **버전 1**로 등록하고 `Production` 단계로 전환했다. 그 후 5장 코드는 `models:/random-forest-classifier/Production`을 사용했다. 이는 **기존 예제와 맞추기 위한 선택**이다. MLflow 공식 문서는 모델 단계(stage)를 더 이상 새 설계의 기본 경로로 권하지 않고 별칭(alias) 사용을 안내한다. 새 파이프라인에서 별칭을 쓰려면 모델 조회 코드도 함께 바꿔야 한다.
-
-MLflow 3.0.0에서는 run의 고정 아티팩트 경로로만 모델을 찾으려 하면 등록 과정이 어긋날 수 있다. 스터디에서는 선택한 run에 연결된 **logged model ID**를 확인해 등록했다. 모델 이름을 `random-forest-classifier`라고 정하기 전에는 실제 저장된 모델이 랜덤 포레스트인지도 확인했다. 최고 점수 모델을 무조건 그 이름으로 등록하면 레지스트리의 이름과 내용물이 달라질 수 있기 때문이다.
-
-아래는 위에서 실행한 `random-forest` run을 찾아 연결된 logged model을 등록하는 **재현용 코드**다. XGBoost run의 AUC가 더 높더라도 5장 컴포넌트가 요구하는 `predict_proba()`를 제공하는 후보를 명시적으로 선택한다. 같은 이름을 다시 등록하면 버전 번호가 1보다 커질 수 있으므로 출력된 버전을 확인한다.
-
-```python
-from mlflow import MlflowClient
-
-client = MlflowClient()
-experiment = client.get_experiment_by_name("income-classifier")
-runs = client.search_runs(
-    experiment_ids=[experiment.experiment_id],
-    order_by=["metrics.roc_auc_score_test DESC"],
-)
-rf_run = next(
-    run for run in runs
-    if run.data.tags.get("mlflow.runName") == "random-forest"
-    and run.data.params.get("n_estimators") == "100"
-)
-logged_models = mlflow.search_logged_models(
-    experiment_ids=[experiment.experiment_id],
-    filter_string=f"source_run_id = '{rf_run.info.run_id}'",
-    output_format="list",
-)
-if len(logged_models) != 1:
-    raise RuntimeError(f"랜덤 포레스트 logged model 수: {len(logged_models)}")
-
-registered = mlflow.register_model(
-    f"models:/{logged_models[0].model_id}",
-    "random-forest-classifier",
-)
-client.transition_model_version_stage(
-    name=registered.name,
-    version=registered.version,
-    stage="Production",
-    archive_existing_versions=True,
-)
-version = client.get_model_version(registered.name, registered.version)
-assert version.run_id == rf_run.info.run_id
-print(registered.name, registered.version, version.current_stage, version.run_id)
-```
-
-마지막 `assert`는 5장 추론 코드가 모델 버전의 `run_id`로 `column_list.pkl`을 찾아야 하기 때문에 넣었다. 실패하면 단계 승격만 확인하고 넘어가지 말고, 등록 모델과 실행 아티팩트의 연결부터 점검해야 한다.
-
-## 5. Feast에 피처를 등록할 때 생기는 세 가지 경로
-
-책의 4장은 하나의 소득 CSV를 피처 그룹 세 개로 나눠 현실의 분산된 데이터 소스를 흉내 낸다. 기준 엔티티는 `user_id`다. 세 Parquet 파일에는 `user_id`와 피처 시각이 들어 있으며, 다음 FeatureView가 각 파일을 가리킨다.
-
-| FeatureView | 피처 | 의미 |
-| --- | --- | --- |
-| `demographic` | 출신 국가, 성별, 인종 | 인구통계 |
-| `relationship` | 가구 내 관계, 혼인 상태 | 관계 |
-| `occupation` | 고용 형태, 학력, 직업 | 직업 |
-
-Feast를 이해할 때 **정의, 과거 값, 현재 값**을 나눠 보면 덜 헷갈린다.
-
-- **레지스트리:** `user_id`와 FeatureView, 스키마, 데이터 소스, TTL을 기록한다.
-- **오프라인 스토어:** 과거 시점 조회에 쓸 Parquet 파일을 보관한다.
-- **온라인 스토어:** 구체화한 현재 값을 Redis에서 빠르게 제공한다.
-
-```mermaid
-flowchart LR
-    SRC["세 피처 Parquet 파일"] --> OFF["MinIO: 오프라인 피처"]
-    DEF["엔티티·FeatureView 정의"] --> REG["Feast Registry"]
-    REG -.->|"이름·스키마·소스"| HIST["과거 시점 조회"]
-    OFF --> HIST
-    HIST --> TRAIN["학습·배치 추론용 피처"]
-    OFF --> MAT["materialize: 기간별 적재"]
-    REG -.-> MAT
-    MAT --> REDIS["Redis: 온라인 피처"]
-    REDIS --> ONLINE["온라인 조회"]
-    ONLINE --> SERVE["실시간 추론용 입력"]
-```
-
-이 도식은 책의 그림 4.10을 이번 저장소와 조회 경로에 맞춰 다시 구성했다. `feast apply`는 **정의를 레지스트리에 등록**한다. 그 명령만으로 Redis에 사용자 값이 들어가는 것은 아니다. 실제 스터디 기록에서도 등록 직후 Redis의 키 수는 0이었고, `materialize` 뒤에 값이 생겼다.
-
-먼저 공개 예제에 들어 있는 Parquet 파일 세 개와 배치 대상자 파일을 MinIO에 올린다. 3절의 MinIO 포트 포워딩을 유지한 상태에서 `~/mlpe-study`에서 실행한다.
-
-```bash
-cd ~/mlpe-study
-source ./load-minio-env.sh
-
-.venv/bin/python - <<'PY'
-import os
-from pathlib import Path
-from minio import Minio
-
-client = Minio(
-    "127.0.0.1:19000",
-    access_key=os.environ["MINIO_ACCESS_KEY"],
-    secret_key=os.environ["MINIO_SECRET_KEY"],
-    secure=False,
-)
-feature_dir = Path("chapter-4/feast/feature_data")
-for file in feature_dir.glob("*.parquet"):
-    client.fput_object("feature-data-sets", file.name, str(file))
-    print("업로드:", "feature-data-sets/" + file.name)
-entity_file = Path("chapter-4/feast/data/entity_df.parquet")
-client.fput_object("inference-datasets", "entity_df.parquet", str(entity_file))
-print("업로드: inference-datasets/entity_df.parquet")
-PY
-```
-
-다음 내용은 `~/mlpe-study/feast-local/features.py` 전체다. 먼저 `mkdir -p ~/mlpe-study/feast-local`을 실행하고 아래 블록을 해당 파일로 저장한다. 파일 소스의 주소는 `FEAST_DATA_ENDPOINT`에서 읽으므로 로컬 적용 때는 포트 포워딩 주소를, 클러스터 안에서 다시 적용할 때는 MinIO Service 주소를 사용할 수 있다. `user_id`가 엔티티이고, 세 FeatureView 모두 같은 **365일 TTL**을 갖는다.
-
-```python
-# feast-local/features.py
-import os
-from datetime import timedelta
-from feast import Entity, FeatureView, Field, FileSource
-from feast.data_format import ParquetFormat
-from feast.types import String
-
-user = Entity(name="user_id", description="Income dataset user")
-
-def make_view(name: str, filename: str, columns: list[str]) -> FeatureView:
-    return FeatureView(
-        name=name,
-        entities=[user],
-        schema=[Field(name=column, dtype=String) for column in columns],
-        ttl=timedelta(days=365),
-        source=FileSource(
-            path=f"s3://feature-data-sets/{filename}",
-            file_format=ParquetFormat(),
-            s3_endpoint_override=os.environ["FEAST_DATA_ENDPOINT"],
-        ),
-    )
-
-demographic = make_view(
-    "demographic", "demographic_features.parquet",
-    ["Native_country", "Sex", "Race"],
-)
-relationship = make_view(
-    "relationship", "relationship_features.parquet",
-    ["Relationship", "Marital-Status"],
-)
-occupation = make_view(
-    "occupation", "occupational_features.parquet",
-    ["Workclass", "Education", "Occupation"],
-)
-```
-
-`ttl=365일`은 과거 시점 조회에서 얼마만큼 이전 값까지 후보로 볼지를 제한한다. 설정이 길수록 무조건 좋은 것은 아니다. 오래된 값도 허용해도 되는 피처인지 업무 의미를 먼저 정해야 한다. 이 예제는 필요한 소득 데이터의 피처를 빠뜨리지 않으려는 학습용 설정이다.
-
-로컬 Feast 설정 파일은 아래처럼 만든다. Redis 비밀번호는 `redis-auth` Secret에서 읽어 **로컬의 파일**에만 쓴다. 이 파일은 공개 저장소에 넣지 않는다. 스터디 K3s의 Redis NodePort가 30006인 구성에 해당하며, 포트가 다르면 연결 문자열을 바꾼다.
-
-```bash
-cd ~/mlpe-study
-mkdir -p feast-local
-# 바로 위 Python 블록을 feast-local/features.py로 저장한 뒤 실행
-source ./load-minio-env.sh
-export REDIS_PASSWORD="$(
-  kubectl -n redis get secret redis-auth \
-    -o jsonpath='{.data.redis-password}' | base64 -d
-)"
-.venv/bin/python - <<'PY'
-import os
-from pathlib import Path
-
-password = os.environ["REDIS_PASSWORD"]
-config = (
-    "project: income_local\n"
-    "registry: s3://feature-registry/registry_local.db\n"
-    "provider: local\n"
-    "entity_key_serialization_version: 2\n"
-    "offline_store:\n  type: file\n"
-    "online_store:\n  type: redis\n"
-    f'  connection_string: "127.0.0.1:30006,password={password}"\n'
-)
-path = Path("feast-local/feature_store.yaml")
-path.write_text(config)
-path.chmod(0o600)
-print("설정 파일 생성:", path)
-PY
-cd feast-local
-../.venv/bin/feast apply
-```
-
-### 과거 시점 조회는 오늘의 값을 과거로 보내지 않는다
-
-1월 7일, 5월 21일, 12월 4일에 같은 사용자의 피처가 기록됐다고 하자. 5월 22일자 추론 자료를 만들 때는 5월 21일의 값이 필요하다. 12월 값을 붙이면 당시 알 수 없던 미래 정보를 사용하게 된다.
-
-```text
-1월 7일 값 ─── 5월 21일 값 ── 5월 22일 조회 ───────── 12월 4일 값
-                      ↑ 사용                              ↑ 사용 불가
-```
-
-Feast의 `get_historical_features()`는 `user_id`와 `event_timestamp`가 담긴 엔티티 데이터프레임을 받고, 요청한 피처의 그 시점 이전 값을 찾는다.
-
-```python
-from feast import FeatureStore
-import pandas as pd
-
-store = FeatureStore(repo_path="feast-local")
-entity_df = pd.DataFrame({
-    "user_id": ["9f2ac416-06e1-44a0-87bd-d4787c85bf66"],
-    "event_timestamp": [pd.Timestamp("2023-01-30T10:59:42Z")],
-})
-historical = store.get_historical_features(
-    entity_df=entity_df,
-    features=["demographic:Sex", "occupation:Occupation"],
-).to_df()
-print(historical[["user_id", "event_timestamp", "Sex", "Occupation"]])
-```
-
-실제 스터디 조회에서는 특정 사용자를 **2023년 1월 30일 10:59:42** 시점으로 조회했다. 반환된 `Sex`는 `Male`, `Occupation`은 `Adm-clerical`이었다. 원본 피처의 기록 시각은 **1월 24일 06:52:20**으로 조회 시점보다 앞이었다. 결과 한 행과 원본 시각을 대조해 시점 조회가 의도대로 작동하는지 확인했다.
-
-### 온라인 조회 전에 구체화한다
-
-Redis는 과거 Parquet 파일을 조회 때마다 읽지 않는다. 먼저 지정 기간의 오프라인 값을 온라인 스토어로 옮겨야 한다. 스터디에서는 세 FeatureView를 각각 **30,162행씩 처리**한 뒤 Redis의 키 수 **30,162개**를 확인했다. Redis 내부 확인 결과, 이 구성에서는 사용자별로 세 뷰의 값이 같은 키에 들어 있었다. 이 키 구조는 사용한 Feast 버전에서 관찰한 구현 결과이며, 모든 버전의 규칙으로 가정하지 않는다.
-
-```sh
-cd ~/mlpe-study/feast-local
-source ../load-minio-env.sh
-../.venv/bin/feast materialize \
-  2022-09-16T00:00:00 2023-09-17T00:00:00
-kubectl -n redis exec redis-0 -- redis-cli DBSIZE
-```
-
-위 기간은 이번 데이터 파일을 대상으로 한 값이다. 실제 실행에서는 시간대까지 확인해야 한다. `get_online_features()`로는 시각 인수 없이 Redis에 현재 구체화된 값을 조회한다. 스터디에서는 온라인 조회와 피처 서버의 `POST /get-online-features`에서 `Sex=Male`을 확인했다. 온라인 값은 새 파일을 올렸다고 저절로 바뀌지 않는다. 새 기간을 구체화해야 최신 값이 반영된다.
-
-SDK에서 바로 조회할 때는 엔티티 행을 넘기고, 반환된 데이터프레임에서 필요한 열을 확인한다.
-
-```python
-store = FeatureStore(repo_path="feast-local")
-online = store.get_online_features(
-    features=["demographic:Sex"],
-    entity_rows=[{"user_id": "9f2ac416-06e1-44a0-87bd-d4787c85bf66"}],
-).to_df()
-print(online[["user_id", "Sex"]])
-```
-
-Feast SDK를 쓰지 않는 서비스에서는 `feast serve`로 피처 서버를 띄워 같은 온라인 값을 HTTP로 조회할 수 있다. 스터디 기록의 응답에서는 해당 피처 상태가 `PRESENT`였고 값은 `Male`이었다. 레지스트리를 눈으로 점검할 때는 Feast UI도 사용했다. 기본 UI 포트가 Jupyter와 겹쳐 **다른 포트**로 실행했다. 두 경로 모두 `feast apply`로 등록한 정의를 읽으며, 실제 값은 조회 방식에 따라 오프라인 파일이나 Redis에서 온다.
-
-```bash
-cd ~/mlpe-study/feast-local
-source ../load-minio-env.sh
-../.venv/bin/feast serve  # 터미널 A: 127.0.0.1:6566
-```
-
-```bash
-cd ~/mlpe-study/feast-local
-source ../load-minio-env.sh
-../.venv/bin/feast ui -h 127.0.0.1 -p 8889  # 터미널 B: UI
-```
-
-원격 Mac에서 UI를 볼 때는 `ssh -N -L 8889:127.0.0.1:8889 <K3s 서버 SSH 주소>`로 연결하고 `http://127.0.0.1:8889`에 접속한다. 피처 서버가 떠 있는 동안 세 번째 터미널에서 HTTP 응답도 확인할 수 있다. `results`에 `Sex`의 값과 `PRESENT` 상태가 함께 나와야 한다.
-
-```bash
-curl -fsS -X POST http://127.0.0.1:6566/get-online-features \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "features": ["demographic:Sex"],
-    "entities": {"user_id": ["9f2ac416-06e1-44a0-87bd-d4787c85bf66"]}
-  }' | jq '.results'
-```
-
-## 6. `localhost`가 달라지는 순간 - 5장 연결의 첫 장애
-
-4장에서 로컬 프로세스가 MinIO에 접속할 때는 포트 연결 뒤 `localhost`를 써도 됐다. 하지만 5장의 Feast 컴포넌트는 **Kubernetes Pod 안에서** 실행된다. Pod의 `localhost`는 노트북 서버나 MinIO가 아니라 **그 Pod 자신**이다. 로컬 주소가 저장된 4장 Feast 레지스트리를 그대로 가져다 쓰면 피처 파일에 접근하지 못한다.
-
-| 실행 주체 | `localhost`가 가리키는 곳 | MinIO 접근 경로 |
-| --- | --- | --- |
-| 노트북·CLI가 실행되는 호스트 | 그 호스트 | 호스트에서 연결한 포트 |
-| KFP 컴포넌트 Pod | 해당 Pod | 클러스터 내부 MinIO Service 이름 |
-| Argo CD·다른 Pod | 각각 자기 Pod | 클러스터 내부 Service 이름 |
-
-호스트에서 클러스터 내부 DNS 이름을 넣어 `feast apply`를 시험했을 때도 실패했다. 호스트는 그 Service 이름을 해석하지 못했기 때문이다. 결국 **클러스터 안의 Job에서 `feast apply`를 실행**해 Pod에서 접근 가능한 MinIO 주소를 레지스트리에 저장했다. 이때 5장용 레지스트리와 설정을 4장의 로컬 조회 설정과 분리했다.
-
-아래는 그 구조를 따라 만드는 **클러스터용 설정과 Job의 전체 예시**다. 5장 배치 추론은 과거 시점의 오프라인 피처만 조회하므로 이 설정의 온라인 저장소는 로컬 SQLite로 둔다. 책 4장의 Redis 온라인 조회는 앞의 `feast-local` 설정으로 계속 실행한다. 두 설정은 `registry_local.db`와 `registry.db`도 서로 다르게 사용한다.
-
-```bash
-cd ~/mlpe-study
-mkdir -p feast-cluster
-cat > feast-cluster/feature_store.yaml <<'YAML'
-project: income_cluster
-registry: s3://feature-registry/registry.db
-provider: local
-entity_key_serialization_version: 2
-offline_store:
-  type: file
-online_store:
-  type: sqlite
-  path: /tmp/income-online.db
-YAML
-
-kubectl -n kubeflow create configmap income-feast-repo \
-  --from-file=features.py=feast-local/features.py \
-  --from-file=feature_store.yaml=feast-cluster/feature_store.yaml \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
-
-Job에서는 `FEAST_DATA_ENDPOINT`를 클러스터 내부 MinIO 주소로 지정한다. `features.py`를 같은 파일로 재사용해도 `feast apply`가 **Pod 안에서** 실행되므로 `registry.db`에는 Pod가 접근할 수 있는 소스 주소가 기록된다. 다음 YAML을 `~/mlpe-study/feast-cluster/job.yaml`로 저장해 적용한다. 의존성은 `pyarrow==18.1.0`까지 고정했다. 재현 코드를 점검하면서 Feast 0.40.1이 설치한 NumPy 1.26과 최신 PyArrow 26의 조합에서는 import 오류가 나는 것을 확인했기 때문이다.
+한 Job의 YAML에는 이미지, 자원 요청·상한, `/work`에 붙일 PVC, 실패 후 재시도 횟수가 들어간다. 예를 들어 `train`은 **CPU 500m·메모리 1GiB 요청**, **메모리 3GiB 상한**, `backoffLimit: 0`으로 실행했다. MLflow 주소는 `http://mlflow:5000`이다. 이 이름은 같은 네임스페이스의 Service DNS로 해석된다. Mac에서 보이는 `localhost:5000`을 파드에 넣으면 파드 **자기 자신**을 가리키므로 MLflow에 연결되지 않는다.
 
 ```yaml
-# feast-cluster/job.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: income-feast-apply
-  namespace: kubeflow
+  name: train
+  namespace: mlpe-seoul-bike
 spec:
   backoffLimit: 0
   template:
     spec:
       restartPolicy: Never
       containers:
-        - name: feast
-          image: python:3.10-slim-bookworm
-          command: ["/bin/sh", "-c"]
-          args:
-            - >-
-              pip install --no-cache-dir 'feast[redis]==0.40.1'
-              'pandas==2.2.3' 'pyarrow==18.1.0'
-              's3fs==2024.10.0' 'boto3==1.35.36'
-              'fsspec==2024.10.0' 'aiobotocore==2.15.2' &&
-              cd /repo && feast apply
+        - name: train
+          image: seoul-bike-ml:dev
+          imagePullPolicy: Never
+          args: ["train"]
           env:
-            - name: FEAST_DATA_ENDPOINT
-              value: http://minio-service.kubeflow.svc.cluster.local:9000
-            - name: FEAST_S3_ENDPOINT_URL
-              value: http://minio-service.kubeflow.svc.cluster.local:9000
-            - name: AWS_ENDPOINT_URL
-              value: http://minio-service.kubeflow.svc.cluster.local:9000
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: mlpipeline-minio-artifact
-                  key: accesskey
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: mlpipeline-minio-artifact
-                  key: secretkey
+            - {name: MLFLOW_TRACKING_URI, value: "http://mlflow:5000"}
+          resources:
+            requests: {cpu: 500m, memory: 1Gi}
+            limits: {memory: 3Gi}
           volumeMounts:
-            - name: repo
-              mountPath: /repo
+            - {name: data, mountPath: /work}
       volumes:
-        - name: repo
-          configMap:
-            name: income-feast-repo
+        - name: data
+          persistentVolumeClaim: {claimName: experiment-data}
+```
+
+파드와 PVC가 실제로 만들어졌는지는 다음처럼 확인했다. `readout` 파드는 Job 결과를 로컬의 `run-output/`으로 복사할 때만 사용하는 임시 파드다. 게시용 `evidence/`에는 원본 데이터 대신 집계 JSON만 옮겼다.
+완료된 Job 목록도 실행 직후의 출력이다.
+
+```bash
+kubectl -n mlpe-seoul-bike get pods,pvc
+kubectl -n mlpe-seoul-bike logs job/collect
+kubectl -n mlpe-seoul-bike logs job/features
+kubectl -n mlpe-seoul-bike logs job/train | tail -10
+kubectl -n mlpe-seoul-bike logs job/infer | tail -5
+python3 verify.py
+# VERIFY {"source_rows": 8760, "feature_rows": 8592,
+#         "test_rows": 2184, "test_mae": 90.8443,
+#         "baseline_mae": 386.4167, "online_matches_offline": true}
+```
+
+### Feast가 한 도시의 긴 시계열을 한 번에 조인하다 OOM
+
+처음에는 `city_id="seoul"`의 8,592개 시점을 **한 번의 `get_historical_features` 호출**에 모두 넣었다. Feast 0.40.1의 파일 기반 오프라인 스토어에서 이 조회 Job은 **2GiB 상한에 걸려 `OOMKilled`** 됐다. 피처 값이 8,592×5개뿐이라고 조인 도중 필요한 메모리도 작다고 생각한 것이 실수였다. 레지스트리 등록 자체는 끝났지만 과거 시점 조인을 검증하기 전에 종료됐다.
+
+피처 검사는 32개 시점을 고르게 뽑아 원본 시차 값과 Feast 반환값을 대조했다. 학습·추론에 쓰는 전체 8,592개 시점은 **168시간씩 나눠 조회**하고 합쳤다. 이 변경 후 `features`와 `train` Job이 정상 완료됐다. 배치 크기 168은 이 로컬 실습에서 메모리를 통과한 값이지, 다른 Feast 백엔드에 공통으로 맞는 수치는 아니다. 전체 조회의 성능이 중요해지면 파일 스토어 대신 대량 시점 조인에 맞는 오프라인 저장소도 비교해야 한다.
+
+```python
+parts = []
+for start in range(0, len(entity), 168):
+    part = store.get_historical_features(
+        entity_df=entity.iloc[start:start + 168],
+        features=["bike_hourly:lag_1", "bike_hourly:lag_24", "..."],
+    ).to_df()
+    parts.append(part)
+joined = pd.concat(parts, ignore_index=True)
+```
+
+## 5. Feast에서 과거 시점과 온라인 피처를 같은 값으로 확인했다
+
+Feast 엔티티는 `city_id`이고 이번 자료에는 `"seoul"` 하나만 있다. `bike_hourly` FeatureView에는 시차 대여량 세 개와 직전 날씨 두 개를 넣었다. 피처 행의 `event_timestamp`는 **그 값이 예측에 사용 가능한 `t`시의 시작**을 뜻한다. 따라서 `t`행의 `lag_1`은 `t-1`행의 대여량을 가리킨다. `get_historical_features`에는 예측 대상의 `city_id`와 `event_timestamp`를 넘기고, 반환된 피처를 미리 계산한 시차 값과 대조했다. 표본 32개 시점의 다섯 피처가 모두 일치했다. [Feast 과거 시점 조회 문서](https://docs.feast.dev/getting-started/concepts/feature-retrieval)
+
+TTL은 **1시간**으로 정했다. 매 시간 피처 행을 만들었으므로, 누락이 없을 때 조회 대상 시간의 행을 사용한다. 어느 시간이 빠진다면 전날 값을 조용히 끌고 오지 않게 하려는 설정이다. 이 TTL은 `lag_168`이 일주일 전 관측을 포함한다는 사실과 충돌하지 않는다. `lag_168`은 **현재 피처 행의 값**이고, TTL은 **그 피처 행 자체의 유효 시각**에 적용된다.
+
+온라인 조회는 마지막 시각의 피처 **한 행만** `materialize`로 Redis에 보냈다. `redis-cli dbsize`는 `1`이었고, `get_online_features` 값이 그 시각의 오프라인 Parquet과 같았다.
+
+```python
+store = FeatureStore(repo_path="/work/feast_repo")
+store.materialize(last_time - timedelta(hours=1),
+                  last_time + timedelta(minutes=1))
+online = store.get_online_features(
+    features=["bike_hourly:lag_1", "bike_hourly:lag_24",
+              "bike_hourly:lag_168", "bike_hourly:prev_temperature",
+              "bike_hourly:prev_rainfall"],
+    entity_rows=[{"city_id": "seoul"}],
+).to_df()
 ```
 
 ```bash
-cd ~/mlpe-study
-kubectl apply -f feast-cluster/job.yaml
-kubectl -n kubeflow wait --for=condition=complete \
-  job/income-feast-apply --timeout=600s
-kubectl -n kubeflow logs job/income-feast-apply
+kubectl -n mlpe-seoul-bike logs job/online
+kubectl -n mlpe-seoul-bike exec deploy/redis -- redis-cli dbsize
+# 1
 ```
 
-파이프라인의 피처 조회 컴포넌트는 MinIO에서 `feature_store.yaml`을 내려받는다. 따라서 Job이 `registry.db`를 만든 다음, **비밀번호가 없는 클러스터용 설정 파일**을 `feature-registry` 버킷에 올린다.
+| 마지막 조회 대상 | 오프라인 값 | Redis 온라인 값 |
+| --- | ---: | ---: |
+| 서울 시각 | 2018-11-30 23:00 | 같은 시각 |
+| `lag_1` | 712 | 712 |
+| `lag_24` | 559 | 559 |
+| `lag_168` | 548 | 548 |
+| 직전 온도 | 약 2.1°C | 약 2.1°C |
+| 직전 강수량 | 0 | 0 |
 
-```bash
-cd ~/mlpe-study
-source ./load-minio-env.sh
-.venv/bin/python - <<'PY'
-import os
-from minio import Minio
+이 결과가 **전체 기간의 온라인/오프라인 일치**를 보증하지는 않는다. 마지막 1개 행만 구체화하고 확인했다. 시간 경계를 하나씩 넘기며 온라인 값을 교체하는 실시간 수집 파이프라인도 이번에는 만들지 않았다. 피처 검증 결과, 온라인 조회 결과에 숫자를 남겼다.
 
-client = Minio(
-    "127.0.0.1:19000",
-    access_key=os.environ["MINIO_ACCESS_KEY"],
-    secret_key=os.environ["MINIO_SECRET_KEY"],
-    secure=False,
-)
-client.fput_object(
-    "feature-registry", "feature_store.yaml",
-    "feast-cluster/feature_store.yaml",
-)
-for item in client.list_objects("feature-registry"):
-    print(item.object_name)
-# registry.db와 feature_store.yaml을 확인
-PY
-```
+## 6. MLflow에는 무엇을 기록하고 어떻게 모델을 골랐나
 
-실제 배포 대상이 바뀔 때 확인할 항목은 세 가지다.
-
-1. 피처 소스의 S3 엔드포인트가 **그 코드를 실행하는 환경에서** 접근 가능한가.
-2. KFP Pod가 읽는 `feature_store.yaml`이 **클러스터용 레지스트리**를 가리키는가.
-3. 등록 Job의 결과를 레지스트리에서 다시 읽어 **FeatureView 세 개와 엔티티**가 보이는가.
-
-설정에 Redis 비밀번호나 객체 스토리지 키를 직접 넣으면 그 설정 파일을 복사하는 곳마다 비밀도 따라간다. 이 글의 예제와 표에는 실제 접속 주소와 인증 값을 넣지 않았다.
-
-## 7. KFP 네 컴포넌트의 계약
-
-5장은 **학습 파이프라인이 아니라 배치 추론 파이프라인**을 만든다. 입력은 예측할 사용자 ID와 기준 시각의 목록이다. 출력은 각 사용자에 대해 모델이 계산한 고소득 확률을 담은 Parquet 파일이다. 네 작업은 하나의 DAG를 이룬다.
+분할은 무작위가 아니라 **달력 순서**로 했다. 2017년 12월 8일부터 2018년 6월 말까지 4,920시간으로 후보 모델을 학습하고, 7~8월 1,488시간으로 선택했다. 마지막 9~11월 2,184시간은 선택이 끝난 뒤의 미래 평가로 남겨 뒀다. 일주일 시차 때문에 원본의 첫 7일이 제외돼 학습 시작 시각이 12월 8일이다.
 
 ```mermaid
 flowchart LR
-    A["① MinIO에서 대상자 읽기"] -->|"Dataset: user_id·시각"| B["② Feast 과거 피처 조회"]
-    B -->|"Dataset: 사용자·피처"| C["③ MLflow 모델 추론"]
-    C -->|"Dataset: 예측 확률"| D["④ MinIO에 결과 쓰기"]
-    D --> OUT["결과 Parquet"]
-    FEAST["Feast Registry·오프라인 스토어"] -.-> B
-    MODEL["MLflow 등록 모델"] -.-> C
+    T["학습<br/>2017-12-08 ~ 2018-06-30<br/>4,920시간"] --> V["검증<br/>2018-07-01 ~ 08-31<br/>1,488시간"]
+    V --> S["검증 MAE로<br/>피처 조합 선택"]
+    S --> F["학습+검증<br/>6,408시간으로 재학습"]
+    F --> P["MLflow 모델 버전 1<br/>champion 별칭"]
+    P --> E["미래 평가<br/>2018-09-01 ~ 11-30<br/>2,184시간"]
 ```
 
-각 컴포넌트는 **입력, 출력, 실행 이미지**를 명세로 갖는다. 책의 예제는 Python 파일로 동작을 작성하고, Docker 이미지에 넣은 뒤, `component.yaml`에 파일 경로와 인수·아티팩트 타입을 연결한다. `data_output`을 `Dataset`으로 선언하면 다음 단계는 앞 단계의 `outputs["data_output"]`을 입력으로 받는다.
+비교한 대상은 `t-24`의 실제 대여량을 그대로 답하는 **하루 전 기준선**, `시각·요일·월·공휴일+시차 3개`를 쓰는 HistGradientBoosting 모델, 여기에 **직전 온도·강수량**을 더한 모델이다. 기준선에 학습 단계가 없다는 점도 중요하다. MAE는 매 시간의 예측 대수와 실제 대수 차이의 절댓값을 평균한 값이다. **MAE 90이면 한 시간당 평균 90대 정도 벗어난다.**
 
-실습 저장소의 파이프라인은 KFP **2.9.0**으로 컴파일돼 있었지만, 스터디 서버의 백엔드는 **2.4.0**이었다. 이번 실행에서는 백엔드 버전(2.4.0)의 SDK로 작업본을 다시 컴파일했다. 컴포넌트 이미지도 오래된 `latest`를 그대로 의존하지 않고, 실습에서 빌드한 고정 태그로 명세를 바꿨다. 원본 저장소 파일을 수정하지 않고 작업본을 둔 이유는 책의 예제와 환경별 변경을 비교하기 위해서다.
+| 후보 | 7~8월 검증 MAE↓ | 검증 RMSE↓ | 결정 |
+| --- | ---: | ---: | --- |
+| 하루 전 같은 시각 (`lag_24`) | 265.55 | 456.26 | 단순 기준선 |
+| 달력 + 시차 1·24·168시간 | **103.76** | **157.44** | 선택 |
+| 달력 + 시차 + 직전 온도·강수량 | 118.46 | 171.30 | 이번 검증에서는 더 나쁨 |
 
-이제 소스 파일과 명세의 관계를 실제 경로로 확인할 수 있다. 2절에서 내려받은 `chapter-5` 저장소의 `src/`에는 네 작업의 Python 코드가, `components/`에는 각 코드의 입력·출력과 실행 명령을 적은 YAML이 있다.
+직전 날씨를 추가하면 무조건 좋아질 것 같았지만 실제로는 그렇지 않았다. 이는 **이 피처 구성과 7~8월 검증 구간의 결과**다. 온도와 수요의 관계가 없다는 결론은 아니다. 계절별 자료의 양, 습도·강설 누락, 모델 설정, 날씨 관측 지연 등 다른 요인도 있을 수 있다. 이번 데이터에서 할 수 있는 정직한 판단은 **검증 MAE가 낮은 단순한 후보를 등록한다**는 것이다.
 
-| 단계 | Python 파일 (`~/mlpe-study/chapter-5/` 기준) | 명세 파일 (`~/mlpe-study/chapter-5/` 기준) | 남기는 출력 |
-| --- | --- | --- | --- |
-| 대상자 읽기 | `src/read_data/read_data.py` | `components/read_data/component.yaml` | 대상자 Parquet `Dataset` |
-| 피처 조회 | `src/retrieve_features/retrieve_features.py` | `components/retrieve_features/component.yaml` | 시점에 맞춘 피처 `Dataset` |
-| 모델 추론 | `src/run_inference/run_inference.py` | `components/run_inference/component.yaml` | 확률 열을 더한 `Dataset` |
-| 결과 쓰기 | `src/write_data/write_data.py` | `components/write_data/component.yaml` | MinIO 결과 객체 |
-
-다음은 각 컴포넌트의 Python 코드가 맡는 동작을 한곳에 모아 다시 쓴 **설명용 코드**다. `minio_host` 등의 값은 파이프라인 런타임 파라미터이므로 이 블록을 노트북 셀로 실행하지 않는다. 실제로 실행되는 Python 파일 네 개의 경로와 각 YAML 명세의 경로는 위 표와 같다.
+최종 모델은 학습+검증 6,408시간으로 다시 학습했다. MLflow 3.0.0에 기준선·두 후보·최종 모델을 별도 실행으로 남기고, 데이터 SHA-256·피처 이름·분할 경계·검증 지표를 기록했다. 최종 모델은 `seoul-bike-hourly` **버전 1**로 등록하고 `champion` 별칭을 붙였다. 추론 Job은 등록된 버전과 별칭을 각각 불러 같은 예측인지 확인했다. UI는 필요할 때만 다음처럼 포트 포워딩한다.
 
 ```python
-# 네 컴포넌트의 핵심 작업을 순서대로 읽기 위한 코드
-from pathlib import Path
-import pandas as pd
-import mlflow
-from feast import FeatureStore
-from minio import Minio
-
-minio = Minio(minio_host, access_key=access_key,
-              secret_key=secret_key, secure=False)
-minio.fget_object(entity_df_bucket, entity_df_filename, "/tmp/entities.parquet")
-entities = pd.read_parquet("/tmp/entities.parquet")
-
-store = FeatureStore(repo_path="/tmp/cluster-feast")  # MinIO에서 받은 설정이 있는 폴더
-feature_frame = store.get_historical_features(
-    entity_df=entities, features=feature_list.split(",")
-).to_df()
-
-mlflow.set_tracking_uri(mlflow_host)
-model = mlflow.sklearn.load_model(
-    "models:/random-forest-classifier/Production"
-)
-input_columns = pd.read_pickle("column_list.pkl")  # 등록 모델 실행의 아티팩트
-encoded = pd.get_dummies(
-    feature_frame.drop(columns=["user_id", "event_timestamp"]),
-    drop_first=True, dtype=float,
-).reindex(columns=input_columns, fill_value=0)
-encoded["Predicted_Income_Class"] = model.predict_proba(encoded)[:, 1]
-encoded.to_parquet("/tmp/predictions.parquet", index=False)
-minio.fput_object(output_bucket, output_file_name, "/tmp/predictions.parquet")
+with mlflow.start_run(run_name="champion-calendar-and-lags"):
+    mlflow.log_params({"features": ",".join(columns),
+                       "dataset_sha256": csv_sha256})
+    model_info = mlflow.sklearn.log_model(final_model, name="model")
+registered = mlflow.register_model(model_info.model_uri,
+                                   "seoul-bike-hourly")
+MlflowClient().set_registered_model_alias("seoul-bike-hourly",
+                                          "champion", registered.version)
 ```
-
-명세가 Python 파일을 어떻게 실행하는지도 확인해야 한다. 아래는 `~/mlpe-study/chapter-5-work/components/read_data/component.yaml`의 핵심 구조다. `data_output`을 `Dataset`으로 선언하고 `{outputPath: data_output}`을 명령행 인수에 넣으면 KFP가 출력 파일 경로를 전달한다. 다른 세 명세도 같은 방식으로 앞 단계의 입력 경로와 다음 단계의 출력 경로를 연결한다.
-
-```yaml
-name: Read Data From MinIO
-inputs:
-  - {name: minio_host, type: String}
-  - {name: access_key, type: String}
-  - {name: secret_key, type: String}
-  - {name: bucket_name, type: String}
-  - {name: file_name, type: String}
-outputs:
-  - {name: data_output, type: Dataset}
-implementation:
-  container:
-    image: '<내 레지스트리 계정>/income-kfp:bookworm-v1'
-    command:
-      - python3
-      - /app/src/read_data/read_data.py
-      - --minio_host
-      - {inputValue: minio_host}
-      - --access_key
-      - {inputValue: access_key}
-      - --secret_key
-      - {inputValue: secret_key}
-      - --bucket_name
-      - {inputValue: bucket_name}
-      - --file_name
-      - {inputValue: file_name}
-      - --data_output_path
-      - {outputPath: data_output}
-```
-
-실행 가능한 컴포넌트 이미지를 만들 때는 오래된 `buster` 기반 이미지를 `bookworm`으로 바꾸고, 네 명세의 이미지 주소를 **하나의 고정 태그**로 맞춘다. 공개 예제의 Dockerfile은 소스 전체를 이미지에 넣으므로 네 작업이 같은 이미지 하나를 사용해도 된다. `COMPONENT_IMAGE`에는 자신의 컨테이너 레지스트리 주소를 넣는다. 이미지 안의 네 Python 파일은 `kfp`를 import하지 않으므로 이미지 의존성에서 KFP SDK를 뺀다. KFP 2.4.0과 Feast 0.40.1을 한 환경에 설치하려 하면 Protobuf 요구 버전이 충돌한다. 파이프라인 컴파일용 KFP SDK는 뒤의 별도 가상환경에만 둔다.
 
 ```bash
-cd ~/mlpe-study
-cp -R chapter-5 chapter-5-work
-export COMPONENT_IMAGE="<내 레지스트리 계정>/income-kfp:bookworm-v1"
-.venv/bin/python - <<'PY'
-import os
-import re
-from pathlib import Path
-
-root = Path("chapter-5-work")
-dockerfile = root / "Dockerfile"
-dockerfile.write_text(
-    dockerfile.read_text().replace(
-        "python:3.10-slim-buster", "python:3.10-slim-bookworm"
-    )
-)
-requirements = root / "requirements.txt"
-runtime_requirements = [
-    line for line in requirements.read_text().splitlines()
-    if not line.startswith("kfp==")
-]
-requirements.write_text(
-    "\n".join(runtime_requirements)
-    + "\nscikit-learn==1.5.2\npyarrow==18.1.0\nsqlalchemy>=2.0,<2.1\n"
-)
-for file in (root / "components").glob("*/component.yaml"):
-    text = file.read_text()
-    text, count = re.subn(
-        r"image:\s*['\"]?varunmallya/[^'\"\s]+['\"]?",
-        f"image: '{os.environ['COMPONENT_IMAGE']}'",
-        text,
-    )
-    assert count == 1, file
-    file.write_text(text)
-    print("이미지 고정:", file)
-PY
-
-# amd64 K3s 서버에서 arm64 이미지도 함께 만들었던 스터디의 방식
-docker run --privileged --rm tonistiigi/binfmt --install arm64
-docker buildx inspect mlpe-multi >/dev/null 2>&1 ||
-  docker buildx create --name mlpe-multi --driver docker-container
-docker buildx use mlpe-multi
-docker buildx inspect --bootstrap
-docker login  # COMPONENT_IMAGE의 레지스트리에 게시할 계정으로 로그인
-docker buildx build --builder mlpe-multi \
-  --platform linux/amd64,linux/arm64 \
-  -t "$COMPONENT_IMAGE" --push chapter-5-work
+kubectl -n mlpe-seoul-bike port-forward svc/mlflow 15002:5000
+# Mac 브라우저: http://localhost:15002
 ```
 
-다음은 `~/mlpe-study/chapter-5-work/income_pipeline.py`의 **전체 파이프라인 정의**다. 네 YAML 명세를 읽고, 앞 단계의 `Dataset` 출력을 다음 단계의 입력으로 넘긴다. 14개 런타임 파라미터 이름은 8절의 REST 요청과 정확히 맞춘다.
+## 7. 무작위 평가는 67.88대, 미래 평가는 90.84대였다
+
+`infer` Job은 학습 Job 메모리에 남아 있는 모델을 쓰지 않는다. **MLflow 레지스트리의 버전 1을 다시 다운로드**하고 Feast로 미래 구간 피처를 조회한 뒤 예측한다. 버전 번호를 지정해 불러온 결과와 `champion` 별칭으로 불러온 결과가 같다는 것도 검사했다.
+
+| 평가 | MAE↓ | RMSE↓ | 읽는 방법 |
+| --- | ---: | ---: | --- |
+| 같은 전체 기간을 섞은 무작위 25% 홀드아웃 | **67.88** | 124.66 | 모든 계절이 학습·평가에 섞인 참고 실험 |
+| **2018년 9~11월 미래 2,184시간** | **90.84** | 147.33 | 이 글에서 사용할 모델 평가 |
+| 미래 2,184시간의 하루 전 기준선 | 386.42 | 651.68 | 같은 기간의 단순 비교 |
+
+무작위 평가가 더 좋아 보이는 이유를 하나로 단정할 수는 없다. 무작위 분할은 9~11월의 다른 시간대를 학습에 섞고, 시간상 가까운 행이 서로 다른 집합에 놓인다. 특히 시차 피처는 이웃 시간대의 관측에 강하게 연결된다. 실제로 8월까지 학습해 9~11월을 맞히는 상황과 다르다. 따라서 **67.88을 배포 성능으로 게시하지 않고**, 미래 구간의 **90.84**를 기준으로 읽었다. 미래 구간도 실제 직전 시간 집계가 매 시간 갱신된다는 운영 가정이 필요하다.
+
+미래 구간을 월별로 나누면 9월 **98.18**, 10월 **98.09**, 11월 **76.02 MAE**였다. RMSE가 MAE보다 크게 나온 것은 큰 오차가 일부 있음을 보여준다. 실제 최대 절대오차는 **974.27대**였다. 평균 하나만 남겼다면 놓쳤을 신호다. 모델 선택 기록과 미래 평가 기록에서 원수치를 확인할 수 있다.
+
+### 운행하지 않는 시간이라는 새로운 질문
+
+미래 평가의 2,184시간 중 실제 대여량이 0인 시간은 **247시간**이었다. 원본의 `Functioning Day=No`인 시간도 정확히 **247시간**이었고, 그 시간의 실제 대여량은 모두 0이었다. 모델은 이때 평균 **64.75대**를 예측했다. 그러니 일부 오차는 수요의 변화보다 **서비스가 그 시간에 운영되지 않았는지**를 모르기 때문에 생긴다.
+
+`Functioning Day`가 예측 시점 전에 운영 일정으로 제공된다고 **가정만** 하고, 그 247시간의 예측을 0으로 바꿔 보는 사후 계산을 했다. 미래 MAE는 **90.84 → 83.52대**로 내려갔다. 하지만 데이터 컬럼이 있다는 사실만으로 그 상태를 미리 알 수 있다는 뜻은 아니다. 이 숫자는 배포 모델의 성능이 아니라, **운영 상태 정보가 제때 들어올 때 기대할 수 있는 개선의 단서**다. 다음 실험이라면 운영 중단 공지의 발생 시각을 수집하고 `공지 시각 ≤ 예측 시각`일 때만 사용해야 한다.
+
+## 8. KFP standalone에서 등록 모델로 배치 추론했다
+
+앞부분의 `run.sh`는 Kubernetes Job을 나누어 실행하지만, **단계 사이의 순서는 Mac에서 실행한 셸 스크립트**가 관리한다. 책 5장에서 다룬 KFP가 이 순서를 실제로 관리하는지도 확인하고 싶었다. 그래서 기존 `mlpe-seoul-bike`는 그대로 두고, KFP 2.17.3의 [공식 standalone 매니페스트](https://github.com/kubeflow/pipelines/tree/2.17.3/manifests/kustomize)를 `kubeflow` 네임스페이스에 설치했다. MySQL, SeaweedFS, Argo Workflow 컨트롤러, KFP API·UI 등이 함께 올라왔다. **Kubeflow 전체 플랫폼을 설치한 것은 아니다.**
+
+```bash
+export PIPELINE_VERSION=2.17.3
+kubectl apply -k \
+  "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=$PIPELINE_VERSION"
+kubectl wait --for=condition=Established \
+  crd/applications.app.k8s.io crd/workflows.argoproj.io --timeout=90s
+kubectl apply -k \
+  "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$PIPELINE_VERSION"
+kubectl -n kubeflow get deployments
+```
+
+### Mac arm64에서 만난 이미지 두 가지
+
+설치 도중 `metadata-writer` 파드는 `ErrImagePull`이었다. `ghcr.io/kubeflow/kfp-metadata-writer:2.17.3`에는 이 실행 시점에 **arm64 매니페스트가 없었고**, 이벤트에는 `no matching manifest for linux/arm64/v8`이 나왔다. 반면 VM에서 `docker run --platform linux/amd64 alpine:3.23 uname -m`을 실행하면 `x86_64`가 출력되어 amd64 에뮬레이션이 가능했다. 이 **로컬 실습 환경에서만** 해당 이미지를 amd64로 받아 별도 태그를 붙이고 Deployment를 바꿨다.
+
+```bash
+docker pull --platform linux/amd64 \
+  ghcr.io/kubeflow/kfp-metadata-writer:2.17.3
+docker tag ghcr.io/kubeflow/kfp-metadata-writer:2.17.3 \
+  kfp-metadata-writer:amd64-lab
+kubectl -n kubeflow set image deploy/metadata-writer \
+  main=kfp-metadata-writer:amd64-lab
+kubectl -n kubeflow patch deploy metadata-writer --type=json \
+  -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
+kubectl -n kubeflow rollout status deploy/metadata-writer
+```
+
+첫 워크플로의 `kfp-launcher` 이미지는 arm64 이미지가 있었지만 다운로드 중 네트워크 타임아웃이 났다. 이때 Kubernetes API도 잠깐 TLS handshake timeout을 반환했고 노드가 일시적으로 `NotReady`였다. 메모리 부족으로 판정할 근거는 없었다. 노드가 회복된 뒤 `docker pull --platform linux/arm64 ghcr.io/kubeflow/kfp-launcher:2.17.3`로 이미지를 받아 두자 같은 워크플로가 **재시도되면서 다음 단계로 진행**했다. 설치 후 확인한 노드 사용량은 약 **5.9GiB/16GiB**였다. 이미지의 아키텍처와 네트워크 오류는 다른 문제여서 각각 로그를 보고 처리해야 했다.
+
+### 4장의 모델을 5장의 입력으로 쓴다
+
+이번 KFP 파이프라인은 모델을 다시 학습하지 않는다. **4장에서 등록한 모델을 이용한 배치 추론**이라는 5장의 질문에 맞춰 네 컴포넌트를 정의했다.
+
+```mermaid
+flowchart LR
+    A["collect<br/>원본 SHA-256 검사"] --> B["features<br/>Feast 피처 등록"]
+    B --> C["registered<br/>MLflow champion 확인<br/>데이터 해시 대조"]
+    C --> D["infer<br/>미래 2,184시간 예측"]
+    D --> E["KFP Run<br/>Succeeded"]
+```
+
+KFP는 `kubeflow` 네임스페이스에 있으므로 `mlpe-seoul-bike`의 PVC를 그대로 붙일 수 없다. **KFP 전용 1GiB PVC `seoul-bike-work`**를 만들고 네 컴포넌트 모두 `/work`에 마운트했다. Feast 설정이 사용하는 `redis:6379`는 `kubeflow`의 `ExternalName` 서비스로 기존 Redis에 연결했다. 이번 KFP의 **과거 시점 배치 조회는 Redis의 피처 값을 읽지 않으며**, 이 서비스는 Feast 설정을 재사용하기 위한 경로다. 모델 추적 서버는 파드 안에서 `http://mlflow.mlpe-seoul-bike.svc.cluster.local:5000`으로 접근했다. 서비스 이름 앞에 네임스페이스가 추가된 이유는 두 서버가 서로 다른 네임스페이스에 있기 때문이다.
+
+KFP SDK 2.17.3으로 만든 `pipeline.py`는 `@dsl.container_component`로 앞의 `seoul-bike-ml:dev` 이미지를 재사용한다. `.after()`가 단계 순서를 선언하고 `kfp.kubernetes.mount_pvc()`가 각 태스크에 같은 PVC를 붙인다. PVC 파일이 바뀌는 파이프라인이므로 컴포넌트 캐시는 껐다. `registered` 단계에서는 MLflow 별칭의 **버전·실행 ID·피처 열 목록**을 읽고, 그 실행에 적힌 원본 CSV 해시가 이번 `collect`에서 확인한 해시와 같아야 다음으로 넘어간다.
 
 ```python
-# chapter-5-work/income_pipeline.py
+@dsl.pipeline(name="seoul-bike-registered-batch-inference")
+def pipeline():
+    collected = collect()
+    feature_view = features().after(collected)
+    model = registered().after(feature_view)
+    predictions = infer().after(model)
+    for task in (collected, feature_view, model, predictions):
+        kfp.kubernetes.mount_pvc(
+            task, pvc_name="seoul-bike-work", mount_path="/work"
+        )
+        task.set_caching_options(False)
+```
+
+`run_kfp.sh`에 설치부터 컴파일·제출까지 모았다. 이미 KFP가 떠 있다면 API를 로컬 18088 포트로 포워딩하고 아래 순서만 실행해도 된다. SDK는 별도 `.venv`에 설치해 Feast·MLflow 컨테이너 의존성과 섞지 않았다.
+
+```bash
+cd blog/machine-learning-platform-engineering/examples/seoul_bike_k8s
+uv venv --python 3.11 .venv
+uv pip install --python .venv/bin/python \
+  'kfp==2.17.3' 'kfp-kubernetes==2.17.3'
+kubectl apply -f kfp/infra.yaml
+.venv/bin/python kfp/pipeline.py
+
+# 다른 터미널에서 유지
+kubectl -n kubeflow port-forward svc/ml-pipeline 18088:8888
+
+# 제출하는 터미널
+.venv/bin/python kfp/submit.py
+kubectl -n kubeflow get workflows
+# seoul-bike-registered-batch-inference-7m4wb   Succeeded
+```
+
+첫 실행은 이미지 다운로드 지연까지 포함해 약 **5분** 걸렸다. KFP의 Run 상태는 `SUCCEEDED`였고, 네 컴포넌트가 순서대로 `Completed`였다. 별도 KFP PVC에서 결과를 꺼내 첫 Kubernetes Job의 결과와 대조했다.
+
+```bash
+kubectl apply -f kfp/readout.yaml
+kubectl -n kubeflow wait --for=condition=Ready \
+  pod/seoul-bike-readout --timeout=90s
+mkdir -p kfp-output
+for name in manifest selection results; do
+  kubectl -n kubeflow cp \
+    "seoul-bike-readout:/work/${name}.json" "kfp-output/${name}.json"
+done
+kubectl -n kubeflow delete pod seoul-bike-readout
+```
+
+두 실행이 같은 데이터를 보고 같은 등록 모델을 썼는지는 파일을 비교해 확인할 수 있다. 아래 코드는 원본 해시, 모델 이름·버전, 미래 평가 행 수와 MAE를 함께 검사한다. 각 모델 예측값의 완전한 행별 일치를 주장하는 검사는 아니다.
+
+```python
+import json
 from pathlib import Path
-import kfp
+
+def read(folder, name):
+    return json.loads((Path(folder) / f"{name}.json").read_text())
+
+job_manifest = read("run-output", "manifest")
+kfp_manifest = read("kfp-output", "manifest")
+job_result = read("run-output", "results")
+kfp_result = read("kfp-output", "results")
+kfp_selection = read("kfp-output", "selection")
+
+assert job_manifest["csv_sha256"] == kfp_manifest["csv_sha256"]
+assert kfp_selection["lineage_check"] is True
+assert job_result["model"]["name"] == kfp_result["model"]["name"]
+assert job_result["model"]["version"] == kfp_result["model"]["version"]
+assert job_result["rows"] == kfp_result["rows"]
+assert job_result["future_test"]["mae"] == kfp_result["future_test"]["mae"]
+print("Job과 KFP의 데이터·모델 버전·미래 MAE 일치")
+```
+
+| 대조 항목 | Job 실행 | KFP 실행 |
+| --- | --- | --- |
+| 원본 CSV SHA-256 | `373339b7…7b749c60` | 같음 |
+| MLflow 모델 | `seoul-bike-hourly` 버전 **1** | 같음 |
+| 미래 평가 행 수 | **2,184** | **2,184** |
+| 미래 MAE | **90.8443대** | **90.8443대** |
+| 워크플로 상태 | Job 5개 `Complete` | KFP Run `SUCCEEDED` |
+
+KFP 실행 대조 기록과 워크플로 상태를 남겼다. KFP UI를 볼 때는 `kubectl -n kubeflow port-forward svc/ml-pipeline-ui 18080:80`으로 로컬 주소만 열면 된다.
+
+한 가지 한계도 보였다. `.after()`는 **실행 순서**를 KFP에 알려주지만, 네 컴포넌트가 공유 PVC의 `/work/*.parquet`를 읽고 쓰는 관계는 YAML의 **정식 Dataset 입출력으로 선언하지 않았다.** KFP UI에는 태스크와 로그가 남지만, 데이터 아티팩트의 계보는 이 코드만으로 완성되지 않는다. 다음 버전에서는 `Output[Dataset]`·`Input[Dataset]` 연결로 파일을 전달하고, 공유 PVC는 꼭 필요한 데이터에만 써야 한다. **오케스트레이터를 설치하는 것과 파이프라인의 데이터 계약을 명시하는 것은 서로 다른 작업**이었다.
+
+## 9. 4~5장을 다시 읽으며 남은 것
+
+이번 실습에서 4장의 도구는 각각 질문 하나를 붙잡았다. **Feast**는 “이 예측 시각에 사용할 수 있던 피처인가?”를, **MLflow**는 “어느 데이터와 피처로 고른 몇 번째 모델인가?”를 답하게 했다. 모델 정확도 외에도 첫 조인 Job이 `OOMKilled`된 기록, 날씨 피처가 검증 성능을 낮춘 결과, 운행 중단 247시간의 오류가 실험의 일부가 됐다.
+
+5장의 자동화도 한 단계 더 확인했다. 첫 실행은 `run.sh`가 Kubernetes Job 다섯 개의 순서를 제어했고, 두 번째 실행은 **KFP가 네 컴포넌트의 순서를 제어**했다. 둘 다 같은 MLflow 모델로 같은 미래 MAE가 나왔다. Job만으로도 컨테이너 격리, 자원 상한, 로그, PVC, 실패 상태는 볼 수 있었고, KFP는 실행 그래프와 Run 단위 관리를 더했다. 그러나 KFP 버전에도 PVC에 숨은 파일 의존성이 남아 있어, 책에서 강조한 **컴포넌트의 명시적 입출력**은 다음 과제로 이어진다.
+
+가장 중요한 다음 질문은 모델 종류보다 **정보의 도착 시각**이다. 직전 대여량이 실제로 매시 정각에 확정되는지, 운영 중단 일정이 언제 공지되는지, 날씨 관측이 얼마 뒤에 들어오는지를 알아야 지금의 `t-1` 피처가 현실에서도 안전하다. 책의 “재현 가능한 실험과 일관된 피처”가 필요한 이유는 도구를 써 보면 더 구체적으로 드러난다. 같은 숫자라도 **언제 알 수 있었는지**가 빠지면 좋은 검증 점수는 서비스의 답이 되지 않는다.
+현재 모델은 입력 열 목록을 별도 `selection.json`으로 보존했지만 MLflow 모델의 **입력 signature는 기록하지 않았다.** 새 버전의 피처가 들어와도 인터페이스가 맞는지 배포 전에 확인하려면 signature와 입력 예시까지 모델과 함께 등록하는 것이 다음 보강 지점이다.
+
+
+KFP의 `registered` 단계가 확인한 원본 CSV 해시와 MLflow 실행에 기록한 해시가 같았고, 같은 모델 버전으로 Job과 KFP가 **같은 2,184시간에 MAE 90.8443**을 냈다. 이 대조는 파이프라인이 ‘성공’했다는 표시보다 더 강한 검증이다. 다만 공유 PVC 안의 파일이 암묵적으로 이어지므로, 다음 버전에서는 KFP의 `Input[Dataset]`·`Output[Dataset]`으로 중간 산출물을 명시할 필요가 있다.
+
+실시간 API와 HPA 부하 실험은 이 글의 4~5장 배치 실습과 별도 범위다. 이 부분은 후속 운영 실험 글에서 따로 다룰 예정이다.
+
+## 10. 전체 재현 코드: 파일별로 복사하기
+
+아래 코드는 이 글에 사용한 실습 파일을 그대로 본문에 넣은 것이다. 블로그만 보고 재현하려면 빈 디렉터리에 표의 상대 경로대로 파일을 만들면 된다. **`run.sh`를 먼저 실행해 모델을 등록하고, 이어 `run_kfp.sh`를 실행한다.** KFP 파이프라인은 기존 MLflow의 `champion` 모델을 조회하므로 순서가 중요하다. `kfp/seoul-bike-pipeline.yaml`은 `kfp/pipeline.py`가 컴파일해 만든다. 원본 CSV·Parquet·SQLite DB는 생성물이므로 본문에 넣지 않았다.
+
+```text
+seoul_bike_k8s/
+├── Dockerfile
+├── requirements.txt
+├── experiment.py
+├── serve.py
+├── load.py
+├── verify.py
+├── run.sh
+├── run_kfp.sh
+├── k8s/
+│   ├── base.yaml
+│   ├── collect.yaml
+│   ├── features.yaml
+│   ├── train.yaml
+│   ├── infer.yaml
+│   ├── online.yaml
+│   └── readout.yaml
+└── kfp/
+    ├── infra.yaml
+    ├── pipeline.py
+    ├── submit.py
+    └── readout.yaml
+```
+
+**환경:** Mac arm64, Rancher Desktop Moby, Kubernetes 컨텍스트 `rancher-desktop`, VM 8 CPU·16GB, Python 3.11과 `uv`. 아래 `Dockerfile`은 서빙 실습의 `serve.py`, `load.py`도 복사하므로 두 파일도 함께 싣는다. KFP는 standalone 2.17.3을 설치한다. 기존 클러스터의 버전이나 이미지가 다르면 설치 명령과 이미지 아키텍처를 먼저 확인해야 한다.
+
+```bash
+kubectl config current-context   # rancher-desktop
+kubectl get nodes -o wide          # arm64 Ready 확인
+cd seoul_bike_k8s
+bash run.sh                        # 수집 → Feast → MLflow 학습·등록 → 배치·온라인 검증
+bash run_kfp.sh                    # KFP standalone 설치 → 컴파일 → SDK 제출
+```
+
+### 10.1 컨테이너와 의존성
+
+**`requirements.txt`**
+
+```text
+feast[redis]==0.40.1
+mlflow==3.0.0
+numpy==1.26.4
+pandas==2.2.3
+pyarrow==17.0.0
+scikit-learn==1.5.2
+sqlalchemy>=2.0,<2.1
+```
+
+**`Dockerfile`**
+
+```dockerfile
+FROM python:3.11-slim-bookworm
+
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 GIT_PYTHON_REFRESH=quiet
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY experiment.py .
+COPY serve.py load.py ./
+ENTRYPOINT ["python", "/app/experiment.py"]
+```
+
+### 10.2 데이터 수집·Feast·MLflow·추론 구현
+
+`experiment.py`는 단계 이름을 인수로 받는다. `collect`는 UCI ZIP을 해시로 확인하고 서울 시각을 UTC 이벤트 시각으로 바꾼다. `features`는 시차 피처와 Feast 뷰를 만들고 32개 시점을 원본과 대조한다. `train`은 시간 순서로 후보를 비교해 MLflow에 모델을 등록한다. `registered`는 KFP에서 별칭과 원본 해시를 확인한다. `infer`는 등록 버전으로 미래 구간을 평가한다. `online`은 마지막 행만 Redis에 구체화하고 값이 일치하는지 확인한다.
+
+**`experiment.py`**
+
+```python
+"""Point-in-time Seoul bike demand experiment for local arm64 Kubernetes."""
+import argparse
+import hashlib
+import io
+import json
+import os
+import sys
+import urllib.request
+import zipfile
+from datetime import timedelta
+from pathlib import Path
+
+import mlflow
+import mlflow.sklearn
+import numpy as np
+import pandas as pd
+from feast import Entity, FeatureStore, FeatureView, Field, FileSource
+from feast.types import Float32, Int64
+from mlflow import MlflowClient
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import train_test_split
+
+
+ROOT = Path(os.environ.get("BIKE_DATA_ROOT", "/work"))
+REPO = ROOT / "feast_repo"
+URL = "https://archive.ics.uci.edu/static/public/560/seoul+bike+sharing+demand.zip"
+ZIP_SHA256 = "139e9908f0a3544bb222386855c9ce107e96467306bb8e4ce936aab59e7baac4"
+MODEL_NAME = "seoul-bike-hourly"
+FEATURES = ["lag_1", "lag_24", "lag_168", "prev_temperature", "prev_rainfall"]
+FEATURE_REFS = [f"bike_hourly:{name}" for name in FEATURES]
+BASE_COLS = ["hour", "weekday", "month", "holiday", "lag_1", "lag_24", "lag_168"]
+WEATHER_COLS = BASE_COLS + ["prev_temperature", "prev_rainfall"]
+TRAIN_END = pd.Timestamp("2018-07-01", tz="Asia/Seoul")
+VAL_END = pd.Timestamp("2018-09-01", tz="Asia/Seoul")
+
+
+def save_json(name, value):
+    ROOT.mkdir(parents=True, exist_ok=True)
+    (ROOT / name).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+
+
+def collect():
+    request = urllib.request.Request(URL, headers={"User-Agent": "mlpe-study/1.0"})
+    with urllib.request.urlopen(request, timeout=90) as response:
+        data = response.read()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != ZIP_SHA256:
+        raise ValueError(f"Dataset ZIP SHA-256 changed: {digest}")
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        raw = archive.read("SeoulBikeData.csv")
+    csv_digest = hashlib.sha256(raw).hexdigest()
+    df = pd.read_csv(io.BytesIO(raw), encoding="latin1")
+    local_time = pd.to_datetime(
+        df["Date"] + " " + df["Hour"].astype(str).str.zfill(2),
+        format="%d/%m/%Y %H",
+    ).dt.tz_localize("Asia/Seoul")
+    df.insert(0, "local_time", local_time)
+    df.insert(1, "event_timestamp", local_time.dt.tz_convert("UTC"))
+    df = df.sort_values("event_timestamp").reset_index(drop=True)
+    if len(df) != 8760 or df["event_timestamp"].nunique() != 8760:
+        raise ValueError("Expected 8760 unique hourly rows")
+    if not df["event_timestamp"].diff().dropna().eq(pd.Timedelta(hours=1)).all():
+        raise ValueError("Missing or duplicated hours")
+    if df.isna().any().any():
+        raise ValueError("Unexpected missing cells")
+    df.to_parquet(ROOT / "source.parquet", index=False)
+    save_json("manifest.json", {
+        "dataset": "UCI Seoul Bike Sharing Demand",
+        "source": URL,
+        "zip_sha256": digest,
+        "csv_sha256": csv_digest,
+        "rows": len(df),
+        "first_local_time": str(df["local_time"].iloc[0]),
+        "last_local_time": str(df["local_time"].iloc[-1]),
+        "missing_hours": 0,
+        "target": "Rented Bike Count",
+        "prediction_time": "start of target hour in Asia/Seoul",
+    })
+    print(f"COLLECT rows={len(df)} zip_sha256={digest} csv_sha256={csv_digest}")
+
+
+def prepare_features():
+    df = pd.read_parquet(ROOT / "source.parquet")
+    count = df["Rented Bike Count"]
+    local = df["local_time"].dt.tz_convert("Asia/Seoul")
+    feature_df = pd.DataFrame({
+        "city_id": "seoul",
+        "event_timestamp": df["event_timestamp"],
+        "lag_1": count.shift(1).astype("float32"),
+        "lag_24": count.shift(24).astype("float32"),
+        "lag_168": count.shift(168).astype("float32"),
+        "prev_temperature": df["Temperature(°C)"].shift(1).astype("float32"),
+        "prev_rainfall": df["Rainfall(mm)"].shift(1).astype("float32"),
+    }).iloc[168:].reset_index(drop=True)
+    entity = pd.DataFrame({
+        "city_id": "seoul",
+        "event_timestamp": df["event_timestamp"].iloc[168:].reset_index(drop=True),
+        "local_time": local.iloc[168:].reset_index(drop=True),
+        "hour": local.dt.hour.iloc[168:].reset_index(drop=True).astype("int64"),
+        "weekday": local.dt.dayofweek.iloc[168:].reset_index(drop=True).astype("int64"),
+        "month": local.dt.month.iloc[168:].reset_index(drop=True).astype("int64"),
+        "holiday": (df["Holiday"] == "Holiday").iloc[168:].reset_index(drop=True).astype("int64"),
+        "target": count.iloc[168:].reset_index(drop=True).astype("int64"),
+    })
+    assert len(feature_df) == 8592
+    assert feature_df[FEATURES].notna().all().all()
+    assert feature_df["lag_1"].iloc[-1] == count.iloc[-2]
+    assert feature_df["lag_24"].iloc[-1] == count.iloc[-25]
+    assert feature_df["lag_168"].iloc[-1] == count.iloc[-169]
+    REPO.mkdir(parents=True, exist_ok=True)
+    feature_df.to_parquet(ROOT / "features.parquet", index=False)
+    entity.to_parquet(ROOT / "entities.parquet", index=False)
+    (REPO / "feature_store.yaml").write_text(
+        "project: seoul_bike\n"
+        "registry: /work/feast_repo/registry.db\n"
+        "provider: local\n"
+        "offline_store:\n  type: file\n"
+        "online_store:\n  type: redis\n  connection_string: redis:6379\n"
+        "entity_key_serialization_version: 2\n"
+    )
+    user = Entity(name="city_id", join_keys=["city_id"])
+    source = FileSource(path="/work/features.parquet", timestamp_field="event_timestamp")
+    view = FeatureView(
+        name="bike_hourly",
+        entities=[user],
+        ttl=timedelta(hours=1),
+        schema=[
+            Field(name="lag_1", dtype=Float32),
+            Field(name="lag_24", dtype=Float32),
+            Field(name="lag_168", dtype=Float32),
+            Field(name="prev_temperature", dtype=Float32),
+            Field(name="prev_rainfall", dtype=Float32),
+        ],
+        source=source,
+        online=True,
+    )
+    store = FeatureStore(repo_path=str(REPO))
+    store.apply([user, view])
+    audit_entity = entity[["city_id", "event_timestamp"]].iloc[::269].copy()
+    historical = store.get_historical_features(
+        entity_df=audit_entity, features=FEATURE_REFS
+    ).to_df()
+    historical = historical.sort_values("event_timestamp").reset_index(drop=True)
+    expected = feature_df.iloc[::269].sort_values("event_timestamp").reset_index(drop=True)
+    for name in FEATURES:
+        if not np.allclose(historical[name], expected[name], equal_nan=True):
+            raise AssertionError(f"Feast PIT mismatch for {name}")
+    print(f"FEATURES rows={len(feature_df)} feast_historical_parity=true")
+    save_json("feature_audit.json", {
+        "rows": len(feature_df),
+        "feature_view": "bike_hourly",
+        "feast_historical_parity": True,
+        "historical_audit_rows": len(audit_entity),
+        "features": FEATURES,
+        "timestamp_rule": "feature row at prediction hour t contains observations through t-1 only",
+        "feast_ttl_hours": 1,
+    })
+
+
+def joined_frame():
+    entity = pd.read_parquet(ROOT / "entities.parquet")
+    store = FeatureStore(repo_path=str(REPO))
+    # Feast 0.40 file-store PIT join can create a large intermediate table for
+    # one city with thousands of timestamps. Bounded batches keep memory stable.
+    parts = []
+    for start in range(0, len(entity), 168):
+        part = store.get_historical_features(
+            entity_df=entity.iloc[start:start + 168], features=FEATURE_REFS
+        ).to_df()
+        parts.append(part)
+        if start % 2016 == 0:
+            print(f"Feast PIT joined {min(start + 168, len(entity))}/{len(entity)}", flush=True)
+    joined = pd.concat(parts, ignore_index=True)
+    joined["local_time"] = pd.to_datetime(joined["local_time"], utc=True).dt.tz_convert("Asia/Seoul")
+    joined = joined.sort_values("event_timestamp").reset_index(drop=True)
+    if len(joined) != 8592 or joined[FEATURES].isna().any().any():
+        raise AssertionError("Feast training join incomplete")
+    return joined
+
+
+def metrics(y, p):
+    return {
+        "mae": round(float(mean_absolute_error(y, p)), 4),
+        "rmse": round(float(np.sqrt(mean_squared_error(y, p))), 4),
+    }
+
+
+def make_model():
+    return HistGradientBoostingRegressor(
+        max_iter=160, max_leaf_nodes=15, l2_regularization=1.0,
+        learning_rate=0.06, random_state=42,
+    )
+
+
+def train():
+    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow:5000"))
+    mlflow.set_experiment("seoul-bike-hourly")
+    df = joined_frame()
+    train_df = df[df.local_time < TRAIN_END]
+    val_df = df[(df.local_time >= TRAIN_END) & (df.local_time < VAL_END)]
+    test_df = df[df.local_time >= VAL_END]
+    if min(map(len, (train_df, val_df, test_df))) == 0:
+        raise AssertionError("Empty time split")
+    baseline_val = metrics(val_df.target, val_df.lag_24)
+    with mlflow.start_run(run_name="seasonal-naive-24h") as run:
+        mlflow.log_params({"method": "y[t-24]", "split": "calendar", "dataset_sha256": json.loads((ROOT / "manifest.json").read_text())["csv_sha256"]})
+        mlflow.log_metrics({f"val_{k}": v for k, v in baseline_val.items()})
+    candidate_results = {}
+    for name, cols in [("calendar-and-lags", BASE_COLS), ("plus-previous-weather", WEATHER_COLS)]:
+        model = make_model().fit(train_df[cols], train_df.target)
+        score = metrics(val_df.target, model.predict(val_df[cols]).clip(min=0))
+        candidate_results[name] = {"columns": cols, "validation": score}
+        with mlflow.start_run(run_name=name):
+            mlflow.log_params({
+                "features": ",".join(cols),
+                "train_end_exclusive": str(TRAIN_END),
+                "validation_end_exclusive": str(VAL_END),
+                "random_state": 42,
+                "dataset_sha256": json.loads((ROOT / "manifest.json").read_text())["csv_sha256"],
+            })
+            mlflow.log_metrics({f"val_{k}": v for k, v in score.items()})
+    selected = min(candidate_results, key=lambda x: candidate_results[x]["validation"]["mae"])
+    cols = candidate_results[selected]["columns"]
+    final_train = df[df.local_time < VAL_END]
+    final_model = make_model().fit(final_train[cols], final_train.target)
+    # Demonstrate what a shuffled evaluation would have claimed with the same code and all seasons.
+    random_train, random_test = train_test_split(df, test_size=0.25, random_state=42)
+    random_model = make_model().fit(random_train[cols], random_train.target)
+    random_score = metrics(random_test.target, random_model.predict(random_test[cols]).clip(min=0))
+    with mlflow.start_run(run_name=f"champion-{selected}") as run:
+        mlflow.log_params({
+            "selected_candidate": selected,
+            "features": ",".join(cols),
+            "train_rows": len(final_train),
+            "validation_rows": len(val_df),
+            "future_test_rows": len(test_df),
+            "dataset_sha256": json.loads((ROOT / "manifest.json").read_text())["csv_sha256"],
+        })
+        mlflow.log_metrics({f"selection_val_{k}": v for k, v in candidate_results[selected]["validation"].items()})
+        model_info = mlflow.sklearn.log_model(final_model, name="model")
+        run_id = run.info.run_id
+    registered = mlflow.register_model(model_info.model_uri, MODEL_NAME)
+    MlflowClient().set_registered_model_alias(MODEL_NAME, "champion", registered.version)
+    output = {
+        "splits": {"train": len(train_df), "validation": len(val_df), "future_test": len(test_df), "final_train": len(final_train)},
+        "validation_baseline_24h": baseline_val,
+        "candidates": candidate_results,
+        "selected": selected,
+        "random_holdout": random_score,
+        "model": {"name": MODEL_NAME, "version": registered.version, "alias": "champion", "run_id": run_id, "columns": cols},
+    }
+    save_json("selection.json", output)
+    print("TRAIN " + json.dumps(output, ensure_ascii=False))
+
+
+def registered():
+    """Resolve the chapter-4 registered model for a chapter-5 inference DAG."""
+    tracking_uri = os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow:5000")
+    client = MlflowClient(tracking_uri)
+    version = client.get_model_version_by_alias(MODEL_NAME, "champion")
+    if not version.run_id:
+        raise AssertionError("Registered model version has no source run")
+    run = client.get_run(version.run_id)
+    cols = run.data.params["features"].split(",")
+    if not set(cols).issubset(set(WEATHER_COLS)):
+        raise AssertionError(f"Unexpected registered model columns: {cols}")
+    manifest = json.loads((ROOT / "manifest.json").read_text())
+    if run.data.params["dataset_sha256"] != manifest["csv_sha256"]:
+        raise AssertionError("Registered model was trained with different source data")
+    output = {
+        "model": {
+            "name": MODEL_NAME,
+            "version": version.version,
+            "alias": "champion",
+            "run_id": version.run_id,
+            "columns": cols,
+        },
+        "source_csv_sha256": manifest["csv_sha256"],
+        "lineage_check": True,
+    }
+    save_json("selection.json", output)
+    print("REGISTERED " + json.dumps(output, ensure_ascii=False))
+
+
+def infer():
+    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow:5000"))
+    selection = json.loads((ROOT / "selection.json").read_text())
+    df = joined_frame()
+    test_df = df[df.local_time >= VAL_END].copy()
+    model_spec = selection["model"]
+    version_uri = f"models:/{MODEL_NAME}/{model_spec['version']}"
+    model = mlflow.sklearn.load_model(version_uri)
+    alias_model = mlflow.sklearn.load_model(f"models:/{MODEL_NAME}@champion")
+    predictions = model.predict(test_df[model_spec["columns"]]).clip(min=0)
+    alias_predictions = alias_model.predict(test_df[model_spec["columns"]]).clip(min=0)
+    if not np.allclose(predictions, alias_predictions):
+        raise AssertionError("MLflow alias and version predictions differ")
+    future = metrics(test_df.target, predictions)
+    baseline = metrics(test_df.target, test_df.lag_24)
+    test_df["prediction"] = predictions
+    test_df["baseline_24h"] = test_df.lag_24
+    test_df["absolute_error"] = abs(test_df.target - test_df.prediction)
+    source_test = pd.read_parquet(ROOT / "source.parquet")
+    source_test = source_test[
+        source_test.local_time >= VAL_END
+    ].sort_values("event_timestamp").reset_index(drop=True)
+    if not np.array_equal(
+        source_test.event_timestamp.to_numpy(), test_df.event_timestamp.to_numpy()
+    ):
+        raise AssertionError("Operational status audit is not time aligned")
+    non_functioning = source_test["Functioning Day"].eq("No").to_numpy()
+    if not np.all(test_df.target.to_numpy()[non_functioning] == 0):
+        raise AssertionError("Non-functioning hours contain rentals")
+    oracle_predictions = predictions.copy()
+    oracle_predictions[non_functioning] = 0
+    test_df[["local_time", "target", "prediction", "baseline_24h", "absolute_error"]].to_parquet(
+        ROOT / "future_predictions.parquet", index=False
+    )
+    by_month = {
+        str(month): metrics(group.target, group.prediction)
+        for month, group in test_df.groupby(test_df.local_time.dt.strftime("%Y-%m"))
+    }
+    result = {
+        "model": model_spec,
+        "future_test": future,
+        "baseline_24h": baseline,
+        "rows": len(test_df),
+        "by_month": by_month,
+        "zero_target_hours": int((test_df.target == 0).sum()),
+        "non_functioning_hours": int(non_functioning.sum()),
+        "non_functioning_mean_prediction": round(float(predictions[non_functioning].mean()), 4),
+        "oracle_status_mask_mae": metrics(test_df.target, oracle_predictions)["mae"],
+        "max_absolute_error": round(float(test_df.absolute_error.max()), 4),
+        "alias_prediction_parity": True,
+    }
+    if "random_holdout" in selection:
+        result["random_holdout"] = selection["random_holdout"]
+    save_json("results.json", result)
+    print("INFER " + json.dumps(result, ensure_ascii=False))
+
+
+def online():
+    store = FeatureStore(repo_path=str(REPO))
+    feature_df = pd.read_parquet(ROOT / "features.parquet")
+    last_time = pd.Timestamp(feature_df.event_timestamp.iloc[-1])
+    store.materialize(
+        start_date=last_time.to_pydatetime() - timedelta(hours=1),
+        end_date=last_time.to_pydatetime() + timedelta(minutes=1),
+    )
+    actual = store.get_online_features(
+        features=FEATURE_REFS, entity_rows=[{"city_id": "seoul"}]
+    ).to_df()
+    expected = feature_df.iloc[-1]
+    for name in FEATURES:
+        if not np.isclose(float(actual[name].iloc[0]), float(expected[name])):
+            raise AssertionError(f"Feast online mismatch for {name}")
+    result = {
+        "materialized_rows": 1,
+        "city_id": "seoul",
+        "online_matches_offline": True,
+        "event_timestamp_utc": str(last_time),
+        "online_features": {name: float(actual[name].iloc[0]) for name in FEATURES},
+    }
+    save_json("online_audit.json", result)
+    print("ONLINE " + json.dumps(result, ensure_ascii=False))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("stage", choices=["collect", "features", "train", "registered", "infer", "online"])
+    args = parser.parse_args()
+    globals()[args.stage if args.stage != "features" else "prepare_features"]()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### 10.3 Kubernetes 자원과 Job 순서
+
+`base.yaml`은 실험용 PVC·MLflow·Redis를 만든다. 다섯 Job은 같은 `/work`를 순서대로 사용한다. `readout` 파드는 각 단계의 JSON 결과를 복사한 뒤 삭제한다.
+
+**`k8s/base.yaml`**
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mlpe-seoul-bike
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: experiment-data
+  namespace: mlpe-seoul-bike
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-data
+  namespace: mlpe-seoul-bike
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: mlpe-seoul-bike
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          image: seoul-bike-ml:dev
+          imagePullPolicy: Never
+          command: ["mlflow"]
+          args:
+            - server
+            - --host
+            - 0.0.0.0
+            - --port
+            - "5000"
+            - --workers
+            - "1"
+            - --backend-store-uri
+            - sqlite:////mlflow/mlflow.db
+            - --artifacts-destination
+            - /mlflow/artifacts
+            - --serve-artifacts
+          ports:
+            - containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: mlflow-data
+              mountPath: /mlflow
+      volumes:
+        - name: mlflow-data
+          persistentVolumeClaim:
+            claimName: mlflow-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow
+  namespace: mlpe-seoul-bike
+spec:
+  type: ClusterIP
+  selector:
+    app: mlflow
+  ports:
+    - port: 5000
+      targetPort: 5000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: mlpe-seoul-bike
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          ports:
+            - containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: mlpe-seoul-bike
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+```
+
+**`k8s/collect.yaml`**
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: collect
+  namespace: mlpe-seoul-bike
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: collect
+          image: seoul-bike-ml:dev
+          imagePullPolicy: Never
+          args: ["collect"]
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {memory: 512Mi}
+          volumeMounts:
+            - {name: data, mountPath: /work}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: experiment-data}
+```
+
+**`k8s/features.yaml`**
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: features
+  namespace: mlpe-seoul-bike
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: features
+          image: seoul-bike-ml:dev
+          imagePullPolicy: Never
+          args: ["features"]
+          resources:
+            requests: {cpu: 300m, memory: 512Mi}
+            limits: {memory: 2Gi}
+          volumeMounts:
+            - {name: data, mountPath: /work}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: experiment-data}
+```
+
+**`k8s/train.yaml`**
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: train
+  namespace: mlpe-seoul-bike
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: train
+          image: seoul-bike-ml:dev
+          imagePullPolicy: Never
+          args: ["train"]
+          env:
+            - {name: MLFLOW_TRACKING_URI, value: "http://mlflow:5000"}
+          resources:
+            requests: {cpu: 500m, memory: 1Gi}
+            limits: {memory: 3Gi}
+          volumeMounts:
+            - {name: data, mountPath: /work}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: experiment-data}
+```
+
+**`k8s/infer.yaml`**
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: infer
+  namespace: mlpe-seoul-bike
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: infer
+          image: seoul-bike-ml:dev
+          imagePullPolicy: Never
+          args: ["infer"]
+          env:
+            - {name: MLFLOW_TRACKING_URI, value: "http://mlflow:5000"}
+          resources:
+            requests: {cpu: 300m, memory: 512Mi}
+            limits: {memory: 2Gi}
+          volumeMounts:
+            - {name: data, mountPath: /work}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: experiment-data}
+```
+
+**`k8s/online.yaml`**
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: online
+  namespace: mlpe-seoul-bike
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: online
+          image: seoul-bike-ml:dev
+          imagePullPolicy: Never
+          args: ["online"]
+          resources:
+            requests: {cpu: 200m, memory: 256Mi}
+            limits: {memory: 1Gi}
+          volumeMounts:
+            - {name: data, mountPath: /work}
+      volumes:
+        - name: data
+          persistentVolumeClaim: {claimName: experiment-data}
+```
+
+**`k8s/readout.yaml`**
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: readout
+  namespace: mlpe-seoul-bike
+spec:
+  restartPolicy: Never
+  containers:
+    - name: readout
+      image: seoul-bike-ml:dev
+      imagePullPolicy: Never
+      command: ["sh", "-c", "sleep 3600"]
+      resources:
+        requests: {cpu: 50m, memory: 64Mi}
+        limits: {memory: 256Mi}
+      volumeMounts:
+        - {name: data, mountPath: /work}
+  volumes:
+    - name: data
+      persistentVolumeClaim: {claimName: experiment-data}
+```
+
+**`run.sh`**
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$here"
+namespace=mlpe-seoul-bike
+
+if [[ "$(kubectl config current-context)" != "rancher-desktop" ]]; then
+  echo "Select the rancher-desktop Kubernetes context first" >&2
+  exit 1
+fi
+
+docker build --platform linux/arm64 -t seoul-bike-ml:dev .
+kubectl apply -f k8s/base.yaml
+kubectl -n "$namespace" rollout status deploy/mlflow --timeout=240s
+kubectl -n "$namespace" rollout status deploy/redis --timeout=180s
+
+for stage in collect features train infer online; do
+  kubectl -n "$namespace" delete job "$stage" --ignore-not-found --wait=true
+  kubectl apply -f "k8s/$stage.yaml"
+  if ! kubectl -n "$namespace" wait --for=condition=complete "job/$stage" --timeout=1200s; then
+    kubectl -n "$namespace" logs "job/$stage" --all-containers=true
+    exit 1
+  fi
+  kubectl -n "$namespace" logs "job/$stage" --all-containers=true
+done
+
+kubectl -n "$namespace" delete pod readout --ignore-not-found --wait=true
+kubectl apply -f k8s/readout.yaml
+kubectl -n "$namespace" wait --for=condition=Ready pod/readout --timeout=120s
+mkdir -p run-output
+for name in manifest.json feature_audit.json selection.json results.json online_audit.json; do
+  kubectl -n "$namespace" cp "readout:/work/$name" "run-output/$name"
+done
+kubectl -n "$namespace" delete pod readout --wait=true
+python3 verify.py
+echo "MLflow UI: kubectl -n $namespace port-forward svc/mlflow 15002:5000"
+```
+
+**`verify.py`**
+
+```python
+import json
+from pathlib import Path
+
+root = Path(__file__).parent / "run-output"
+files = {name: json.loads((root / f"{name}.json").read_text())
+         for name in ("manifest", "feature_audit", "selection", "results", "online_audit")}
+assert files["manifest"]["rows"] == 8760
+assert files["feature_audit"]["rows"] == 8592
+assert files["feature_audit"]["feast_historical_parity"]
+assert files["results"]["rows"] == files["selection"]["splits"]["future_test"]
+assert files["results"]["alias_prediction_parity"]
+assert files["online_audit"]["online_matches_offline"]
+print("VERIFY " + json.dumps({
+    "source_rows": files["manifest"]["rows"],
+    "feature_rows": files["feature_audit"]["rows"],
+    "test_rows": files["results"]["rows"],
+    "test_mae": files["results"]["future_test"]["mae"],
+    "baseline_mae": files["results"]["baseline_24h"]["mae"],
+    "online_matches_offline": files["online_audit"]["online_matches_offline"],
+}))
+```
+
+### 10.4 KFP 설치·DAG·실행 제출
+
+KFP의 네 단계 `collect → features → registered → infer`는 같은 모델 이미지를 쓴다. `registered`는 앞서 MLflow에 등록한 버전과 원본 해시를 확인한다. `submit.py`의 `create_run_from_pipeline_package`가 **실제 실행 제출 호출**이다. `run_kfp.sh`는 KFP API를 18088 포트로 연결한 뒤 이 코드를 실행한다. 이 실습에서 실행을 제출한 경로는 **SDK 호출**이며, 직접 작성한 REST `curl` 제출 명령은 없다.
+
+**`kfp/infra.yaml`**
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seoul-bike-work
+  namespace: kubeflow
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: kubeflow
+spec:
+  type: ExternalName
+  externalName: redis.mlpe-seoul-bike.svc.cluster.local
+  ports:
+    - port: 6379
+      targetPort: 6379
+```
+
+**`kfp/pipeline.py`**
+
+```python
+"""KFP v2 DAG that uses the registered chapter-4 model for batch inference."""
 from kfp import compiler, dsl
+import kfp.kubernetes
 
-root = Path(__file__).parent
-read_data = kfp.components.load_component_from_file(
-    str(root / "components/read_data/component.yaml")
-)
-get_features = kfp.components.load_component_from_file(
-    str(root / "components/retrieve_features/component.yaml")
-)
-infer = kfp.components.load_component_from_file(
-    str(root / "components/run_inference/component.yaml")
-)
-write_data = kfp.components.load_component_from_file(
-    str(root / "components/write_data/component.yaml")
-)
 
-@dsl.pipeline(name="income-classifier-pipeline")
-def income_classifier_pipeline(
-    minio_host: str,
-    access_key: str,
-    secret_key: str,
-    entity_df_bucket: str,
-    entity_df_filename: str,
-    feature_store_bucket_name: str,
-    feature_store_config_file_name: str,
-    feature_list: str,
-    model_name: str,
-    model_type: str,
-    model_stage: str,
-    mlflow_host: str,
-    output_bucket: str,
-    output_file_name: str,
-):
-    ids = read_data(
-        minio_host=minio_host, access_key=access_key,
-        secret_key=secret_key, bucket_name=entity_df_bucket,
-        file_name=entity_df_filename,
+IMAGE = "seoul-bike-ml:dev"
+MLFLOW_URI = "http://mlflow.mlpe-seoul-bike.svc.cluster.local:5000"
+
+
+@dsl.container_component
+def collect():
+    return dsl.ContainerSpec(
+        image=IMAGE, command=["python", "/app/experiment.py"], args=["collect"]
     )
-    features = get_features(
-        minio_host=minio_host, access_key=access_key,
-        secret_key=secret_key, bucket_name=feature_store_bucket_name,
-        file_name=feature_store_config_file_name,
-        entity_df=ids.outputs["data_output"], feature_list=feature_list,
+
+
+@dsl.container_component
+def features():
+    return dsl.ContainerSpec(
+        image=IMAGE, command=["python", "/app/experiment.py"], args=["features"]
     )
-    predictions = infer(
-        minio_host=minio_host, access_key=access_key,
-        secret_key=secret_key, model_name=model_name,
-        model_type=model_type, model_stage=model_stage,
-        mlflow_host=mlflow_host,
-        input_data=features.outputs["data_output"],
+
+
+@dsl.container_component
+def registered():
+    return dsl.ContainerSpec(
+        image=IMAGE,
+        command=["env", f"MLFLOW_TRACKING_URI={MLFLOW_URI}", "python", "/app/experiment.py"],
+        args=["registered"],
     )
-    write_data(
-        minio_host=minio_host, access_key=access_key,
-        secret_key=secret_key, bucket_name=output_bucket,
-        file_name=output_file_name,
-        input_data=predictions.outputs["data_output"],
+
+
+@dsl.container_component
+def infer():
+    return dsl.ContainerSpec(
+        image=IMAGE,
+        command=["env", f"MLFLOW_TRACKING_URI={MLFLOW_URI}", "python", "/app/experiment.py"],
+        args=["infer"],
     )
+
+
+@dsl.pipeline(name="seoul-bike-registered-batch-inference")
+def pipeline():
+    collected = collect()
+    feature_view = features().after(collected)
+    model = registered().after(feature_view)
+    predictions = infer().after(model)
+    for task, limit in [
+        (collected, "512Mi"),
+        (feature_view, "2Gi"),
+        (model, "512Mi"),
+        (predictions, "2Gi"),
+    ]:
+        kfp.kubernetes.mount_pvc(task, pvc_name="seoul-bike-work", mount_path="/work")
+        task.set_caching_options(False)
+        task.set_cpu_request("200m")
+        task.set_memory_request("128Mi")
+        task.set_memory_limit(limit)
+
 
 if __name__ == "__main__":
     compiler.Compiler().compile(
-        pipeline_func=income_classifier_pipeline,
-        package_path=str(root / "income_classifier_pipeline.yaml"),
+        pipeline_func=pipeline, package_path="kfp/seoul-bike-pipeline.yaml"
     )
 ```
 
-컴파일러는 별도 가상환경에 설치한다. 4장 학습 환경과 KFP SDK의 의존성이 섞이지 않도록 하기 위해서다. **이 Python 블록을 위 경로에 저장한 뒤** 다음을 실행하면, 8절의 REST 코드가 업로드할 YAML이 생성된다.
+**`kfp/submit.py`**
 
-```bash
-cd ~/mlpe-study
-uv venv --python 3.11 kfp-venv
-uv pip install --python kfp-venv/bin/python 'kfp==2.4.0'
-kfp-venv/bin/python chapter-5-work/income_pipeline.py
-ls chapter-5-work/income_classifier_pipeline.yaml
+```python
+"""Submit the compiled batch inference DAG to local KFP standalone."""
+import json
+from pathlib import Path
+
+import kfp
+
+
+client = kfp.Client(host="http://127.0.0.1:18088", namespace="kubeflow")
+run = client.create_run_from_pipeline_package(
+    "kfp/seoul-bike-pipeline.yaml",
+    run_name="seoul-bike-registered-inference",
+    experiment_name="seoul-bike-study",
+    namespace="kubeflow",
+    enable_caching=False,
+)
+finished = client.wait_for_run_completion(run.run_id, timeout=900)
+result = {"run_id": run.run_id, "state": finished.state}
+Path("kfp-output").mkdir(exist_ok=True)
+Path("kfp-output/last-run.json").write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps(result))
+if finished.state != "SUCCEEDED":
+    raise SystemExit(1)
 ```
 
-컴파일 성공은 **정의가 만들어졌다는 뜻**이고, 네 작업의 성공은 KFP 실행 결과에서 별도로 확인해야 한다.
+**`kfp/readout.yaml`**
 
-### 추론 입력 열은 목록만 맞춘다고 끝나지 않는다
-
-추론 컴포넌트는 Feast에서 얻은 범주형 값에 다시 `pd.get_dummies(drop_first=True)`를 적용하고, 학습 때 저장한 `column_list.pkl`의 열 순서로 맞춘다. 이 방식은 **같은 범주가 모두 들어 있는 큰 배치**에서는 작동할 수 있지만, 작은 배치에서는 조용히 잘못된 값을 만들 위험이 있다.
-
-예를 들어 학습 전체에서 `Occupation`의 첫 범주가 A였고, 이번 배치에는 B와 C만 있다고 하자. `drop_first=True`가 이번 배치에서는 B를 기준 범주로 버릴 수 있다. 그 뒤 열 이름을 학습 목록에 맞춰 다시 정렬해도 **버려진 B의 정보는 돌아오지 않는다.** 결측 열을 0으로 채우는 작업은 인코더의 기준 범주를 고정하는 것과 다르다.
-
-이번 실행은 전체 **30,162행**을 한 번에 넣어 직접 모델 추론과 같은 확률을 얻었다. 이는 **그 배치에서 결과가 일치했다**는 증거다. 새로운 한 명 또는 드문 범주만 들어온 배치에서도 맞는다는 보장은 아니다. 후속 개선에서는 학습 때 맞춘 인코더를 모델과 함께 저장하고, 추론에서도 같은 변환 객체를 사용해야 한다.
-
-이 가정을 공개 데이터로 확인한 후속 실험에서는 같은 6,033명의 평가 데이터를 한 번에 추론할 때는 차이가 없었지만, 한 명씩 추론하자 **1,229명의 0.5 기준 분류가 바뀌었다.** 기존 KFP 실행과 별도로 모델을 새로 학습해, 배치 크기만 바꾸어 측정한 결과다. 이 배치 불변성 실험은 다음 글에서 따로 정리한다.
-
-책의 소득 데이터에서 벗어나 수집부터 다시 해 보고 싶다면 한국어 뉴스 제목 분류 실험으로 이어진다. Hugging Face에서 KLUE YNAT을 내려받아 Rancher Desktop의 Kubernetes Job으로 학습·배치 추론하고, MLflow에서 모델을 등록했다. 이 실험도 별도 글로 다룰 예정이다.
-
-## 8. 스터디 실행 결과와 막혔던 지점
-
-이전 정리에서는 KFP UI에 YAML을 업로드하고 화면에서 실행한 것처럼 읽혔지만, 제공된 실행 기록에는 **REST API로 업로드·실행하고 결과를 확인했다**고 적혀 있다. 당시 HTTP 요청을 담은 스크립트 원본은 확보하지 못했다. 아래에는 [KFP 2.4.0의 공식 API 명세](https://github.com/kubeflow/pipelines/blob/2.4.0/backend/api/v2beta1/swagger/kfp_api_single_file.swagger.json)에 맞춰 **새로 작성한 제출 명령과 결과 검증 코드 전체**를 적었다. 이는 스터디에서 사용한 원본 호출을 그대로 복원한 것은 아니다. 스터디에서는 네 작업이 모두 `Succeeded`로 끝난 것과 MinIO 출력 파일을 확인했으며, Kubeflow 대시보드에서 동일 실행을 브라우저로 확인했다는 기록은 없다.
-
-### REST API로 파이프라인을 제출하는 재현용 코드
-
-앞 절에서 컴파일한 `income_classifier_pipeline.yaml`과 MinIO·Feast·MLflow 환경이 준비된 **K3s 서버**에서 실행한다. 첫 번째 터미널에서 KFP API 서버를 포트 포워딩한다. 이 서버에서는 Jupyter가 8888 포트를 사용하므로 로컬 포트는 18888로 잡았다.
-
-```bash
-kubectl -n kubeflow port-forward svc/ml-pipeline 18888:8888
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: seoul-bike-readout
+  namespace: kubeflow
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: readout
+      image: seoul-bike-ml:dev
+      imagePullPolicy: Never
+      command: ["sh", "-c", "sleep 1800"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests: {cpu: 50m, memory: 64Mi}
+        limits: {memory: 256Mi}
+      volumeMounts:
+        - {name: data, mountPath: /work}
+  volumes:
+    - name: data
+      persistentVolumeClaim: {claimName: seoul-bike-work}
 ```
 
-두 번째 터미널에서는 다음 명령을 실행한다. `KFP_NAMESPACE`는 `kubectl get profiles`에서 확인한 사용자 프로필의 네임스페이스로, `MLFLOW_HOST`는 **KFP Pod에서 접속 가능한** K3s 서버의 MLflow 주소로 설정한다. MinIO 키는 기존 Kubernetes Secret에서 읽고 화면에는 출력하지 않는다. 결과 파일에는 실행 시각을 붙여 이전 결과를 덮어쓰지 않는다.
+**`run_kfp.sh`**
 
 ```bash
-cd ~/mlpe-study/chapter-5-work
+#!/usr/bin/env bash
 set -euo pipefail
-kubectl get profiles
-export KFP_NAMESPACE="<사용자 프로필 네임스페이스>"
-export MLFLOW_HOST="http://<K3s 서버의 Pod 접근 가능 IP>:5000"
-source ../load-minio-env.sh
-kubectl -n "$KFP_NAMESPACE" get secret mlpipeline-minio-artifact
 
-API="http://127.0.0.1:18888/apis/v2beta1"
-RUN_TAG="$(date +%Y%m%d%H%M%S)"
-NAME="income-classifier-rest-${RUN_TAG}"
-OUTPUT_FILE="inference_result_rest_${RUN_TAG}.parquet"
-export OUTPUT_FILE
-test -f income_classifier_pipeline.yaml
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$here"
+version=2.17.3
 
-# 1. 컴파일한 YAML을 업로드하고 자동 생성된 파이프라인 버전을 찾는다.
-PIPELINE_ID="$(
-  curl -fsS -X POST \
-    "${API}/pipelines/upload?name=${NAME}&namespace=${KFP_NAMESPACE}" \
-    -F "uploadfile=@income_classifier_pipeline.yaml" |
-    jq -er '.pipeline_id'
-)"
-VERSION_ID="$(
-  curl -fsS "${API}/pipelines/${PIPELINE_ID}/versions" |
-    jq -er '.pipeline_versions[0].pipeline_version_id'
-)"
+if [[ "$(kubectl config current-context)" != "rancher-desktop" ]]; then
+  echo "Select the rancher-desktop Kubernetes context first" >&2
+  exit 1
+fi
 
-# 2. 이 실행을 묶을 KFP 실험을 만든다.
-EXPERIMENT_ID="$(
-  jq -n --arg name "$NAME" --arg ns "$KFP_NAMESPACE" \
-    '{display_name:$name, namespace:$ns}' |
-    curl -fsS -X POST "${API}/experiments" \
-      -H "Content-Type: application/json" --data-binary @- |
-    jq -er '.experiment_id'
-)"
+kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=$version"
+kubectl wait --for=condition=Established crd/applications.app.k8s.io crd/workflows.argoproj.io --timeout=90s
+kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic?ref=$version"
 
-# 3. 등록 모델과 피처 조회에 필요한 14개 런타임 파라미터를 보내 Run을 생성한다.
-RUN_ID="$(
-  jq -n \
-    --arg name "$NAME" \
-    --arg experiment "$EXPERIMENT_ID" \
-    --arg pipeline "$PIPELINE_ID" \
-    --arg version "$VERSION_ID" \
-    --arg mlflow "$MLFLOW_HOST" \
-    --arg output "$OUTPUT_FILE" \
-    '{
-      display_name: $name,
-      experiment_id: $experiment,
-      pipeline_version_reference: {
-        pipeline_id: $pipeline,
-        pipeline_version_id: $version
-      },
-      runtime_config: {parameters: {
-        minio_host: "minio-service.kubeflow:9000",
-        access_key: env.MINIO_ACCESS_KEY,
-        secret_key: env.MINIO_SECRET_KEY,
-        entity_df_bucket: "inference-datasets",
-        entity_df_filename: "entity_df.parquet",
-        feature_store_bucket_name: "feature-registry",
-        feature_store_config_file_name: "feature_store.yaml",
-        feature_list: "demographic:Sex,demographic:Race,demographic:Native_country,relationship:Relationship,relationship:Marital-Status,occupation:Workclass,occupation:Education,occupation:Occupation",
-        model_name: "random-forest-classifier",
-        model_type: "sklearn",
-        model_stage: "Production",
-        mlflow_host: $mlflow,
-        output_bucket: "inference-datasets",
-        output_file_name: $output
-      }}
-    }' |
-    curl -fsS -X POST "${API}/runs" \
-      -H "Content-Type: application/json" --data-binary @- |
-    jq -er '.run_id'
-)"
-printf 'KFP Run ID: %s\n결과 파일: inference-datasets/%s\n' \
-  "$RUN_ID" "$OUTPUT_FILE"
+# This component's upstream tag has no arm64 manifest in the tested release.
+docker pull --platform linux/amd64 "ghcr.io/kubeflow/kfp-metadata-writer:$version"
+docker tag "ghcr.io/kubeflow/kfp-metadata-writer:$version" kfp-metadata-writer:amd64-lab
+kubectl -n kubeflow set image deploy/metadata-writer main=kfp-metadata-writer:amd64-lab
+kubectl -n kubeflow patch deploy metadata-writer --type=json \
+  -p='[{"op":"replace","path":"/spec/template/spec/containers/0/imagePullPolicy","value":"Never"}]'
+kubectl -n kubeflow rollout status deploy/metadata-writer --timeout=240s
+kubectl -n kubeflow rollout status deploy/ml-pipeline --timeout=300s
 
-# 진행 중이면 PENDING 또는 RUNNING이 나온다. 완료 뒤 다시 조회한다.
-curl -fsS "${API}/runs/${RUN_ID}" | jq '{run_id, state}'
+docker pull --platform linux/arm64 "ghcr.io/kubeflow/kfp-launcher:$version"
+docker build --platform linux/arm64 -t seoul-bike-ml:dev .
+kubectl apply -f kfp/infra.yaml
+
+if [[ ! -x .venv/bin/python ]]; then
+  uv venv --python 3.11 .venv
+fi
+uv pip install --python .venv/bin/python "kfp==$version" "kfp-kubernetes==$version"
+.venv/bin/python kfp/pipeline.py
+
+kubectl -n kubeflow port-forward svc/ml-pipeline 18088:8888 \
+  > /tmp/seoul-bike-kfp-portforward.log 2>&1 &
+tunnel=$!
+trap 'kill "$tunnel" 2>/dev/null || true' EXIT
+for _ in $(seq 1 30); do
+  if curl -fsS http://127.0.0.1:18088/apis/v2beta1/healthz > /dev/null; then
+    break
+  fi
+  sleep 2
+done
+.venv/bin/python kfp/submit.py
 ```
 
-핵심 제출 요청은 `POST /apis/v2beta1/runs`다. 요청 본문의 `pipeline_version_reference`가 업로드한 파이프라인 버전을, `runtime_config.parameters`가 5장의 컴포넌트 입력을 가리킨다. 이 예제는 **기존 5장 컴포넌트 계약을 그대로 사용**하므로 MinIO 액세스 키와 시크릿 키가 KFP Run 이력에 평문으로 남는다. 개인 실습 외 환경에서는 Secret을 Pod에 주입하도록 컴포넌트를 바꾼 뒤 사용해야 한다.
+### 10.5 이미지 빌드에 함께 들어간 서빙 코드
 
-| 확인 항목 | 스터디에서 관찰한 결과 | 여기서 알 수 있는 것 |
-| --- | --- | --- |
-| KFP 실행 상태 | 네 작업 모두 `Succeeded` | 작업 순서가 끝까지 실행됨 |
-| 최종 파일 | MinIO의 `inference_result.parquet` | 마지막 쓰기 단계까지 연결됨 |
-| 파일 모양 | 30,162행 × 91열, 결측 0건 | 대상자 배치가 빠짐없이 파일로 나옴 |
-| 고소득 예측 비율 | 확률 0.5 이상이 약 22.1% | 이번 배치의 출력 분포 |
-| 모델 직접 추론과 차이 | 확률의 최대 차이 0.0 | 파이프라인이 같은 등록 모델의 계산을 재현함 |
+아래 두 파일은 이번 4~5장 배치 결과를 계산하는 데 쓰이지 않는다. 실습 당시 Dockerfile이 두 파일을 함께 복사했으므로, **위 코드를 그대로 빌드할 수 있도록** 남긴다. API와 HPA의 동작·성능 해석은 후속 글에서 다룬다.
 
-**22.1%는 모델 정확도가 아니다.** 정답과 대조한 값이 아니라, 이 배치에서 확률이 0.5 이상인 비율이다. 최대 차이 0.0도 모델이 실제 소득을 잘 맞혔다는 뜻이 아니라 **두 실행 경로의 계산 결과가 같았다**는 뜻이다.
+**`serve.py`**
 
-최종 검증은 KFP의 `Succeeded` 표시에서 멈추지 않았다. MinIO에서 결과 Parquet을 다시 읽어 **행 수, 열 수, 결측값, 확률 분포**를 확인했다. 이어 등록된 같은 랜덤 포레스트를 직접 불러 동일한 피처에 추론하고, 확률 열의 차이를 계산했다. 이 비교를 거쳐야 “파일만 생성됐다”와 “원한 모델의 계산이 결과 파일에 들어갔다”를 구별할 수 있다.
-
-같은 검증을 재현하려면 위 REST 요청을 실행한 **두 번째 터미널에서**, Run의 `state`가 `SUCCEEDED`가 된 뒤 아래를 실행한다. `OUTPUT_FILE`은 REST 블록에서 `export`한 파일 이름이다. 아래 코드는 새 실행의 결과를 검사하며, 앞의 스터디 표에 적힌 숫자를 새 실행의 결과로 주장하지 않는다.
-
-```bash
-cd ~/mlpe-study
-source ./load-minio-env.sh
-
-.venv/bin/python - <<'PY'
+```python
+"""Small Kubernetes prediction API backed by MLflow and Feast online features."""
+import json
 import os
 from pathlib import Path
-import numpy as np
-import pandas as pd
+
 import mlflow
-from minio import Minio
+import mlflow.sklearn
+import pandas as pd
+from fastapi import FastAPI, HTTPException
 
-object_name = os.environ["OUTPUT_FILE"]
-destination = Path("/tmp") / object_name
-minio = Minio(
-    "127.0.0.1:19000",
-    access_key=os.environ["MINIO_ACCESS_KEY"],
-    secret_key=os.environ["MINIO_SECRET_KEY"],
-    secure=False,
-)
-minio.fget_object("inference-datasets", object_name, str(destination))
-result = pd.read_parquet(destination)
-assert result.shape == (30_162, 91), result.shape
-assert result.isna().sum().sum() == 0
-assert result["Predicted_Income_Class"].between(0, 1).all()
+from feast import FeatureStore
 
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
-model = mlflow.sklearn.load_model(
-    "models:/random-forest-classifier/Production"
-)
-features = result.drop(columns="Predicted_Income_Class")
-direct = model.predict_proba(features)[:, 1]
-delta = np.abs(direct - result["Predicted_Income_Class"].to_numpy())
-print("결과 모양:", result.shape)
-print("고소득 예측 비율:", (result["Predicted_Income_Class"] >= 0.5).mean())
-print("직접 모델 추론과 최대 차이:", delta.max())
-assert np.allclose(direct, result["Predicted_Income_Class"].to_numpy())
-PY
+
+ROOT = Path(os.environ.get("BIKE_DATA_ROOT", "/work"))
+app = FastAPI(title="Seoul bike hourly forecast lab")
+model = None
+store = None
+selection = None
+latest = None
+calendar = None
+
+
+@app.on_event("startup")
+def startup():
+    global model, store, selection, latest, calendar
+    mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI", "http://mlflow:5000"))
+    selection = json.loads((ROOT / "selection.json").read_text())
+    latest = json.loads((ROOT / "online_audit.json").read_text())
+    store = FeatureStore(repo_path=str(ROOT / "feast_repo"))
+    model = mlflow.sklearn.load_model("models:/seoul-bike-hourly@champion")
+    calendar = pd.read_parquet(
+        ROOT / "entities.parquet", columns=["event_timestamp", "holiday"]
+    ).iloc[-1]
+
+
+@app.get("/health")
+def health():
+    return {"ok": model is not None and store is not None}
+
+
+@app.get("/predict")
+def predict():
+    if model is None or store is None:
+        raise HTTPException(503, "Model is still loading")
+    timestamp = pd.Timestamp(latest["event_timestamp_utc"]).tz_convert("Asia/Seoul")
+    # The switch reproduces the intentionally unoptimized first load test.
+    current_calendar = (
+        pd.read_parquet(ROOT / "entities.parquet", columns=["event_timestamp", "holiday"]).iloc[-1]
+        if os.environ.get("RELOAD_CALENDAR_EACH_REQUEST") == "1"
+        else calendar
+    )
+    if pd.Timestamp(current_calendar.event_timestamp) != pd.Timestamp(latest["event_timestamp_utc"]):
+        raise HTTPException(503, "Online feature timestamp does not match calendar row")
+    feature_names = ["lag_1", "lag_24", "lag_168", "prev_temperature", "prev_rainfall"]
+    retrieved = store.get_online_features(
+        features=[f"bike_hourly:{name}" for name in feature_names],
+        entity_rows=[{"city_id": "seoul"}],
+    ).to_df()
+    if retrieved[feature_names].isna().any().any():
+        raise HTTPException(503, "Online features have not been materialized")
+    row = {
+        "hour": timestamp.hour,
+        "weekday": timestamp.dayofweek,
+        "month": timestamp.month,
+        "holiday": int(current_calendar.holiday),
+        **{name: float(retrieved[name].iloc[0]) for name in feature_names},
+    }
+    columns = selection["model"]["columns"]
+    prediction = max(0.0, float(model.predict(pd.DataFrame([row])[columns])[0]))
+    return {
+        "prediction_hour": str(timestamp),
+        "predicted_rentals": round(prediction, 3),
+        "model_version": selection["model"]["version"],
+        "feature_source": "Feast Redis online store",
+    }
 ```
 
-성공까지 이어진 장애와 조치는 다음과 같았다.
+**`load.py`**
 
-| 막힌 단계 | 확인한 원인 | 실습에서 적용한 조치 |
-| --- | --- | --- |
-| 컴포넌트 이미지 빌드 | 오래된 `slim-buster` 기반 이미지의 패키지 저장소 조회 실패 | 작업본의 기반 이미지를 `bookworm`으로 교체 |
-| 다른 CPU 아키텍처 이미지 빌드 | 빌드 호스트에 arm64 실행 지원이 준비되지 않음 | 빌드 환경을 준비한 뒤 두 아키텍처 이미지 게시 |
-| Feast 등록 | 호스트와 Pod가 서로 다른 MinIO 주소를 사용 | 클러스터 안에서 등록 Job 실행 |
-| KFP Pod 시작 지연 | 사용자 네임스페이스의 아티팩트 Secret 누락 | 필요한 리소스를 수동으로 맞춰 실습 진행 |
-| 모델 추론 인터페이스 | XGBoost `Booster`에 `predict_proba()` 없음 | 기존 추론 코드와 맞는 사이킷런 랜덤 포레스트 사용 |
+```python
+"""Generate bounded in-cluster request load and report aggregate latency."""
+import json
+import os
+import time
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-네 번째 조치는 **이번 환경을 지나가기 위한 수동 복구**였다. 새 사용자 네임스페이스에서도 같은 누락이 반복될 수 있으므로, 공용 플랫폼이라면 리소스를 만들어야 하는 컨트롤러부터 고쳐야 한다. 이번 글의 성공 결과가 그 문제까지 해결했다는 뜻은 아니다.
 
-이미지는 네 개의 이름으로 준비했지만, 스터디 기록에서는 같은 Dockerfile이 저장소 전체 코드를 넣는 구조여서 **실제 내용은 동일**했다. 네 번 빌드하는 대신 한 번 빌드한 뒤 필요한 태그를 붙이는 방식을 사용했다. 이 선택은 실습 속도를 높였지만, 컴포넌트별 최소 의존성이나 이미지 크기를 분리하는 설계는 다음 과제로 남는다.
+url = os.environ.get("TARGET_URL", "http://bike-api:8000/predict")
+duration = int(os.environ.get("DURATION_SECONDS", "150"))
+workers = int(os.environ.get("WORKERS", "16"))
+deadline = time.monotonic() + duration
 
-### 실행 파라미터에 비밀을 넣은 흔적
 
-책의 파이프라인 예제는 MinIO 액세스 키와 시크릿 키를 일반 문자열 파라미터로 받는다. 스터디 실행에서도 이 값이 KFP 실행 이력에 **평문으로 남는 문제**를 확인했다. 글에는 값이나 접속 가능한 주소를 옮기지 않았다. 공유 환경에서 재사용하려면 Kubernetes Secret 등 별도 경로로 주입하고, 파이프라인 파라미터에는 비밀 값을 넣지 않도록 컴포넌트 계약을 바꿔야 한다.
+def request_loop():
+    successes = 0
+    failures = 0
+    latencies = []
+    while time.monotonic() < deadline:
+        started = time.monotonic()
+        try:
+            with urllib.request.urlopen(url, timeout=10) as response:
+                if response.status != 200:
+                    raise ValueError(response.status)
+                response.read()
+            successes += 1
+        except Exception:
+            failures += 1
+        latencies.append(time.monotonic() - started)
+    return successes, failures, latencies
 
-## 9. 두 장을 읽고 남은 운영 기준
 
-4장과 5장의 연결은 “도구를 모두 설치했다”보다 **서로의 계약을 확인했다**는 데 의미가 있다. MLflow run의 지표가 어느 데이터에서 나왔는지, 등록 모델이 추론 코드의 메서드를 제공하는지, Feast의 피처 주소가 실행 Pod에서 열리는지, 중간 `Dataset`이 다음 작업으로 전달되는지를 각각 확인했다. 결과 파일을 모델의 직접 추론과 대조한 것도 이 계약의 마지막 검사였다.
+with ThreadPoolExecutor(max_workers=workers) as pool:
+    results = [future.result() for future in as_completed(
+        [pool.submit(request_loop) for _ in range(workers)]
+    )]
+all_latencies = sorted(value for _, _, group in results for value in group)
+successes = sum(item[0] for item in results)
+failures = sum(item[1] for item in results)
+print(json.dumps({
+    "successes": successes,
+    "failures": failures,
+    "workers": workers,
+    "duration_seconds": duration,
+    "rps": round(successes / duration, 2),
+    "p50_ms": round(all_latencies[len(all_latencies) // 2] * 1000, 2),
+    "p95_ms": round(all_latencies[int(len(all_latencies) * 0.95)] * 1000, 2),
+}, sort_keys=True))
+```
 
-반면 이 파이프라인에는 **재학습, 새 모델 승인, 실시간 서빙, 드리프트 감지**가 아직 없다. 4장의 모델·피처 자산과 5장의 배치 추론은 MLOps 루프의 일부를 구현한다. 1~2장에서 정한 “운영에서 오류가 늘면 무엇을 고칠까?”라는 질문에 답하려면 예측 후 정답 수집과 모니터링, 새 후보 평가까지 이어야 한다.
+### 10.6 결과 확인 기준
 
-다음에 같은 실습을 반복한다면 아래 네 가지부터 고치고 싶다.
-
-1. 평가 분할을 고정하고, 실행마다 데이터·변환·모델 버전을 함께 남긴다.
-2. 학습 시점에 맞춘 범주형 인코더를 추론 컴포넌트에서도 그대로 사용한다.
-3. 레지스트리의 stage 의존을 줄이려면 모델 별칭과 KFP 조회 코드를 함께 바꾼다.
-4. KFP 실행 이력에서 인증 값을 없애고, 네임스페이스 리소스 생성 문제를 수동 조치 없이 해결한다.
-
-## 10. 참고 자료
-
-- *Machine Learning Platform Engineering*, 4~5장(pp. 97–148)
-- 책의 4~5장 코드를 실행하며 정리한 스터디 기록
-- [책 4장 예제 저장소](https://github.com/practical-mlops/chapter-4)와 [5장 예제 저장소](https://github.com/practical-mlops/chapter-5)
-- [MLflow 모델 레지스트리 공식 문서](https://mlflow.org/docs/latest/ml/model-registry/workflow/)
-- [Feast 공식 문서](https://docs.feast.dev/)
-- [Kubeflow Pipelines 공식 문서](https://www.kubeflow.org/docs/components/pipelines/)
-
-본문의 Mermaid는 책 그림 4.1·4.10·5.2의 구성요소 관계를 확인한 뒤 이번 실습의 실행 경로에 맞춰 새로 그렸다. 원서 그림이나 스터디 자료의 화면 캡처는 옮기지 않았다.
+첫 `run.sh` 실행 뒤 `python3 verify.py`에서 원본 **8,760행**, 피처 **8,592행**, 미래 평가 **2,184행**, 미래 MAE **90.8443**, 기준선 MAE **386.4167**, 온라인/오프라인 일치가 출력됐다. `run_kfp.sh`는 제출 ID와 `SUCCEEDED` 상태를 `kfp-output/last-run.json`에 쓴다. 첫 실행 기록의 ID는 `958a59dc-aa23-449b-ae42-ce480ad63959`였으며, 다시 실행하면 새 ID와 모델 버전이 생길 수 있다. KFP 결과를 꺼내 원본 해시·모델 버전·MAE가 Job 실행과 일치하는지도 확인했다.
