@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "한국 데이터로 다시 만든 서울 공공자전거 Feast·MLflow·KFP 실험"
+title: "한국 데이터로 다시 만든 MLOps 4~5장: 서울 공공자전거 Feast·MLflow·KFP 실험"
 comments: true
 classes: wide
 description: "서울 공공자전거 시간별 대여 데이터를 직접 수집해 Rancher Desktop Kubernetes에서 Feast 시점 조회, MLflow 모델 등록, KFP 배치 추론을 실행하고 검증한 기록."
@@ -20,7 +20,7 @@ tags:
   - MinIO
 ---
 
-# 한국 데이터로 다시 만든 서울 공공자전거 Feast·MLflow·KFP 실험
+# 한국 데이터로 다시 만든 MLOps 4\~5장: 서울 공공자전거 Feast·MLflow·KFP 실험
 
 > 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >
