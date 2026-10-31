@@ -186,7 +186,7 @@ python3 verify.py
 #         "baseline_mae": 386.4167, "online_matches_offline": true}
 ```
 
-### Feast가 한 도시의 긴 시계열을 한 번에 조인하다 OOM
+### Feast가 한 도시의 긴 시계열을 한 번에 조인하다 OOM 발생
 
 처음에는 `city_id="seoul"`의 8,592개 시점을 **한 번의 `get_historical_features` 호출**에 모두 넣었다. Feast 0.40.1의 파일 기반 오프라인 스토어에서 이 조회 Job은 **2GiB 상한에 걸려 `OOMKilled`** 됐다. 피처 값이 8,592×5개뿐이라고 조인 도중 필요한 메모리도 작다고 생각한 것이 실수였다. 레지스트리 등록 자체는 끝났지만 과거 시점 조인을 검증하기 전에 종료됐다.
 
@@ -1635,3 +1635,21 @@ print(json.dumps({
 ### 10.6 결과 확인 기준
 
 첫 `run.sh` 실행 뒤 `python3 verify.py`에서 원본 **8,760행**, 피처 **8,592행**, 미래 평가 **2,184행**, 미래 MAE **90.8443**, 기준선 MAE **386.4167**, 온라인/오프라인 일치가 출력됐다. `run_kfp.sh`는 제출 ID와 `SUCCEEDED` 상태를 `kfp-output/last-run.json`에 쓴다. 첫 실행 기록의 ID는 `958a59dc-aa23-449b-ae42-ce480ad63959`였으며, 다시 실행하면 새 ID와 모델 버전이 생길 수 있다. KFP 결과를 꺼내 원본 해시·모델 버전·MAE가 Job 실행과 일치하는지도 확인했다.
+
+## 11. 마무리
+
+위 코드와 YAML을 빈 디렉터리에 그대로 두고 `run.sh` → `run_kfp.sh` 순으로 실행하면, 이 글의 수집부터 Feast 시점 조회, MLflow 등록, KFP 배치 추론까지 같은 경로를 다시 밟을 수 있다. 숫자가 조금 달라질 수는 있어도 **흐름과 검증 기준은 그대로** 재현된다.
+
+책의 4~5장을 소득 분류 대신 서울 공공자전거로 바꿔 읽은 이유는 하나였다. 시각이 분명한 데이터라야 "이 값을 예측 시점에 정말 쓸 수 있었나"를 끝까지 따질 수 있기 때문이다. 그 질문을 붙잡고 가니 도구를 설치했다는 사실보다, **Feast의 시점 조회·MLflow의 모델 계보·KFP의 실행 순서가 서로의 계약을 지키는지**가 실습의 본론이 됐다. 무작위 평가(67.88대)와 미래 평가(90.84대)의 간극, 날씨 피처가 오히려 검증을 낮춘 결과, 운행 중단 247시간의 오차는 모두 그 계약을 확인하는 과정에서 드러난 신호였다.
+
+다음 글에서는 이 배치 파이프라인 위에 실시간 추론 API와 HPA 부하 실험을 얹어, "정보가 언제 도착하는가"라는 질문을 운영 관점에서 이어 볼 생각이다.
+
+## 12. 참고 자료
+
+- *Machine Learning Platform Engineering*, 4~5장(pp. 97-148)
+- [UCI Seoul Bike Sharing Demand 데이터셋](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand) (CC BY 4.0, [DOI: 10.24432/C5F62R](https://doi.org/10.24432/C5F62R))
+- [MLflow 모델 레지스트리 공식 문서](https://mlflow.org/docs/latest/ml/model-registry/workflow/)
+- [Feast 과거 시점 조회 문서](https://docs.feast.dev/getting-started/concepts/feature-retrieval)
+- [Kubeflow Pipelines 공식 문서](https://www.kubeflow.org/docs/components/pipelines/)
+
+본문의 Mermaid는 책 4~5장의 구성요소 관계를 확인한 뒤 이번 실습의 실행 경로에 맞춰 새로 그렸다. 원서 그림이나 스터디 자료의 화면 캡처는 옮기지 않았다.
