@@ -481,7 +481,24 @@ KFP의 `registered` 단계가 확인한 원본 CSV 해시와 MLflow 실행에 �
 
 실시간 API와 HPA 부하 실험은 이 글의 4\~5장 배치 실습과 별도 범위다. 이 부분은 후속 운영 실험 글에서 따로 다룰 예정이다.
 
-## 10. 전체 재현 코드: 파일별로 복사하기
+## 10. 마무리
+
+부록 A의 코드와 YAML을 빈 디렉터리에 그대로 두고 `run.sh` → `run_kfp.sh` 순으로 실행하면, 이 글의 수집부터 Feast 시점 조회, MLflow 등록, KFP 배치 추론까지 같은 경로를 다시 밟을 수 있다. 숫자가 조금 달라질 수는 있어도 **흐름과 검증 기준은 그대로** 재현된다.
+
+책의 4\~5장을 소득 분류 대신 서울 공공자전거로 바꿔 읽은 이유는 하나였다. 시각이 분명한 데이터라야 "이 값을 예측 시점에 정말 쓸 수 있었나"를 끝까지 따질 수 있기 때문이다. 그 질문을 붙잡고 가니 도구를 설치했다는 사실보다, **Feast의 시점 조회·MLflow의 모델 계보·KFP의 실행 순서가 서로의 계약을 지키는지**가 실습의 본론이 됐다. 무작위 평가(67.88대)와 미래 평가(90.84대)의 간극, 날씨 피처가 오히려 검증을 낮춘 결과, 운행 중단 247시간의 오차는 모두 그 계약을 확인하는 과정에서 드러난 신호였다.
+
+다음 글에서는 이 배치 파이프라인 위에 실시간 추론 API와 HPA 부하 실험을 얹어, "정보가 언제 도착하는가"라는 질문을 운영 관점에서 이어 볼 생각이다.
+
+## 11. 참고 자료
+
+- *Machine Learning Platform Engineering*, 4\~5장(pp. 97-148)
+- [UCI Seoul Bike Sharing Demand 데이터셋](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand) (CC BY 4.0, [DOI: 10.24432/C5F62R](https://doi.org/10.24432/C5F62R))
+- [MLflow 모델 레지스트리 공식 문서](https://mlflow.org/docs/latest/ml/model-registry/workflow/)
+- [Feast 과거 시점 조회 문서](https://docs.feast.dev/getting-started/concepts/feature-retrieval)
+- [Kubeflow Pipelines 공식 문서](https://www.kubeflow.org/docs/components/pipelines/)
+
+본문의 Mermaid는 책 4\~5장의 구성요소 관계를 확인한 뒤 이번 실습의 실행 경로에 맞춰 새로 그렸다. 원서 그림이나 스터디 자료의 화면 캡처는 옮기지 않았다.
+## 부록 A. 전체 재현 코드: 파일별로 복사하기
 
 아래 코드는 이 글에 사용한 실습 파일을 그대로 본문에 넣은 것이다. 블로그만 보고 재현하려면 빈 디렉터리에 표의 상대 경로대로 파일을 만들면 된다. **`run.sh`를 먼저 실행해 모델을 등록하고, 이어 `run_kfp.sh`를 실행한다.** KFP 파이프라인은 기존 MLflow의 `champion` 모델을 조회하므로 순서가 중요하다. `kfp/seoul-bike-pipeline.yaml`은 `kfp/pipeline.py`가 컴파일해 만든다. 원본 CSV·Parquet·SQLite DB는 생성물이므로 본문에 넣지 않았다.
 
@@ -520,7 +537,7 @@ bash run.sh                        # 수집 → Feast → MLflow 학습·등록 
 bash run_kfp.sh                    # KFP standalone 설치 → 컴파일 → SDK 제출
 ```
 
-### 10.1 컨테이너와 의존성
+### A.1 컨테이너와 의존성
 
 **`requirements.txt`**
 
@@ -548,7 +565,7 @@ COPY serve.py load.py ./
 ENTRYPOINT ["python", "/app/experiment.py"]
 ```
 
-### 10.2 데이터 수집·Feast·MLflow·추론 구현
+### A.2 데이터 수집·Feast·MLflow·추론 구현
 
 `experiment.py`는 단계 이름을 인수로 받는다. `collect`는 UCI ZIP을 해시로 확인하고 서울 시각을 UTC 이벤트 시각으로 바꾼다. `features`는 시차 피처와 Feast 뷰를 만들고 32개 시점을 원본과 대조한다. `train`은 시간 순서로 후보를 비교해 MLflow에 모델을 등록한다. `registered`는 KFP에서 별칭과 원본 해시를 확인한다. `infer`는 등록 버전으로 미래 구간을 평가한다. `online`은 마지막 행만 Redis에 구체화하고 값이 일치하는지 확인한다.
 
@@ -939,7 +956,7 @@ if __name__ == "__main__":
 
 </details>
 
-### 10.3 Kubernetes 자원과 Job 순서
+### A.3 Kubernetes 자원과 Job 순서
 
 `base.yaml`은 실험용 PVC·MLflow·Redis를 만든다. 다섯 Job은 같은 `/work`를 순서대로 사용한다. `readout` 파드는 각 단계의 JSON 결과를 복사한 뒤 삭제한다.
 
@@ -1322,7 +1339,7 @@ print("VERIFY " + json.dumps({
 }))
 ```
 
-### 10.4 KFP 설치·DAG·실행 제출
+### A.4 KFP 설치·DAG·실행 제출
 
 KFP의 네 단계 `collect → features → registered → infer`는 같은 모델 이미지를 쓴다. `registered`는 앞서 MLflow에 등록한 버전과 원본 해시를 확인한다. `submit.py`의 `create_run_from_pipeline_package`가 **실제 실행 제출 호출**이다. `run_kfp.sh`는 KFP API를 18088 포트로 연결한 뒤 이 코드를 실행한다. 이 실습에서 실행을 제출한 경로는 **SDK 호출**이며, 직접 작성한 REST `curl` 제출 명령은 없다.
 
@@ -1534,7 +1551,7 @@ done
 .venv/bin/python kfp/submit.py
 ```
 
-### 10.5 이미지 빌드에 함께 들어간 서빙 코드
+### A.5 이미지 빌드에 함께 들어간 서빙 코드
 
 아래 두 파일은 이번 4\~5장 배치 결과를 계산하는 데 쓰이지 않는다. 실습 당시 Dockerfile이 두 파일을 함께 복사했으므로, **위 코드를 그대로 빌드할 수 있도록** 남긴다. API와 HPA의 동작·성능 해석은 후속 글에서 다룬다.
 
@@ -1670,21 +1687,3 @@ print(json.dumps({
     "p95_ms": round(all_latencies[int(len(all_latencies) * 0.95)] * 1000, 2),
 }, sort_keys=True))
 ```
-
-## 11. 마무리
-
-위 코드와 YAML을 빈 디렉터리에 그대로 두고 `run.sh` → `run_kfp.sh` 순으로 실행하면, 이 글의 수집부터 Feast 시점 조회, MLflow 등록, KFP 배치 추론까지 같은 경로를 다시 밟을 수 있다. 숫자가 조금 달라질 수는 있어도 **흐름과 검증 기준은 그대로** 재현된다.
-
-책의 4\~5장을 소득 분류 대신 서울 공공자전거로 바꿔 읽은 이유는 하나였다. 시각이 분명한 데이터라야 "이 값을 예측 시점에 정말 쓸 수 있었나"를 끝까지 따질 수 있기 때문이다. 그 질문을 붙잡고 가니 도구를 설치했다는 사실보다, **Feast의 시점 조회·MLflow의 모델 계보·KFP의 실행 순서가 서로의 계약을 지키는지**가 실습의 본론이 됐다. 무작위 평가(67.88대)와 미래 평가(90.84대)의 간극, 날씨 피처가 오히려 검증을 낮춘 결과, 운행 중단 247시간의 오차는 모두 그 계약을 확인하는 과정에서 드러난 신호였다.
-
-다음 글에서는 이 배치 파이프라인 위에 실시간 추론 API와 HPA 부하 실험을 얹어, "정보가 언제 도착하는가"라는 질문을 운영 관점에서 이어 볼 생각이다.
-
-## 12. 참고 자료
-
-- *Machine Learning Platform Engineering*, 4\~5장(pp. 97-148)
-- [UCI Seoul Bike Sharing Demand 데이터셋](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand) (CC BY 4.0, [DOI: 10.24432/C5F62R](https://doi.org/10.24432/C5F62R))
-- [MLflow 모델 레지스트리 공식 문서](https://mlflow.org/docs/latest/ml/model-registry/workflow/)
-- [Feast 과거 시점 조회 문서](https://docs.feast.dev/getting-started/concepts/feature-retrieval)
-- [Kubeflow Pipelines 공식 문서](https://www.kubeflow.org/docs/components/pipelines/)
-
-본문의 Mermaid는 책 4\~5장의 구성요소 관계를 확인한 뒤 이번 실습의 실행 경로에 맞춰 새로 그렸다. 원서 그림이나 스터디 자료의 화면 캡처는 옮기지 않았다.
