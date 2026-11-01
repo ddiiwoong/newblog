@@ -33,6 +33,32 @@ tags:
 
 ***
 
+## 글에 나오는 용어
+
+쿠버네티스와 GitOps 용어를 먼저 한자리에 모았다. 이미 익숙하다면 건너뛰어도 된다.
+
+<details>
+<summary>핵심 용어 펼쳐 보기</summary>
+
+| 용어 | 뜻 | 이 글에서의 예 |
+| --- | --- | --- |
+| **컨테이너 이미지** | 코드와 실행 환경을 하나로 묶어 어디서나 같게 돌게 만든 패키지 | `ch3-demo:1.0` |
+| **멀티스테이지 빌드** | 빌드 단계와 실행 단계를 나눠, 최종 이미지에는 결과물만 남겨 작게 만드는 Dockerfile 기법 | Go 바이너리만 복사한 8.2MB 이미지 |
+| **Pod** | 쿠버네티스가 컨테이너를 실행하는 최소 단위 | 데모 앱 복제 2개 |
+| **Deployment** | "이 이미지를 몇 개 복제로 유지하라"는 선언. Pod를 관리한다 | `replicas: 2` |
+| **Service** | 여러 Pod에 안정적인 이름(DNS)과 로드밸런싱을 붙이는 오브젝트 | `ch3-demo.default.svc.cluster.local` |
+| **서비스 디스커버리** | 개별 Pod IP를 몰라도 서비스 이름 하나로 접근하게 하는 것 | 요청이 두 Pod에 번갈아 분산 |
+| **네임스페이스** | 클러스터 안에서 리소스를 논리적으로 나누는 구획 | `argocd`, `monitoring` |
+| **Helm 차트·릴리스** | 매니페스트를 템플릿+값으로 묶은 패키지(차트)와, 그것을 설치한 인스턴스(릴리스) | `demo` 릴리스 |
+| **GitOps** | 클러스터의 원하는 상태를 Git에 선언하고, 도구가 실제 상태를 거기에 맞추는 방식 | Git이 단일 진실 공급원 |
+| **Argo CD** | GitOps 구현 도구. Git 선언과 클러스터를 지속적으로 동기화한다 | Application을 Synced·Healthy로 유지 |
+| **self-heal** | 사람이 손으로 바꾼 상태를 Git 선언대로 되돌리는 Argo CD 기능 | replica 3→1 자동 복구 |
+| **CRD** | 쿠버네티스에 새 리소스 종류를 추가하는 확장(Custom Resource Definition) | Argo CD의 `Application` |
+| **ServiceMonitor** | "이 Service의 이 경로를 주기적으로 수집하라"고 Prometheus에 알리는 오브젝트 | 데모 앱 `/metrics` 수집 |
+| **Prometheus·Grafana** | 지표를 수집·저장하는 도구(Prometheus)와 그것을 시각화하는 대시보드(Grafana) | 커스텀 지표 `app_requests_total` |
+
+</details>
+
 | 단계 | 책의 절 | 이 글에서 확인하는 것 |
 | --- | --- | --- |
 | Docker | 3.2 | 멀티스테이지 빌드로 작은 이미지를 만들고 로컬에서 띄운다 |
