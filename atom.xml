@@ -519,6 +519,92 @@
 <p>이 글은 책의 흐름을 따라 <strong>하나의 데모 앱</strong>을 Docker 이미지로 만들고, 쿠버네티스에 올리고, Helm으로 패키징하고, Argo CD로 GitOps 배포를 하고, Prometheus·Grafana로 관측하는 과정을 직접 실행한 기록이다. 앱은 요청 수를 세어 <code>/metrics</code>로 노출하는 작은 Go HTTP 서버다. 모니터링 단계에서 이 커스텀 지표가 Prometheus까지 흘러가는 것을 눈으로 확인하기 위해 골랐다.</p>
 <!-- -->
 <hr>
+<h2 class="anchor anchorTargetHideOnScrollNavbar_vjPI" id="글에-나오는-용어">글에 나오는 용어<a href="https://ddii.dev/mlops/ml-platform-engineering-ch3/#%EA%B8%80%EC%97%90-%EB%82%98%EC%98%A4%EB%8A%94-%EC%9A%A9%EC%96%B4" class="hash-link" aria-label="Direct link to 글에 나오는 용어" title="Direct link to 글에 나오는 용어" translate="no">​</a></h2>
+<p>쿠버네티스와 GitOps 용어를 먼저 한자리에 모았다. 이미 익숙하다면 건너뛰어도 된다.</p>
+<details class="details_lb9f alert alert--info details_b_Ee" data-collapsed="true"><summary>핵심 용어 펼쳐 보기</summary><div><div class="collapsibleContent_i85q">
+<!-- -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>용어</th><th>뜻</th><th>이 글에서의 예</th></tr></thead><tbody><tr><td><strong>컨테이너 이미지</strong></td><td>코드와 실행 환경을 하나로 묶어 어디서나 같게 돌게 만든 패키지</td><td><code>ch3-demo:1.0</code></td></tr><tr><td><strong>멀티스테이지 빌드</strong></td><td>빌드 단계와 실행 단계를 나눠, 최종 이미지에는 결과물만 남겨 작게 만드는 Dockerfile 기법</td><td>Go 바이너리만 복사한 8.2MB 이미지</td></tr><tr><td><strong>Pod</strong></td><td>쿠버네티스가 컨테이너를 실행하는 최소 단위</td><td>데모 앱 복제 2개</td></tr><tr><td><strong>Deployment</strong></td><td>"이 이미지를 몇 개 복제로 유지하라"는 선언. Pod를 관리한다</td><td><code>replicas: 2</code></td></tr><tr><td><strong>Service</strong></td><td>여러 Pod에 안정적인 이름(DNS)과 로드밸런싱을 붙이는 오브젝트</td><td><code>ch3-demo.default.svc.cluster.local</code></td></tr><tr><td><strong>서비스 디스커버리</strong></td><td>개별 Pod IP를 몰라도 서비스 이름 하나로 접근하게 하는 것</td><td>요청이 두 Pod에 번갈아 분산</td></tr><tr><td><strong>네임스페이스</strong></td><td>클러스터 안에서 리소스를 논리적으로 나누는 구획</td><td><code>argocd</code>, <code>monitoring</code></td></tr><tr><td><strong>Helm 차트·릴리스</strong></td><td>매니페스트를 템플릿+값으로 묶은 패키지(차트)와, 그것을 설치한 인스턴스(릴리스)</td><td><code>demo</code> 릴리스</td></tr><tr><td><strong>GitOps</strong></td><td>클러스터의 원하는 상태를 Git에 선언하고, 도구가 실제 상태를 거기에 맞추는 방식</td><td>Git이 단일 진실 공급원</td></tr><tr><td><strong>Argo CD</strong></td><td>GitOps 구현 도구. Git 선언과 클러스터를 지속적으로 동기화한다</td><td>Application을 Synced·Healthy로 유지</td></tr><tr><td><strong>self-heal</strong></td><td>사람이 손으로 바꾼 상태를 Git 선언대로 되돌리는 Argo CD 기능</td><td>replica 3→1 자동 복구</td></tr><tr><td><strong>CRD</strong></td><td>쿠버네티스에 새 리소스 종류를 추가하는 확장(Custom Resource Definition)</td><td>Argo CD의 <code>Application</code></td></tr><tr><td><strong>ServiceMonitor</strong></td><td>"이 Service의 이 경로를 주기적으로 수집하라"고 Prometheus에 알리는 오브젝트</td><td>데모 앱 <code>/metrics</code> 수집</td></tr><tr><td><strong>Prometheus·Grafana</strong></td><td>지표를 수집·저장하는 도구(Prometheus)와 그것을 시각화하는 대시보드(Grafana)</td><td>커스텀 지표 <code>app_requests_total</code></td></tr></tbody></table>
+</div></div></details>
 
 
 
