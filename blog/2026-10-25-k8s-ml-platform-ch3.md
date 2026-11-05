@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "쿠버네티스 위에 ML 플랫폼 토대 쌓기 - Docker부터 GitOps·모니터링까지"
+title: "[MLOps] 쿠버네티스 위에 ML 플랫폼 토대 쌓기 - Docker부터 GitOps·모니터링까지"
 comments: true
 classes: wide
 description: "Machine Learning Platform Engineering 3장을 Rancher Desktop의 k3s에서 직접 실습한다. Docker 이미지 빌드, 쿠버네티스 배포와 서비스, Helm, Argo CD GitOps, Prometheus·Grafana 모니터링을 하나의 앱으로 테스트 진행."
@@ -19,7 +19,7 @@ tags:
   - GitOps
 ---
 
-# 쿠버네티스 위에 ML 플랫폼 토대 쌓기 - Docker부터 GitOps·모니터링까지
+# [MLOps] 쿠버네티스 위에 ML 플랫폼 토대 쌓기 - Docker부터 GitOps·모니터링까지
 
 > 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >

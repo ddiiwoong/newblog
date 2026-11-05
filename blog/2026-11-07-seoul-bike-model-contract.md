@@ -1,13 +1,13 @@
 ---
 layout: single
-title: "Mac k3s에서 서울 자전거 모델 검증하기: MLflow·Feast·Kubeflow·KServe"
+title: "[MLOps] Mac k3s에서 모델 검증 - MLflow·Feast·KServe"
 comments: true
 classes: wide
 description: "서울 공공자전거 모델의 계보와 피처를 확인하고, Kubeflow Notebook에서 데이터를 검증한 뒤 KServe와 BentoML의 예측을 Mac k3s에서 대조한다."
 authors: jinwoong
 toc: true
 toc_label: Table of Contents
-slug: mlops/ml-platform-engineering-part2-cpu-model-contract
+slug: mlops/ml-platform-engineering-model-contract
 date: 2026-11-07
 categories:
   - MLOps
@@ -22,7 +22,7 @@ tags:
   - 모델 계보
 ---
 
-# Mac k3s에서 서울 자전거 모델 검증하기: MLflow·Feast·Kubeflow·KServe
+# [MLOps] Mac k3s에서 모델 검증 - MLflow·Feast·KServe
 
 > 이 글은 개인 학습 기록이며 현재 재직 중인 회사와 관계가 없다.
 >

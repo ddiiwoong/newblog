@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "6장: 서울 자전거 모델을 BentoML로 서빙하고 Evidently 드리프트를 검증하기"
+title: "[MLOps] 서울 자전거 모델 BentoML 서빙과 Evidently 드리프트 검증"
 comments: true
 classes: wide
 description: "MLflow에 등록한 서울 공공자전거 모델을 Rancher Desktop Kubernetes의 BentoML API로 제공하고, Evidently 대조군·미래 구간·인위적 이동 실험을 KFP에서 실행한 기록."
@@ -20,7 +20,7 @@ tags:
   - Kubeflow Pipelines
 ---
 
-# 6장: 서울 자전거 모델을 BentoML로 서빙하고 Evidently 드리프트를 검증하기
+# [MLOps] 서울 자전거 모델 BentoML 서빙과 Evidently 드리프트 검증
 
 > 이 글은 개인 학습 기록이며 현재 재직 중인 회사와 관계가 없다.
 >

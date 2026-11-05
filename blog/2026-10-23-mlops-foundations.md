@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "모델보다 비즈니스 문제에서 출발하자 - MLOps를 떠받치는 생각의 뼈대"
+title: "[MLOps] 모델보다 비즈니스 문제에서 출발하자 - 생각의 뼈대"
 comments: true
 classes: wide
 description: "Machine Learning Platform Engineering 1~2장을 읽고, 모델보다 앞서는 문제 정의, 폐쇄 루프, 리니지와 재현성, DevOps와의 차이, MLOps 성숙도라는 개념 축을 정리한다."
@@ -17,7 +17,7 @@ tags:
   - Model Evaluation
 ---
 
-# 모델보다 비즈니스 문제에서 출발하자 - MLOps를 떠받치는 생각의 뼈대
+# [MLOps] 모델보다 비즈니스 문제에서 출발하자 - 생각의 뼈대
 
 > 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >

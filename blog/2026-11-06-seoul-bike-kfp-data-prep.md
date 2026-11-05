@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "7장: 서울 자전거 데이터를 KFP v2 아티팩트로 준비하고 검증하기"
+title: "[MLOps] 서울 자전거 데이터를 KFP v2로 준비·검증"
 comments: true
 classes: wide
 description: "UCI 서울 공공자전거 8,760시간 데이터를 Rancher Desktop Kubernetes의 KFP standalone에서 수집, 검증, 시차 피처 생성, 시간 분할, QA까지 실행한 기록."
@@ -19,7 +19,7 @@ tags:
   - Data Preparation
 ---
 
-# 7장: 서울 자전거 데이터를 KFP v2 아티팩트로 준비하고 검증하기
+# [MLOps] 서울 자전거 데이터를 KFP v2로 준비·검증
 
 > 이 글은 개인 학습 기록이며 현재 재직 중인 회사와 관계가 없다.
 >
