@@ -12,6 +12,7 @@ date: 2026-11-06
 categories:
   - MLOps
 tags:
+  - ML Platform Engineering
   - MLOps
   - Kubernetes
   - Kubeflow Pipelines
