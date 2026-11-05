@@ -358,6 +358,7 @@
             <name>Jinwoong Kim</name>
             <uri>https://www.linkedin.com/in/ddiiwoong/</uri>
         </author>
+        <category label="ML Platform Engineering" term="ML Platform Engineering"/>
         <category label="MLOps" term="MLOps"/>
         <category label="Kubernetes" term="Kubernetes"/>
         <category label="MLflow" term="MLflow"/>
@@ -498,6 +499,7 @@
             <name>Jinwoong Kim</name>
             <uri>https://www.linkedin.com/in/ddiiwoong/</uri>
         </author>
+        <category label="ML Platform Engineering" term="ML Platform Engineering"/>
         <category label="MLOps" term="MLOps"/>
         <category label="Kubernetes" term="Kubernetes"/>
         <category label="Kubeflow Pipelines" term="Kubeflow Pipelines"/>
@@ -690,6 +692,7 @@
             <name>Jinwoong Kim</name>
             <uri>https://www.linkedin.com/in/ddiiwoong/</uri>
         </author>
+        <category label="ML Platform Engineering" term="ML Platform Engineering"/>
         <category label="MLOps" term="MLOps"/>
         <category label="Kubernetes" term="Kubernetes"/>
         <category label="BentoML" term="BentoML"/>
@@ -1188,6 +1191,7 @@
             <name>Jinwoong Kim</name>
             <uri>https://www.linkedin.com/in/ddiiwoong/</uri>
         </author>
+        <category label="ML Platform Engineering" term="ML Platform Engineering"/>
         <category label="MLOps" term="MLOps"/>
         <category label="ML Platform" term="ML Platform"/>
         <category label="MLflow" term="MLflow"/>
@@ -1397,6 +1401,7 @@
             <name>Jinwoong Kim</name>
             <uri>https://www.linkedin.com/in/ddiiwoong/</uri>
         </author>
+        <category label="ML Platform Engineering" term="ML Platform Engineering"/>
         <category label="MLOps" term="MLOps"/>
         <category label="ML Platform" term="ML Platform"/>
         <category label="Kubernetes" term="Kubernetes"/>
@@ -1644,6 +1649,7 @@
             <name>Jinwoong Kim</name>
             <uri>https://www.linkedin.com/in/ddiiwoong/</uri>
         </author>
+        <category label="ML Platform Engineering" term="ML Platform Engineering"/>
         <category label="MLOps" term="MLOps"/>
         <category label="ML Platform" term="ML Platform"/>
         <category label="Model Evaluation" term="Model Evaluation"/>
