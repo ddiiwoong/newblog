@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkddii=self.webpackChunkddii||[]).push([["93220"],{1912(s){s.exports=JSON.parse('{"blogBasePath":"/","blogTitle":"Cloud Catalyst","authorsListPath":"/authors"}')}}]);
