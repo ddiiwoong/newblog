@@ -492,7 +492,7 @@ KFP의 `registered` 단계가 확인한 원본 CSV 해시와 MLflow 실행에 �
 
 ## 11. 참고 자료
 
-- *Machine Learning Platform Engineering*, 4\~5장(pp. 97-148)
+- [*Machine Learning Platform Engineering*](https://www.manning.com/books/machine-learning-platform-engineering), 4\~5장(pp. 97-148)
 - [UCI Seoul Bike Sharing Demand 데이터셋](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand) (CC BY 4.0, [DOI: 10.24432/C5F62R](https://doi.org/10.24432/C5F62R))
 - [MLflow 모델 레지스트리 공식 문서](https://mlflow.org/docs/latest/ml/model-registry/workflow/)
 - [Feast 과거 시점 조회 문서](https://docs.feast.dev/getting-started/concepts/feature-retrieval)

@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "[MLOps] Mac k3s에서 모델 검증 - MLflow·Feast·KServe"
+title: "[MLOps] k3s에서 모델 검증 - MLflow·Feast·KServe"
 comments: true
 classes: wide
 description: "서울 공공자전거 모델의 계보와 피처를 확인하고, Kubeflow Notebook에서 데이터를 검증한 뒤 KServe와 BentoML의 예측을 Mac k3s에서 대조한다."
@@ -25,13 +25,13 @@ tags:
 
 # [MLOps] Mac k3s에서 모델 검증 - MLflow·Feast·KServe
 
-> 이 글은 개인 학습 기록이며 현재 재직 중인 회사와 관계가 없다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >
-> **참고 자료:** 최성욱 님의 *ML Platform Engineering Part 2 핸즈온*(확인한 커밋 `162b2f7`, 2026-11-02)과 *Machine Learning Platform Engineering* 4\~6장. 참고 저장소의 도메인은 성인 소득 분류다. 이 글은 서울 공공자전거 시간별 수요 모델로 **별도 실험**한 결과이며, 참고 저장소의 실행 수치를 내 결과로 옮기지 않았다.
+> **참고 자료:** [최성욱 님의 *ML Platform Engineering Part 2 핸즈온*](https://github.com/choisungwook/portfolio/tree/162b2f7d1cdd954fc9beb79d85f4f6b46c683972/mlops/ml-platform-engineering-part2)(확인한 커밋 `162b2f7`, 2026-11-02)과 [*Machine Learning Platform Engineering*](https://www.manning.com/books/machine-learning-platform-engineering) 4\~6장. 참고 저장소의 도메인은 성인 소득 분류다. 이 글은 서울 공공자전거 시간별 수요 모델로 **별도 실험**한 결과이며, 참고 저장소의 실행 수치를 내 결과로 옮기지 않았다.
 >
-> **직접 실행한 범위:** 2026년 11월 5일 Mac M3 Pro의 Rancher Desktop k3s에서 MLflow·Feast·BentoML·KServe 사이의 계약을 검사하는 Kubernetes Job을 실행했다. 같은 클러스터에 Kubeflow Notebook 컨트롤러와 자전거 노트북을 띄워 데이터 점검 셀도 실행했다. 기존 KFP는 standalone 설치이며, 이번 검증 Job은 KFP를 사용하지 않았다. Kubeflow 전체 배포판과 GitOps PR 프리뷰를 설치한 결과도 아니다.
+> **직접 실행한 범위:** 2026년 11월 5일 Mac Rancher Desktop k3s에서 MLflow·Feast·BentoML·KServe 사이의 계약을 검사하는 Kubernetes Job을 실행했다. 같은 클러스터에 Kubeflow Notebook 컨트롤러와 자전거 노트북을 띄워 데이터 점검 셀도 실행했다. 기존 KFP는 standalone 설치이며, 이번 검증 Job은 KFP를 사용하지 않았다. Kubeflow 전체 배포판과 GitOps PR 프리뷰를 설치한 결과도 아니다.
 
-> **시리즈 순서:** [Feast·MLflow·KFP 잇기](https://ddii.dev/mlops/ml-platform-engineering-ch4-5-practice/) (모델·피처·배치 추론) → [BentoML 서빙과 Evidently 드리프트 검증](https://ddii.dev/mlops/ml-platform-engineering-ch6-practice/) → [KFP v2 데이터 준비·검증](https://ddii.dev/mlops/ml-platform-engineering-ch7-practice/) → **이 글, Mac k3s 모델 검증** (Notebook·KServe 정합성 검사).
+> **시리즈 순서:** [Feast·MLflow·KFP 잇기](https://ddii.dev/mlops/ml-platform-engineering-ch4-5-practice/) (모델·피처·배치 추론) → [BentoML 서빙과 Evidently 드리프트 검증](https://ddii.dev/mlops/ml-platform-engineering-ch6-practice/) → [KFP v2 데이터 준비·검증](https://ddii.dev/mlops/ml-platform-engineering-ch7-practice/) → **이 글, k3s 모델 검증** (Notebook·KServe 정합성 검사).
 
 앞선 글들에서는 서울 자전거 데이터로 시차 피처를 만들고, MLflow에 모델을 등록하고, Feast로 피처를 조회하고, KFP로 미래 구간을 평가했다. 이어서 등록된 모델을 BentoML API로 서빙했고, 같은 UCI 원본의 데이터 준비를 별도의 KFP 파이프라인으로 실행했다. 이 글에는 **이번 검증 Job에 필요한 선행 환경을 만드는 파일과 실행 명령**을 본문에 실었다. 다른 글이나 코드 저장소를 열지 않아도 이 글의 실험용 파일을 구성할 수 있다. 이렇게 구성요소를 하나씩 확인하면 각각은 정상처럼 보인다. 그러나 한 가지 질문은 남는다.
 
@@ -1905,7 +1905,8 @@ kubectl -n mlpe-seoul-bike get job part2-model-contract-audit
 
 ### 참고한 자료
 
-- 최성욱 님의 *ML Platform Engineering Part 2 핸즈온*, 커밋 `162b2f7` - 모델 계보, 별칭, KServe 서빙, Feast 일치 검증, GitOps 프리뷰 시나리오
-- UCI *Seoul Bike Sharing Demand* - 원본 데이터와 라이선스. 실제 다운로드 주소는 `experiment.py`의 `URL`에 적었다.
-- KServe Standard 모드·PVC 모델 저장소, Kubeflow Notebook 컨트롤러 공식 배포 리소스 - 설치 명령과 버전은 4.1\~4.2절에 적었다.
-- 앞선 서울 공공자전거 실험 글(Feast·MLflow·KFP 잇기, BentoML 서빙과 Evidently 드리프트 검증, KFP v2 데이터 준비·검증) - 이번 글의 선행 환경을 만든 과정. 재현에 필요한 코드는 4.0절에 실었다.
+- [*Machine Learning Platform Engineering*](https://www.manning.com/books/machine-learning-platform-engineering), 4\~6장
+- [최성욱 님의 *ML Platform Engineering Part 2 핸즈온*](https://github.com/choisungwook/portfolio/tree/162b2f7d1cdd954fc9beb79d85f4f6b46c683972/mlops/ml-platform-engineering-part2), 커밋 `162b2f7` - 모델 계보, 별칭, KServe 서빙, Feast 일치 검증, GitOps 프리뷰 시나리오
+- [UCI *Seoul Bike Sharing Demand*](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand) (CC BY 4.0, [DOI: 10.24432/C5F62R](https://doi.org/10.24432/C5F62R)) - 원본 데이터와 라이선스. 실제 다운로드 주소는 `experiment.py`의 `URL`에 적었다.
+- KServe Standard 모드의 [PVC 모델 저장소 문서](https://kserve.github.io/website/latest/modelserving/storage/pvc/pvc/), [Kubeflow Notebooks 문서](https://www.kubeflow.org/docs/components/notebooks/), Notebook 컨트롤러 [배포 리소스(`release-26.03.1`)](https://github.com/kubeflow/community-distribution/tree/release-26.03.1/applications/notebooks-v1/upstream/notebook-controller/base) - 설치 명령과 버전은 4.1\~4.2절에 적었다.
+- 앞선 서울 공공자전거 실험 글([Feast·MLflow·KFP 잇기](https://ddii.dev/mlops/ml-platform-engineering-ch4-5-practice/), [BentoML 서빙과 Evidently 드리프트 검증](https://ddii.dev/mlops/ml-platform-engineering-ch6-practice/), [KFP v2 데이터 준비·검증](https://ddii.dev/mlops/ml-platform-engineering-ch7-practice/)) - 이번 글의 선행 환경을 만든 과정. 재현에 필요한 코드는 4.0절에 실었다.

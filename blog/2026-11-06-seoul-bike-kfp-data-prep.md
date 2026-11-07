@@ -22,7 +22,7 @@ tags:
 
 # [MLOps] 서울 자전거 데이터를 KFP v2로 준비·검증
 
-> 이 글은 개인 학습 기록이며 현재 재직 중인 회사와 관계가 없다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >
 > **읽은 자료:** *Machine Learning Platform Engineering* 7장. **직접 실행:** 2026년 11월 5일 Mac M3 Pro, Rancher Desktop Kubernetes의 KFP standalone에서 아래 파이프라인을 실행했다. **이 KFP 실행 당시** Kubeflow Notebook 컨트롤러와 MinIO 서비스는 없었다. 노트북 UI 구성은 책의 내용으로 설명하고, 실행 결과는 실제로 설치된 KFP와 SeaweedFS 아티팩트 저장소 기준으로 적었다. 같은 날 뒤이어 진행한 Mac k3s 모델 검증 실험에서 Notebook v1 컨트롤러를 추가했다.
 
@@ -525,6 +525,6 @@ COPY prep.py /app/prep.py
 
 ## 참고 자료
 
-- *Machine Learning Platform Engineering*, Benjamin Tan Wei Hao·Shanoop Padmanabhan·Varun Mallya, 7장.
+- [*Machine Learning Platform Engineering*](https://www.manning.com/books/machine-learning-platform-engineering), Benjamin Tan Wei Hao·Shanoop Padmanabhan·Varun Mallya, 7장.
 - [UCI Seoul Bike Sharing Demand 데이터 카드](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand)
 - [KFP v2 컴포넌트와 아티팩트 문서](https://www.kubeflow.org/docs/components/pipelines/user-guides/components/)

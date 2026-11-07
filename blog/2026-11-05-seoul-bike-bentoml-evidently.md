@@ -23,7 +23,7 @@ tags:
 
 # [MLOps] 서울 자전거 모델 BentoML 서빙과 Evidently 드리프트 검증
 
-> 이 글은 개인 학습 기록이며 현재 재직 중인 회사와 관계가 없다.
+> 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >
 > **읽은 자료:** *Machine Learning Platform Engineering* 6장. **직접 실행:** 2026년 11월 5일 Mac M3 Pro의 Rancher Desktop Kubernetes에서 BentoML API와 KFP 배치 드리프트 작업을 실행했다. Yatai, Evidently UI, 실제 시간별 새 데이터가 들어오는 온라인 드리프트 서비스는 설치·실행하지 않았다. 책의 소득 분류 수치를 서울 자전거 실험 결과로 옮기지 않았다.
 
@@ -807,8 +807,7 @@ if finished.state != "SUCCEEDED":
 
 ## 참고 자료
 
-- *Machine Learning Platform Engineering*, Benjamin Tan Wei Hao·Shanoop Padmanabhan·Varun Mallya, 6장.
-- *Machine Learning Platform Engineering*, 6장
+- [*Machine Learning Platform Engineering*](https://www.manning.com/books/machine-learning-platform-engineering), Benjamin Tan Wei Hao·Shanoop Padmanabhan·Varun Mallya, 6장.
 - [UCI Seoul Bike Sharing Demand 데이터 카드](https://archive.ics.uci.edu/dataset/560/seoul+bike+sharing+demand)
 - [BentoML 공식 문서](https://docs.bentoml.com/)
 - [Evidently 공식 문서](https://docs.evidentlyai.com/)
