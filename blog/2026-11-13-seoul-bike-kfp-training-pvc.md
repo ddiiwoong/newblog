@@ -58,7 +58,7 @@ Mac에서 `hello` 컨테이너와 Linux machine을 확인한 뒤, 클러스터�
 | 8장 | 모델 훈련·검증, `Model`·`Metrics` | 두 피처 조합 훈련 → 검증 MAE 비교 → 기준선 게이트 → 최종 훈련 → 미래 평가 | 통합 KFP Run과 MLflow 지표 확인 |
 | 9장 | PVC로 데이터 공유, 실험 추적 | PVC 적재·재사용 경로, MLflow에 데이터 해시·선택 지표·모델 기록 | PVC 적재·재사용 Run과 중앙 MLflow 기록 확인 |
 
-원서의 흐름을 확인하면 7.1절은 **Kubeflow Notebook을 통한 데이터 분석**, 7.2\~7.3절은 **컴포넌트 사이 값·파일 전달과 데이터 준비**, 8.1절은 **YOLO 훈련·검증 컴포넌트**, 9.1절은 **PVC 공유**를 다룬다. 9.2절은 TensorBoard, 9.3절은 영화 추천기와 MLflow 실험 추적이다. Notebook 데이터 검사는 앞선 모델 계약 글의 Rancher k3s 환경에서 수행했다. 이번 실습에서는 Mac의 `local_check.py`와 Apple 클러스터의 KFP 검증 태스크로 입력을 확인했다. 이 글의 MLflow 기록은 원서 9.3절의 추적 방식을 서울 자전거 회귀 문제에 적용한 결과다.
+책의 흐름을 확인하면 7.1절은 **Kubeflow Notebook을 통한 데이터 분석**, 7.2\~7.3절은 **컴포넌트 사이 값·파일 전달과 데이터 준비**, 8.1절은 **YOLO 훈련·검증 컴포넌트**, 9.1절은 **PVC 공유**를 다룬다. 9.2절은 TensorBoard, 9.3절은 영화 추천기와 MLflow 실험 추적이다. Notebook 데이터 검사는 앞선 모델 계약 글의 Rancher k3s 환경에서 수행했다. 이번 실습에서는 Mac의 `local_check.py`와 Apple 클러스터의 KFP 검증 태스크로 입력을 확인했다. 이 글의 MLflow 기록은 책 9.3절의 추적 방식을 서울 자전거 회귀 문제에 적용한 결과다.
 
 책의 객체 탐지 데이터는 이미지와 라벨을 무작위 75/15/10으로 나눈다. 자전거 수요 예측에는 그 비율을 그대로 적용하지 않았다. 목표가 **미래 시간의 대여량**이기 때문이다. 원본 8,760시간에서 `lag_168`을 만들 수 없는 첫 168시간을 뺀 후, 2018년 7월과 9월을 경계로 과거 훈련 4,920시간, 검증 1,488시간, 미래 테스트 2,184시간으로 나눴다. 검증은 모델 선택에 쓰고, 미래 테스트는 선택과 최종 훈련이 끝난 뒤에만 연다.
 
@@ -82,7 +82,7 @@ flowchart LR
 
 ### 책의 파일 경로와 이 파이프라인의 경로
 
-원서 7.2.1\~7.2.3절은 반환할 수 있는 작은 값과 파일로 남겨야 하는 큰 결과를 구분하고, 결과에 맞는 아티팩트 타입을 고른다. KFP 컴포넌트는 서로 다른 Pod에서 실행된다. 작은 정수나 문자열은 파라미터로 주고받을 수 있지만, 표 데이터와 모델 파일은 아티팩트로 연결하는 편이 읽고 추적하기 쉽다. `Output[Dataset]`을 선언하면 KFP가 출력 경로를 지정한다. 이번 구현은 **그 `.path` 자체에 Parquet 파일 한 개를 쓴다.** 다음 단계는 `Input[Dataset].path`에서 그 파일을 읽는다. 디렉터리를 만들고 그 안에 여러 파일을 쓰는 방식도 가능하지만, 그때는 읽는 쪽도 같은 디렉터리 규약을 따라야 한다.
+책의 7.2.1\~7.2.3절은 반환할 수 있는 작은 값과 파일로 남겨야 하는 큰 결과를 구분하고, 결과에 맞는 아티팩트 타입을 고른다. KFP 컴포넌트는 서로 다른 Pod에서 실행된다. 작은 정수나 문자열은 파라미터로 주고받을 수 있지만, 표 데이터와 모델 파일은 아티팩트로 연결하는 편이 읽고 추적하기 쉽다. `Output[Dataset]`을 선언하면 KFP가 출력 경로를 지정한다. 이번 구현은 **그 `.path` 자체에 Parquet 파일 한 개를 쓴다.** 다음 단계는 `Input[Dataset].path`에서 그 파일을 읽는다. 디렉터리를 만들고 그 안에 여러 파일을 쓰는 방식도 가능하지만, 그때는 읽는 쪽도 같은 디렉터리 규약을 따라야 한다.
 
 | 이 파이프라인의 결과 | KFP 타입 | 선택한 이유 |
 | --- | --- | --- |
@@ -214,13 +214,13 @@ UCI ZIP과 내부 CSV의 SHA-256을 고정했다. CSV는 `latin1`로 읽어 `Tem
 | calendar | `hour`, `weekday`, `month`, `holiday`, `lag_1`, `lag_24`, `lag_168` |
 | weather | calendar의 7개 + `prev_temperature`, `prev_rainfall` |
 
-원서 8.1.3\~8.1.4절은 시스템 패키지까지 셸에서 준비해야 하는 YOLO 훈련에 `@dsl.container_component`와 `ContainerSpec`을 쓰고, 검증에는 필요한 라이브러리가 든 이미지를 `@dsl.component`의 `base_image`로 지정한다. 이 실습에서도 **데이터 준비는 `ContainerSpec`으로 `prep.py` 명령을 호출하고, 훈련·검증은 `@dsl.component` 함수로 작성**했다. 두 종류 모두 미리 빌드한 `seoul-bike-ch79:apple` 이미지를 사용한다. `Dockerfile`에 의존성을 고정했고, 이미지 안에 KFP가 있으므로 함수 컴포넌트에는 `install_kfp_package=False`를 지정했다.
+책의 8.1.3\~8.1.4절은 시스템 패키지까지 셸에서 준비해야 하는 YOLO 훈련에 `@dsl.container_component`와 `ContainerSpec`을 쓰고, 검증에는 필요한 라이브러리가 든 이미지를 `@dsl.component`의 `base_image`로 지정한다. 이 실습에서도 **데이터 준비는 `ContainerSpec`으로 `prep.py` 명령을 호출하고, 훈련·검증은 `@dsl.component` 함수로 작성**했다. 두 종류 모두 미리 빌드한 `seoul-bike-ch79:apple` 이미지를 사용한다. `Dockerfile`에 의존성을 고정했고, 이미지 안에 KFP가 있으므로 함수 컴포넌트에는 `install_kfp_package=False`를 지정했다.
 
 두 후보는 **훈련 4,920행으로만** 적합한다. 검증 컴포넌트가 1,488행에서 각각 MAE를 재고, 가장 낮은 후보를 고른다. 계절성 기준선은 “어제 같은 시각의 대여량”인 `lag_24`다. 선택된 후보가 이 기준선보다도 나쁘거나 점수가 유한하지 않으면 검증 태스크를 실패시킨다. KFP `Output[Metrics]`에는 후보와 기준선의 MAE가 기록되고, `Output[Artifact]`에는 선택 이름·입력 컬럼·원본 CSV 해시가 JSON으로 남는다.
 
 검증이 통과한 다음에야 선택한 컬럼으로 **훈련+검증 6,408행을 다시 훈련**해 최종 `Output[Model]`을 만든다. 이 파일에는 훈련된 추정기와 **입력 컬럼 순서**를 함께 담았다. 이 최종 모델을 검증 1,488행에 다시 재서 같은 “검증 성능”이라고 부르면 안 된다. 그 1,488행이 이미 최종 훈련에 들어갔기 때문이다. 최종 모델의 독립 평가는 미래 테스트 2,184행에서 한다.
 
-원서 8.1.7절은 저장된 `best.pt`를 다시 불러와 새 이미지에 추론해 보는 확인을 강조한다. 이 회귀 실습에서는 **별도 평가 Pod가 `Output[Model]` 파일을 다시 읽어 미래 테스트 2,184시간을 예측**한다. 검증 단계의 모델 점수와 저장된 최종 모델의 동작을 각각 확인한 셈이다.
+책의 8.1.7절은 저장된 `best.pt`를 다시 불러와 새 이미지에 추론해 보는 확인을 강조한다. 이 회귀 실습에서는 **별도 평가 Pod가 `Output[Model]` 파일을 다시 읽어 미래 테스트 2,184시간을 예측**한다. 검증 단계의 모델 점수와 저장된 최종 모델의 동작을 각각 확인한 셈이다.
 
 11월 13일 실제 UCI 원본으로 실행한 결과다. Apple 클러스터의 **KFP Pod 로그**에서 확인했고, 선택 모델의 검증 점수와 미래 점수는 **MLflow Run**에서도 대조했다. 로컬 함수 실행 결과와도 소수 넷째 자리까지 같았다.
 
@@ -249,7 +249,7 @@ PVC 경로의 검증 모델은 **calendar 7개 컬럼으로 훈련 4,920행만 �
 
 PVC는 Pod에 일반 파일시스템을 제공하지만 그 안의 파일이 바뀌어도 KFP가 자동으로 데이터 버전을 아는 것은 아니다. 그래서 적재할 때 두 Parquet의 SHA-256을 JSON으로 남기고, 훈련·검증 Pod가 읽기 직전에 다시 검사하도록 했다. 반면 KFP `Dataset` 연결은 어느 단계의 출력이 다음 단계의 입력이었는지를 파이프라인 그래프에 남긴다. PVC를 쓸 때는 `.after(staged)`처럼 파일에 드러나지 않는 실행 순서도 직접 연결해야 한다.
 
-원서 9.1.5절에서도 **PVC 마운트만으로는 태스크 순서가 정해지지 않으므로** 분할 태스크에 `.after(download_op)`를 붙인다. 이번 코드에서는 `CreatePVC`가 내보낸 PVC 이름을 마운트에 전달하고, `train_on_pvc().after(staged)`로 파일 적재가 끝난 뒤 훈련하도록 했다. 원서 listing 9.5는 파일을 “이동”한다고 설명하지만 실제 호출은 `shutil.copy2`다. 원본 파일은 남기 때문에 PVC를 쓴다는 이유만으로 저장량이 줄었다고 계산할 수 없다.
+책의 9.1.5절에서도 **PVC 마운트만으로는 태스크 순서가 정해지지 않으므로** 분할 태스크에 `.after(download_op)`를 붙인다. 이번 코드에서는 `CreatePVC`가 내보낸 PVC 이름을 마운트에 전달하고, `train_on_pvc().after(staged)`로 파일 적재가 끝난 뒤 훈련하도록 했다. 책의 listing 9.5는 파일을 “이동”한다고 설명하지만 실제 호출은 `shutil.copy2`다. 원본 파일은 남기 때문에 PVC를 쓴다는 이유만으로 저장량이 줄었다고 계산할 수 없다.
 
 | 경로 | 이번 코드가 하는 일 | 운영 시 확인할 점 |
 | --- | --- | --- |
@@ -266,7 +266,7 @@ Apple 클러스터에서 PVC `1c995531-db56-4fff-8869-bf64c60fab40-bike`가 `loc
 
 로컬 확인의 MLflow `file://` 저장소에 이어, 이번에는 클러스터의 `mlflow.mlpe-seoul-bike.svc.cluster.local:5000` 서비스에도 통합 파이프라인이 기록을 올렸다. MLflow Run `9169a861c3754c30b4eb5c631124f794`에는 원본 CSV SHA-256 `373339b7…`, 선택된 `calendar`, 검증 MAE **103.7623**, 미래 테스트 MAE **90.8443**과 RMSE **147.3341**이 남았다. 기존 `seoul-bike-hourly`의 `champion` 별칭은 바꾸지 않았다.
 
-원서 9.2절은 TensorBoard로 훈련 과정의 곡선을 보고, 9.3.4절은 MLflow로 실행별 파라미터·지표·모델을 추적한다. 이번 **scikit-learn 히스토그램 부스팅** 코드는 TensorBoard 이벤트 파일을 만들지 않으므로 MLflow의 실행 기록만 확인했다. 에포크별 손실을 출력하는 신경망을 실험할 때는 TensorBoard 로그 디렉터리를 PVC에 쓰고 해당 PVC를 뷰어 Pod에 마운트하면 된다.
+책의 9.2절은 TensorBoard로 훈련 과정의 곡선을 보고, 9.3.4절은 MLflow로 실행별 파라미터·지표·모델을 추적한다. 이번 **scikit-learn 히스토그램 부스팅** 코드는 TensorBoard 이벤트 파일을 만들지 않으므로 MLflow의 실행 기록만 확인했다. 에포크별 손실을 출력하는 신경망을 실험할 때는 TensorBoard 로그 디렉터리를 PVC에 쓰고 해당 PVC를 뷰어 Pod에 마운트하면 된다.
 
 ## 5. 재현 절차
 
@@ -1365,7 +1365,7 @@ with tempfile.TemporaryDirectory() as directory:
 
 ## 참고 자료
 
-- *Machine Learning Platform Engineering* 원서([Manning](https://www.manning.com/books/machine-learning-platform-engineering)), 7.1\~7.3절(Notebook·값·아티팩트 전달과 데이터 준비), 8.1절(훈련·검증 컴포넌트), 9.1\~9.3절(PVC·TensorBoard·MLflow). PVC 복사 동작은 listing 9.5를 확인했다.
+- *Machine Learning Platform Engineering*([Manning](https://www.manning.com/books/machine-learning-platform-engineering)), 7.1\~7.3절(Notebook·값·아티팩트 전달과 데이터 준비), 8.1절(훈련·검증 컴포넌트), 9.1\~9.3절(PVC·TensorBoard·MLflow). PVC 복사 동작은 listing 9.5를 확인했다.
 - [1\~13장 순차 실습 가이드](https://johklo.github.io/docs/tech/machine-learning-platform-engineering/lab-guide/)와 [장별 실습 기록](https://johklo.github.io/docs/tech/machine-learning-platform-engineering/practice/)
 - [KFP: Artifacts](https://www.kubeflow.org/docs/components/pipelines/user-guides/data-handling/artifacts/)
 - [KFP: Lightweight Python components](https://www.kubeflow.org/docs/components/pipelines/user-guides/components/lightweight-python-components/)

@@ -498,7 +498,7 @@ KFP의 `registered` 단계가 확인한 원본 CSV 해시와 MLflow 실행에 �
 - [Feast 과거 시점 조회 문서](https://docs.feast.dev/getting-started/concepts/feature-retrieval)
 - [Kubeflow Pipelines 공식 문서](https://www.kubeflow.org/docs/components/pipelines/)
 
-본문의 Mermaid는 책 4\~5장의 구성요소 관계를 확인한 뒤 이번 실습의 실행 경로에 맞춰 새로 그렸다. 원서 그림이나 스터디 자료의 화면 캡처는 옮기지 않았다.
+본문의 Mermaid는 책 4\~5장의 구성요소 관계를 확인한 뒤 이번 실습의 실행 경로에 맞춰 새로 그렸다. 책의 그림이나 스터디 자료의 화면 캡처는 옮기지 않았다.
 ## 부록 A. 전체 재현 코드: 파일별로 복사하기
 
 아래 코드는 이 글에 사용한 실습 파일을 그대로 본문에 넣은 것이다. 블로그만 보고 재현하려면 빈 디렉터리에 표의 상대 경로대로 파일을 만들면 된다. **`run.sh`를 먼저 실행해 모델을 등록하고, 이어 `run_kfp.sh`를 실행한다.** KFP 파이프라인은 기존 MLflow의 `champion` 모델을 조회하므로 순서가 중요하다. `kfp/seoul-bike-pipeline.yaml`은 `kfp/pipeline.py`가 컴파일해 만든다. 원본 CSV·Parquet·SQLite DB는 생성물이므로 본문에 넣지 않았다.
