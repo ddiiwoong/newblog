@@ -67,15 +67,24 @@ Mac에서 `hello` 컨테이너와 Linux machine을 확인한 뒤, 클러스터�
 
 ```mermaid
 flowchart LR
-  A["UCI ZIP<br/>SHA-256 확인"] --> B["Dataset: 원본<br/>8,760시간"]
-  B --> C["시간·결측 검사"]
-  C --> D["Dataset: 시차 피처<br/>8,592시간"]
-  D --> E["시간 분할<br/>4,920 / 1,488 / 2,184"]
-  E --> F["QA: 순서·결측"]
-  F --> G["Model: 후보 2개"]
-  G --> H["Metrics: 검증 MAE<br/>24시간 기준선과 비교"]
-  H --> I["Model: train+val 재훈련<br/>MLflow Run"]
-  I --> J["Metrics: 미래 테스트"]
+  subgraph P["7장 · 데이터 준비"]
+    direction TB
+    A["UCI ZIP<br/>SHA-256 확인"] --> B["Dataset: 원본<br/>8,760시간"]
+    B --> C["시간·결측 검사"]
+    C --> D["Dataset: 시차 피처<br/>8,592시간"]
+    D --> E["시간 분할<br/>4,920 / 1,488 / 2,184"]
+    E --> F["QA: 순서·결측"]
+  end
+  subgraph T["8장 · 훈련·검증"]
+    direction TB
+    G["Model: 후보 2개<br/>훈련 4,920시간"] --> H["Metrics: 검증 MAE<br/>lag_24 기준선과 비교"]
+    H --> I["Model: 최종 재훈련<br/>훈련+검증 6,408시간"]
+  end
+  subgraph R["9장 · 추적·평가"]
+    direction TB
+    K["MLflow Run<br/>선택 근거·모델"] --> J["Metrics: 미래 테스트<br/>2,184시간"]
+  end
+  P --> T --> R
 ```
 
 </details>
