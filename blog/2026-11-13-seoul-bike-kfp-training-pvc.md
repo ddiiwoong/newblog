@@ -1,6 +1,6 @@
 ---
 layout: single
-title: "[MLOps] KFP로 서울 자전거 수요 모델 훈련·검증 - PVC 공유와 MLflow 추적"
+title: "[MLOps] Apple container로 KFP 훈련·검증 - PVC 공유와 MLflow 추적"
 comments: true
 classes: wide
 description: "서울 공공자전거 시간별 수요를 KFP Dataset·Model·Metrics로 연결하고, 검증 게이트와 MLflow 리니지를 기록한다. PVC 공유 방식도 별도 파이프라인으로 비교한다."
@@ -20,7 +20,7 @@ tags:
   - Seoul Bike
 ---
 
-# KFP로 서울 자전거 수요 모델 훈련·검증 - PVC 공유와 MLflow 추적
+# Apple container로 KFP 훈련·검증 - PVC 공유와 MLflow 추적
 
 > **시리즈 순서:** [1\~2장 이론](https://ddii.dev/mlops/ml-platform-engineering-ch1-2/) → [3장 쿠버네티스 토대](https://ddii.dev/mlops/ml-platform-engineering-ch3/) → [4\~5장 Feast·MLflow·KFP](https://ddii.dev/mlops/ml-platform-engineering-ch4-5-practice/) → [6장 BentoML·Evidently](https://ddii.dev/mlops/ml-platform-engineering-ch6-practice/) → [7장 KFP 데이터 준비](https://ddii.dev/mlops/ml-platform-engineering-ch7-practice/) → [모델 검증](https://ddii.dev/mlops/ml-platform-engineering-model-contract/) → **이 글**
 
