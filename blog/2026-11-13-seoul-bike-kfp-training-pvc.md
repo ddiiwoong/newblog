@@ -18,6 +18,7 @@ tags:
   - PVC
   - MLflow
   - Seoul Bike
+  - ML Platform Engineering
 ---
 
 # Apple container로 KFP 훈련·검증 - PVC 공유와 MLflow 추적
