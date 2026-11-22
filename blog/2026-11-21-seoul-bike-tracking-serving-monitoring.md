@@ -30,7 +30,7 @@ tags:
 
 > 해당 포스팅은 현재 재직 중인 회사와 관련이 없고, 개인 역량 개발을 위한 스터디 자료로 활용할 예정입니다.
 >
-> **읽은 범위:** *Machine Learning Platform Engineering* 9\~11장. 책의 인쇄 페이지 기준으로 PVC 데이터 관리는 p. 263, TensorBoard는 p. 272, 모델 레지스트리는 p. 290, 서빙은 p. 299, 모니터링은 p. 325부터 이어진다. 9.1절의 PVC는 앞선 실습에서 다뤘으므로, 이번에는 서울 공공자전거 회귀 모델의 실험 추적·패키징·모니터링에 집중했다.
+> **읽은 범위:** *Machine Learning Platform Engineering* 9\~11장. 9.1절의 PVC는 앞선 실습에서 다뤘으므로, 이번에는 서울 공공자전거 회귀 모델의 실험 추적·패키징·모니터링에 집중했다.
 
 [모델 계약 검증 글](https://ddii.dev/mlops/ml-platform-engineering-model-contract/)에서는 같은 모델이 여러 추론 경로에서 같은 값을 내는지 확인했다. 이어 [7\~9장 실습](https://ddii.dev/mlops/ml-platform-engineering-ch7-9-practice/)에서는 KFP 파이프라인으로 데이터 준비, 훈련·검증, PVC 재사용, MLflow 기록을 한 번에 실행했다.
 
@@ -206,7 +206,7 @@ with SummaryWriter(log_dir) as writer:
 
 이어서 9.3.3절은 지표를 비즈니스 목적에 맞춰 골라야 한다고 말한다. 평점을 잘 맞히는 것과 사용자가 관심 가질 영화를 상위 목록에 올리는 것은 서로 다른 평가 질문이다. RMSE는 평점 예측 오차를 보고, Precision@50은 추천한 상위 50개 중 관련 있는 항목의 비율을, Recall@50은 관련 있는 항목 중 상위 목록으로 찾아낸 비율을 본다.
 
-책 pp. 284\~285의 작은 실험은 6,400개 표본, 배치 64, 30에포크 조건에서 학습률을 바꾼다. 아래 수치는 책에 실린 결과이고, 영화 추천 모델을 직접 돌려 얻은 값이 아니다.
+9.3.3절의 작은 실험은 6,400개 표본, 배치 64, 30에포크 조건에서 학습률을 바꾼다. 아래 수치는 책에 실린 결과이고, 영화 추천 모델을 직접 돌려 얻은 값이 아니다.
 
 | 책의 실험 | Precision@50, 높을수록 좋음 | Recall@50, 높을수록 좋음 | RMSE, 낮을수록 좋음 |
 | --- | ---: | ---: | ---: |
@@ -640,7 +640,7 @@ BentoML 1.4.40은 패키지 잠금을 꺼도 먼저 `uv`가 있는지 확인했�
 
 ## 참고 자료
 
-- *Machine Learning Platform Engineering*, 9\~11장. 인쇄 페이지 pp. 261\~298, 299\~324, 325\~356. 데이터 접근은 9.1·9.3.1절, 실험 추적·승격은 9.2·9.3.3\~9.3.7절, 패키징·서빙 선택은 10.1\~10.8절, 관찰·드리프트·설명 가능성은 11.1\~11.3절을 본문 흐름에 연결했다.
+- *Machine Learning Platform Engineering*, 9\~11장. 데이터 접근은 9.1·9.3.1절, 실험 추적·승격은 9.2·9.3.3\~9.3.7절, 패키징·서빙 선택은 10.1\~10.8절, 관찰·드리프트·설명 가능성은 11.1\~11.3절을 본문 흐름에 연결했다.
 - [MLflow 모델 레지스트리와 별칭](https://mlflow.org/docs/3.0.0/model-registry/)
 - [BentoML 서비스 정의](https://docs.bentoml.com/en/latest/build-with-bentoml/services.html)
 - [Bento 패키지와 의존성 설정](https://docs.bentoml.com/en/latest/reference/bentoml/bento-build-options.html)
